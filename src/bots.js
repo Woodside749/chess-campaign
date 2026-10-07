@@ -18,7 +18,7 @@ export const BOTS = {
     bio: 'Nervous beginner, hangs pieces.',
     skillLevel: 0,
     depth: 1,
-    blunderChance: 0.4,
+    blunderChance: 0.2,
     lines: {
       start: [
         "H-hi! I've only just learned how the knight moves...",
