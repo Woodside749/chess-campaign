@@ -2,12 +2,28 @@ import { useEffect, useRef, useState } from 'react'
 import { Chess } from 'chess.js'
 import { Chessboard } from 'react-chessboard'
 import { Engine } from './engine.js'
-import { BOTS } from './bots.js'
+import { BOTS, pickLine } from './bots.js'
+import { boardResult, reactionTo, timeoutResult } from './rules.js'
+import Clock from './Clock.jsx'
+import GameOverDialog from './GameOverDialog.jsx'
 import './App.css'
 
 const bot = BOTS.lukas
 // The bot waits at least this long before moving, so its replies don't feel instant.
 const MIN_BOT_DELAY_MS = 500
+const START_TIME_MS = 10 * 60 * 1000 // 10 minutes each
+
+// Clock state: time left for each side when its turn began, and when the current
+// turn began. `turnStart` is null until White's first move, so the clocks start then.
+const freshClock = () => ({ w: START_TIME_MS, b: START_TIME_MS, turnStart: null })
+
+// Returns the clock after `color` has moved: their thinking time is subtracted
+// and the other side's clock starts running.
+function pressClock(clock, color) {
+  const now = Date.now()
+  const spent = clock.turnStart === null ? 0 : now - clock.turnStart
+  return { ...clock, [color]: clock[color] - spent, turnStart: now }
+}
 
 export default function App() {
   // chess.js holds the real game (rules, history). `fen` is a text snapshot of the
@@ -16,7 +32,29 @@ export default function App() {
   const [fen, setFen] = useState(game.fen())
   const [playerColor, setPlayerColor] = useState('w')
   const [selected, setSelected] = useState(null)
+  const [clock, setClock] = useState(freshClock)
+  const [now, setNow] = useState(() => Date.now())
+  const [speech, setSpeech] = useState(() => pickLine(bot, 'start'))
+  const [dialogClosed, setDialogClosed] = useState(false)
   const engineRef = useRef(null)
+
+  const botColor = playerColor === 'w' ? 'b' : 'w'
+  const turn = game.turn()
+
+  // Time left on each clock right now. Only the side to move is losing time.
+  const finishedOnBoard = boardResult(game, playerColor)
+  const elapsed = clock.turnStart !== null && !finishedOnBoard ? Math.max(0, now - clock.turnStart) : 0
+  const timeLeft = {
+    w: clock.w - (turn === 'w' ? elapsed : 0),
+    b: clock.b - (turn === 'b' ? elapsed : 0),
+  }
+
+  // The game is over by checkmate/draw on the board, or because a clock hit zero.
+  const result = finishedOnBoard ?? (timeLeft[turn] <= 0 ? timeoutResult(game, turn, playerColor) : null)
+  const gameOver = result !== null
+  const clockRunning = clock.turnStart !== null && !gameOver
+  const isPlayersTurn = turn === playerColor && !gameOver
+  const botThinking = turn === botColor && !gameOver
 
   // Start Stockfish once when the page opens, and shut it down when it closes.
   useEffect(() => {
@@ -25,18 +63,28 @@ export default function App() {
     return () => engine.terminate()
   }, [])
 
+  // While a clock is running, update `now` 10 times a second so the clock ticks.
+  useEffect(() => {
+    if (!clockRunning) return
+    const timer = setInterval(() => setNow(Date.now()), 100)
+    return () => clearInterval(timer)
+  }, [clockRunning])
+
   // Whenever the position changes and it's the bot's turn, let the bot move.
   useEffect(() => {
-    if (game.isGameOver() || game.turn() === playerColor) return
-    let cancelled = false // set if a new game starts while the bot is thinking
+    if (gameOver || game.turn() !== botColor) return
+    let cancelled = false // set if a new game starts (or time runs out) while the bot is thinking
 
     async function playBotMove() {
       const started = Date.now()
-      const move = await chooseBotMove(engineRef.current, game, bot)
+      const choice = await chooseBotMove(engineRef.current, game, bot)
       const wait = MIN_BOT_DELAY_MS - (Date.now() - started)
       if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait))
       if (cancelled) return
-      game.move(move)
+      const move = game.move(choice)
+      setClock((c) => pressClock(c, botColor))
+      const line = reactionLine(move, playerColor)
+      if (line) setSpeech(line)
       setFen(game.fen())
     }
     playBotMove()
@@ -44,21 +92,22 @@ export default function App() {
     return () => {
       cancelled = true
     }
-  }, [fen, playerColor, game])
-
-  const isPlayersTurn = game.turn() === playerColor && !game.isGameOver()
-  const botThinking = game.turn() !== playerColor && !game.isGameOver()
+  }, [fen, playerColor, botColor, game, gameOver])
 
   // Tries to play the player's move. Returns true if it was legal.
   function tryPlayerMove(from, to) {
     if (!isPlayersTurn) return false
+    let move
     try {
       // Pawns that reach the last rank always become a queen, for now.
-      game.move({ from, to, promotion: 'q' })
+      move = game.move({ from, to, promotion: 'q' })
     } catch {
       return false // chess.js throws on illegal moves
     }
     setSelected(null)
+    setClock((c) => pressClock(c, playerColor))
+    const line = reactionLine(move, playerColor)
+    if (line) setSpeech(line)
     setFen(game.fen())
     return true
   }
@@ -80,21 +129,26 @@ export default function App() {
     setGame(fresh)
     setPlayerColor(color)
     setSelected(null)
+    setClock(freshClock())
+    setSpeech(pickLine(bot, 'start'))
+    setDialogClosed(false)
     setFen(fresh.fen())
   }
 
+  const botLine = result ? endLine(bot, result, game) : speech
+
   return (
     <main className="app">
-      <header className="opponent">
+      <header className="player-bar">
         <div className="avatar">{bot.name[0]}</div>
-        <div>
+        <div className="player-info">
           <div className="opponent-name">
             {bot.name} <span className="rating">({bot.rating})</span>
+            {botThinking && <span className="thinking"> thinking…</span>}
           </div>
-          <div className="opponent-line">
-            {botThinking ? 'Thinking…' : `“${bot.greeting}”`}
-          </div>
+          <div className="speech">“{botLine}”</div>
         </div>
+        <Clock ms={timeLeft[botColor]} active={clockRunning && turn === botColor} />
       </header>
 
       <div className="board">
@@ -111,7 +165,10 @@ export default function App() {
         />
       </div>
 
-      <p className="status">{statusText(game, playerColor, bot)}</p>
+      <div className="player-bar">
+        <p className="status">{statusText(game, result, playerColor, bot)}</p>
+        <Clock ms={timeLeft[playerColor]} active={clockRunning && turn === playerColor} />
+      </div>
 
       <div className="buttons">
         <button onClick={() => newGame('w')}>New game as White</button>
@@ -119,8 +176,32 @@ export default function App() {
       </div>
 
       <MoveList history={game.history()} />
+
+      {result && !dialogClosed && (
+        <GameOverDialog
+          result={result}
+          bot={bot}
+          botLine={botLine}
+          onTryAgain={() => newGame(playerColor)}
+          onClose={() => setDialogClosed(true)}
+        />
+      )}
     </main>
   )
+}
+
+// What the bot says after a move: a line if it was a capture or check, otherwise null.
+function reactionLine(move, playerColor) {
+  const situation = reactionTo(move, playerColor)
+  return situation ? pickLine(bot, situation) : null
+}
+
+// What the bot says when the game ends. Picked by move count rather than at random,
+// so the line stays the same every time the screen re-draws.
+function endLine(bot, result, game) {
+  const situation = { win: 'playerWins', loss: 'botWins', draw: 'draw' }[result.outcome]
+  const options = bot.lines[situation]
+  return options[game.history().length % options.length]
 }
 
 // Picks the bot's move: usually Stockfish's choice, sometimes a random blunder.
@@ -162,14 +243,8 @@ function squareStyles(game, selected) {
   return styles
 }
 
-function statusText(game, playerColor, bot) {
-  if (game.isCheckmate()) {
-    return game.turn() === playerColor ? `Checkmate. ${bot.name} wins.` : 'Checkmate. You win!'
-  }
-  if (game.isStalemate()) return 'Draw by stalemate.'
-  if (game.isThreefoldRepetition()) return 'Draw by repetition.'
-  if (game.isInsufficientMaterial()) return 'Draw, not enough pieces left to mate.'
-  if (game.isDraw()) return 'Draw by the 50-move rule.'
+function statusText(game, result, playerColor, bot) {
+  if (result) return { win: 'You won!', loss: `${bot.name} won.`, draw: 'Draw.' }[result.outcome]
   const whose = game.turn() === playerColor ? 'Your move' : `${bot.name} to move`
   return game.inCheck() ? `${whose}. Check!` : whose
 }

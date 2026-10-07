@@ -4,11 +4,16 @@
   padding: 16px;
 }
 
-.opponent {
+.player-bar {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 12px;
+  margin: 12px 0;
+}
+
+.player-info {
+  flex: 1;
+  min-width: 0;
 }
 
 .avatar {
@@ -33,9 +38,43 @@
   font-weight: 400;
 }
 
-.opponent-line {
+.thinking {
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 14px;
+}
+
+.speech {
   color: var(--muted);
   font-size: 14px;
+  font-style: italic;
+  /* Reserve two lines so the board doesn't jump when the line changes length. */
+  min-height: 2.6em;
+}
+
+.clock {
+  flex: none;
+  margin-left: auto;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 22px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.clock.active {
+  background: var(--text);
+  color: var(--bg);
+}
+
+.clock.low.active {
+  background: #d32f2f;
+  border-color: #d32f2f;
+  color: white;
 }
 
 .board {
@@ -50,7 +89,7 @@
 .status {
   font-weight: 600;
   font-size: 18px;
-  margin: 16px 0 12px;
+  margin: 0;
 }
 
 .buttons {
@@ -91,4 +130,96 @@
 
 .move-number {
   color: var(--muted);
+}
+
+/* Game-over pop-up */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.5);
+  animation: fade-in 0.2s ease-out;
+}
+
+.dialog {
+  width: min(360px, 100%);
+  padding: 24px;
+  border-radius: 12px;
+  background: var(--surface);
+  text-align: center;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  animation: pop-in 0.25s ease-out;
+}
+
+.dialog h2 {
+  margin: 0 0 8px;
+  font-size: 32px;
+}
+
+.dialog.win h2 {
+  color: var(--accent);
+}
+
+.dialog.loss h2 {
+  color: #d32f2f;
+}
+
+.reason {
+  margin: 0 0 16px;
+  color: var(--muted);
+}
+
+.dialog blockquote {
+  margin: 0 0 20px;
+  font-style: italic;
+}
+
+.dialog cite {
+  display: block;
+  margin-top: 4px;
+  font-size: 14px;
+  font-style: normal;
+  color: var(--muted);
+}
+
+.dialog-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dialog-buttons button {
+  padding: 12px;
+  font: inherit;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.dialog-buttons .primary {
+  color: white;
+  background: var(--accent);
+  border: none;
+}
+
+.dialog-buttons .secondary {
+  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--border);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
 }
