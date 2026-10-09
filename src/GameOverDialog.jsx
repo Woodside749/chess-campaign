@@ -1,7 +1,7 @@
 const TITLES = { win: 'You won!', loss: 'You lost', draw: 'Draw' }
 
 // The pop-up shown when a game ends.
-export default function GameOverDialog({ result, bot, botLine, onTryAgain, onClose }) {
+export default function GameOverDialog({ result, bot, botLine, onTryAgain, onClose, onMenu }) {
   return (
     <div className="overlay">
       <div className={`dialog ${result.outcome}`} role="dialog" aria-modal="true" aria-labelledby="result-title">
@@ -17,6 +17,9 @@ export default function GameOverDialog({ result, bot, botLine, onTryAgain, onClo
           </button>
           <button className="secondary" onClick={onClose}>
             View board
+          </button>
+          <button className="secondary" onClick={onMenu}>
+            Back to menu
           </button>
         </div>
       </div>

@@ -57,3 +57,10 @@ export class Engine {
     this.listeners.clear()
   }
 }
+
+// One shared engine for the whole app, started the first time a bot needs it.
+let sharedEngine = null
+export function getEngine() {
+  sharedEngine ??= new Engine()
+  return sharedEngine
+}

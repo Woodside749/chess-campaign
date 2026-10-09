@@ -17,16 +17,21 @@
 }
 
 .avatar {
+  position: relative;
   flex: none;
-  width: 44px;
-  height: 44px;
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: var(--accent);
   color: white;
   font-weight: 700;
-  font-size: 20px;
+}
+
+.flag {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  font-size: 18px;
+  line-height: 1;
 }
 
 .opponent-name {
@@ -222,4 +227,107 @@
     opacity: 0;
     transform: scale(0.9);
   }
+}
+
+/* Back button on the game screen */
+
+.back {
+  padding: 6px 0;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.back:hover {
+  color: var(--text);
+}
+
+/* Main menu */
+
+.menu h1 {
+  margin: 24px 0 4px;
+  font-size: 32px;
+}
+
+.subtitle {
+  margin: 0 0 24px;
+  color: var(--muted);
+}
+
+.color-choice {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.color-choice span {
+  margin-right: 6px;
+  font-weight: 600;
+}
+
+.color-choice button {
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 15px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.color-choice button.selected {
+  color: white;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.bot-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bot-card {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  font: inherit;
+  text-align: left;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.1s, border-color 0.1s;
+}
+
+.bot-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.bot-card-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.bot-bio {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.play-arrow {
+  color: var(--accent);
+  font-size: 18px;
 }
