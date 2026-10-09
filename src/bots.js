@@ -109,11 +109,11 @@ export const BOTS = {
     country: 'Mexico',
     flag: '🇲🇽',
     color: '#e0803a',
-    rating: 600,
+    rating: 550,
     bio: 'Attacks early, often too early.',
     skillLevel: 0,
     depth: 1,
-    blunderChance: 0.1,
+    blunderChance: 0.125,
     lines: {
       start: [
         "¡Vamos! I'm going straight for your king!",
