@@ -66,7 +66,7 @@ export const BOTS = {
     rating: 500,
     bio: 'Solid and careful, trades when unsure.',
     skillLevel: 0,
-    depth: 2,
+    depth: 1,
     blunderChance: 0.15,
     lines: {
       start: [
@@ -112,8 +112,8 @@ export const BOTS = {
     rating: 550,
     bio: 'Attacks early, often too early.',
     skillLevel: 1,
-    depth: 2,
-    blunderChance: 0.12,
+    depth: 1,
+    blunderChance: 0.125,
     lines: {
       start: [
         "¡Vamos! I'm going straight for your king!",
