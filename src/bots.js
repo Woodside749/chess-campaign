@@ -111,7 +111,7 @@ export const BOTS = {
     color: '#e0803a',
     rating: 550,
     bio: 'Attacks early, often too early.',
-    skillLevel: 1,
+    skillLevel: 0,
     depth: 1,
     blunderChance: 0.125,
     lines: {
