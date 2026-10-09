@@ -2,14 +2,14 @@ import { useEffect, useState } from 'react'
 import { Chess } from 'chess.js'
 import { Chessboard } from 'react-chessboard'
 import { pickLine } from './bots.js'
-import { getEngine } from './engine.js'
+import { chooseBotMove, thinkTimeMs } from './botBrain.js'
+import { capturedPieces, materialScore } from './material.js'
 import { boardResult, reactionTo, timeoutResult } from './rules.js'
 import Avatar from './Avatar.jsx'
+import CapturedPieces from './CapturedPieces.jsx'
 import Clock from './Clock.jsx'
 import GameOverDialog from './GameOverDialog.jsx'
 
-// The bot waits at least this long before moving, so its replies don't feel instant.
-const MIN_BOT_DELAY_MS = 500
 const START_TIME_MS = 10 * 60 * 1000 // 10 minutes each
 
 // Clock state: time left for each side when its turn began, and when the current
@@ -54,6 +54,12 @@ export default function Game({ bot, startColor, onExit }) {
   const clockRunning = clock.turnStart !== null && !gameOver
   const isPlayersTurn = turn === playerColor && !gameOver
   const botThinking = turn === botColor && !gameOver
+  // The bot's time left when its turn began. Only changes when a move is made.
+  const botTimeLeft = clock[botColor]
+
+  const captured = capturedPieces(game)
+  const score = materialScore(game) // positive: White is ahead
+  const advantage = (color) => (color === 'w' ? score : -score)
 
   // While a clock is running, update `now` 10 times a second so the clock ticks.
   useEffect(() => {
@@ -69,8 +75,10 @@ export default function Game({ bot, startColor, onExit }) {
 
     async function playBotMove() {
       const started = Date.now()
-      const choice = await chooseBotMove(game, bot)
-      const wait = MIN_BOT_DELAY_MS - (Date.now() - started)
+      const thinkMs = thinkTimeMs(game, botTimeLeft)
+      const choice = await chooseBotMove(game, bot, botTimeLeft)
+      // Wait out the rest of the thinking time, so the bot doesn't reply instantly.
+      const wait = thinkMs - (Date.now() - started)
       if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait))
       if (cancelled) return
       const move = game.move(choice)
@@ -84,7 +92,7 @@ export default function Game({ bot, startColor, onExit }) {
     return () => {
       cancelled = true
     }
-  }, [fen, playerColor, botColor, game, gameOver, bot])
+  }, [fen, playerColor, botColor, botTimeLeft, game, gameOver, bot])
 
   // Tries to play the player's move. Returns true if it was legal.
   function tryPlayerMove(from, to) {
@@ -143,6 +151,7 @@ export default function Game({ bot, startColor, onExit }) {
             {botThinking && <span className="thinking"> thinking…</span>}
           </div>
           <div className="speech">“{botLine}”</div>
+          <CapturedPieces color={botColor} captured={captured[botColor]} advantage={advantage(botColor)} />
         </div>
         <Clock ms={timeLeft[botColor]} active={clockRunning && turn === botColor} />
       </header>
@@ -162,7 +171,10 @@ export default function Game({ bot, startColor, onExit }) {
       </div>
 
       <div className="player-bar">
-        <p className="status">{statusText(game, result, playerColor, bot)}</p>
+        <div className="player-info">
+          <p className="status">{statusText(game, result, playerColor, bot)}</p>
+          <CapturedPieces color={playerColor} captured={captured[playerColor]} advantage={advantage(playerColor)} />
+        </div>
         <Clock ms={timeLeft[playerColor]} active={clockRunning && turn === playerColor} />
       </div>
 
@@ -199,20 +211,6 @@ function endLine(bot, result, game) {
   const situation = { win: 'playerWins', loss: 'botWins', draw: 'draw' }[result.outcome]
   const options = bot.lines[situation]
   return options[game.history().length % options.length]
-}
-
-// Picks the bot's move: usually Stockfish's choice, sometimes a random blunder.
-async function chooseBotMove(game, bot) {
-  const legalMoves = game.moves({ verbose: true })
-  if (Math.random() < bot.blunderChance) {
-    return legalMoves[Math.floor(Math.random() * legalMoves.length)].san
-  }
-  const uci = await getEngine().bestMove(game.fen(), {
-    skillLevel: bot.skillLevel,
-    depth: bot.depth,
-  })
-  // UCI moves look like "e2e4", or "e7e8q" for a promotion.
-  return { from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci[4] }
 }
 
 // Colours for highlighted squares: last move, selected piece, legal targets, check.

@@ -91,6 +91,33 @@
   touch-action: none;
 }
 
+/* Captured pieces and material score */
+
+.captured {
+  display: flex;
+  align-items: center;
+  height: 22px;
+  margin-top: 2px;
+}
+
+.captured-piece {
+  width: 20px;
+  height: 20px;
+  display: inline-block;
+}
+
+/* Pieces of the same type overlap, like on chess.com. */
+.captured-piece.stacked {
+  margin-left: -10px;
+}
+
+.advantage {
+  margin-left: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
 .status {
   font-weight: 600;
   font-size: 18px;
