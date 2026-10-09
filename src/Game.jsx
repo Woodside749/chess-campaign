@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Chess } from 'chess.js'
 import { Chessboard } from 'react-chessboard'
 import { pickLine } from './bots.js'
 import { chooseBotMove, thinkTimeMs } from './botBrain.js'
 import { capturedPieces, materialScore } from './material.js'
+import { premoveTargets } from './premove.js'
 import { boardResult, reactionTo, timeoutResult } from './rules.js'
 import Avatar from './Avatar.jsx'
 import CapturedPieces from './CapturedPieces.jsx'
@@ -36,6 +37,14 @@ export default function Game({ bot, startColor, onExit }) {
   const [now, setNow] = useState(() => Date.now())
   const [speech, setSpeech] = useState(() => pickLine(bot, 'start'))
   const [dialogClosed, setDialogClosed] = useState(false)
+  // A move the player has queued while the bot is thinking, like { from: 'e2', to: 'e4' }.
+  // It is kept in state (to draw it) and in a ref (so the bot's move code can read it).
+  const [premove, setPremoveState] = useState(null)
+  const premoveRef = useRef(null)
+  const setPremove = (value) => {
+    premoveRef.current = value
+    setPremoveState(value)
+  }
 
   const botColor = playerColor === 'w' ? 'b' : 'w'
   const turn = game.turn()
@@ -83,7 +92,22 @@ export default function Game({ bot, startColor, onExit }) {
       if (cancelled) return
       const move = game.move(choice)
       setClock((c) => pressClock(c, botColor))
-      const line = reactionLine(bot, move, playerColor)
+      let line = reactionLine(bot, move, playerColor)
+
+      // If the player queued a premove, play it straight away, if it's still legal.
+      const queued = premoveRef.current
+      if (queued && !game.isGameOver()) {
+        premoveRef.current = null
+        setPremoveState(null)
+        try {
+          const reply = game.move({ ...queued, promotion: 'q' })
+          setClock((c) => pressClock(c, playerColor))
+          line = reactionLine(bot, reply, playerColor) ?? line
+        } catch {
+          // The premove isn't legal in the new position, so it's dropped.
+        }
+      }
+
       if (line) setSpeech(line)
       setFen(game.fen())
     }
@@ -96,7 +120,6 @@ export default function Game({ bot, startColor, onExit }) {
 
   // Tries to play the player's move. Returns true if it was legal.
   function tryPlayerMove(from, to) {
-    if (!isPlayersTurn) return false
     let move
     try {
       // Pawns that reach the last rank always become a queen, for now.
@@ -112,16 +135,37 @@ export default function Game({ bot, startColor, onExit }) {
     return true
   }
 
+  // Queues a premove while the bot is thinking. Returns true if it was accepted.
+  function tryPremove(from, to) {
+    if (!premoveTargets(game, from).includes(to)) return false
+    setPremove({ from, to })
+    setSelected(null)
+    return true
+  }
+
+  // A move made by dragging or tapping: a real move on your turn, a premove otherwise.
+  // We ask `game` whose turn it is right now, because a drag can start during the
+  // bot's turn and end after the bot has moved.
+  function moveIntent(from, to) {
+    if (gameOver || game.isGameOver()) return false
+    return game.turn() === playerColor ? tryPlayerMove(from, to) : tryPremove(from, to)
+  }
+
   function onPieceDrop({ sourceSquare, targetSquare }) {
     if (!targetSquare) return false
-    return tryPlayerMove(sourceSquare, targetSquare)
+    const isRealMove = game.turn() === playerColor
+    const accepted = moveIntent(sourceSquare, targetSquare)
+    // A premove isn't on the board yet, so the piece snaps back to its square.
+    return accepted && isRealMove
   }
 
   // Tap-to-move: tap one of your pieces, then tap where it should go.
+  // Tapping anywhere else cancels the selection and any premove.
   function onSquareClick({ piece, square }) {
-    if (selected && tryPlayerMove(selected, square)) return
+    if (selected && moveIntent(selected, square)) return
+    setPremove(null)
     const isOwnPiece = piece && piece.pieceType[0] === playerColor
-    setSelected(isOwnPiece && isPlayersTurn ? square : null)
+    setSelected(isOwnPiece && !gameOver ? square : null)
   }
 
   function newGame(color) {
@@ -129,6 +173,7 @@ export default function Game({ bot, startColor, onExit }) {
     setGame(fresh)
     setPlayerColor(color)
     setSelected(null)
+    setPremove(null)
     setClock(freshClock())
     setSpeech(pickLine(bot, 'start'))
     setDialogClosed(false)
@@ -163,8 +208,9 @@ export default function Game({ bot, startColor, onExit }) {
             boardOrientation: playerColor === 'w' ? 'white' : 'black',
             onPieceDrop,
             onSquareClick,
-            canDragPiece: ({ piece }) => isPlayersTurn && piece.pieceType[0] === playerColor,
-            squareStyles: squareStyles(game, selected),
+            onSquareRightClick: () => setPremove(null),
+            canDragPiece: ({ piece }) => !gameOver && piece.pieceType[0] === playerColor,
+            squareStyles: squareStyles(game, selected, premove, isPlayersTurn),
             animationDurationInMs: 200,
           }}
         />
@@ -213,8 +259,9 @@ function endLine(bot, result, game) {
   return options[game.history().length % options.length]
 }
 
-// Colours for highlighted squares: last move, selected piece, legal targets, check.
-function squareStyles(game, selected) {
+// Colours for highlighted squares: last move, selected piece, where it can go,
+// a queued premove, and a king in check.
+function squareStyles(game, selected, premove, isPlayersTurn) {
   const styles = {}
   const lastMove = game.history({ verbose: true }).at(-1)
   if (lastMove) {
@@ -223,13 +270,24 @@ function squareStyles(game, selected) {
   }
   if (selected) {
     styles[selected] = { background: 'rgba(100, 181, 246, 0.6)' }
-    for (const move of game.moves({ square: selected, verbose: true })) {
-      styles[move.to] = {
-        background: move.captured
-          ? 'radial-gradient(circle, transparent 58%, rgba(0, 0, 0, 0.25) 60%)'
-          : 'radial-gradient(circle, rgba(0, 0, 0, 0.25) 22%, transparent 24%)',
+    if (isPlayersTurn) {
+      for (const move of game.moves({ square: selected, verbose: true })) {
+        styles[move.to] = {
+          background: move.captured
+            ? 'radial-gradient(circle, transparent 58%, rgba(0, 0, 0, 0.25) 60%)'
+            : 'radial-gradient(circle, rgba(0, 0, 0, 0.25) 22%, transparent 24%)',
+        }
+      }
+    } else {
+      // While the bot thinks, show where the piece could be premoved to.
+      for (const square of premoveTargets(game, selected)) {
+        styles[square] = { background: 'radial-gradient(circle, rgba(0, 0, 0, 0.15) 18%, transparent 20%)' }
       }
     }
+  }
+  if (premove) {
+    styles[premove.from] = { background: 'rgba(229, 57, 53, 0.45)' }
+    styles[premove.to] = { background: 'rgba(229, 57, 53, 0.45)' }
   }
   if (game.inCheck()) {
     const kingSquare = game.findPiece({ type: 'k', color: game.turn() })[0]
