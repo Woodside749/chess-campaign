@@ -11,6 +11,7 @@ import CapturedPieces from './CapturedPieces.jsx'
 import Clock from './Clock.jsx'
 import ConfirmDialog from './ConfirmDialog.jsx'
 import GameOverDialog from './GameOverDialog.jsx'
+import LessonPanel from './LessonPanel.jsx'
 import PromotionPicker from './PromotionPicker.jsx'
 
 const START_TIME_MS = 10 * 60 * 1000 // 10 minutes each
@@ -26,8 +27,10 @@ function pressClock(clock, color) {
   return { ...clock, [color]: clock[color] - (now - clock.turnStart), turnStart: now }
 }
 
-// The game screen: games against `bot`, starting with the player as `startColor` ('w' or 'b').
-export default function Game({ bot, startColor, onExit }) {
+// The game screen: games against `bot`, with the player as `startColor` ('w' or 'b').
+// `timed` turns the clocks on or off. `lesson` is an optional script from lessons.js
+// that the coach walks through before the game carries on normally.
+export default function Game({ bot, startColor, timed = true, lesson = null, onExit }) {
   // chess.js holds the real game (rules, history). `fen` is a text snapshot of the
   // position that we keep in React state, so the screen re-draws after every move.
   const [game, setGame] = useState(() => new Chess())
@@ -46,6 +49,13 @@ export default function Game({ bot, startColor, onExit }) {
   const [resigned, setResigned] = useState(false)
   // Which "are you sure?" pop-up is open: 'resign', 'leave' or null.
   const [confirming, setConfirming] = useState(null)
+  // Lesson progress: which step the coach is on, whether the coach is about to answer
+  // the player's move, and a gentle hint after a wrong move.
+  const [lessonStep, setLessonStep] = useState(0)
+  const [replyPending, setReplyPending] = useState(false)
+  const [lessonHint, setLessonHint] = useState(null)
+  const inLesson = lesson !== null && lessonStep < lesson.length
+  const step = inLesson ? lesson[lessonStep] : null
   // A move the player has queued while the bot is thinking, like { from: 'e2', to: 'e4' }.
   // It is kept in state (to draw it) and in a ref (so the bot's move code can read it).
   const [premove, setPremoveState] = useState(null)
@@ -63,10 +73,9 @@ export default function Game({ bot, startColor, onExit }) {
   const finishedOnBoard = boardResult(game, playerColor)
   const stopped = finishedOnBoard || resigned
   const elapsed = stopped ? 0 : Math.max(0, now - clock.turnStart)
-  const timeLeft = {
-    w: clock.w - (turn === 'w' ? elapsed : 0),
-    b: clock.b - (turn === 'b' ? elapsed : 0),
-  }
+  const timeLeft = timed
+    ? { w: clock.w - (turn === 'w' ? elapsed : 0), b: clock.b - (turn === 'b' ? elapsed : 0) }
+    : { w: Infinity, b: Infinity }
 
   // The game is over by checkmate/draw on the board, by resigning, or because a clock hit zero.
   const result =
@@ -74,11 +83,12 @@ export default function Game({ bot, startColor, onExit }) {
     (resigned ? { outcome: 'loss', reason: 'You resigned.' } : null) ??
     (timeLeft[turn] <= 0 ? timeoutResult(game, turn, playerColor) : null)
   const gameOver = result !== null
-  const clockRunning = !gameOver
+  const clockRunning = timed && !gameOver
   const isPlayersTurn = turn === playerColor && !gameOver
   const botThinking = turn === botColor && !gameOver
   // The bot's time left when its turn began. Only changes when a move is made.
-  const botTimeLeft = clock[botColor]
+  // Without clocks, the bot thinks as if it had a fresh 10 minutes.
+  const botTimeLeft = timed ? clock[botColor] : START_TIME_MS
 
   // Stepping back through the game. While viewing an earlier position the board is
   // locked: you can look, but not move.
@@ -111,9 +121,23 @@ export default function Game({ bot, startColor, onExit }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [plyCount])
 
-  // Whenever the position changes and it's the bot's turn, let the bot move.
+  // During a lesson, the coach answers the player's move with the scripted reply,
+  // after a short pause, and then moves on to the next step.
   useEffect(() => {
-    if (gameOver || game.turn() !== botColor) return
+    if (!replyPending) return
+    const timer = setTimeout(() => {
+      if (step.reply) game.move({ from: step.reply.slice(0, 2), to: step.reply.slice(2, 4) })
+      setReplyPending(false)
+      setLessonStep((n) => n + 1)
+      setFen(game.fen())
+    }, 900)
+    return () => clearTimeout(timer)
+  }, [replyPending, step, game])
+
+  // Whenever the position changes and it's the bot's turn, let the bot move.
+  // (Not during a lesson: then the coach's moves come from the script.)
+  useEffect(() => {
+    if (gameOver || inLesson || game.turn() !== botColor) return
     let cancelled = false // set if a new game starts, time runs out or you leave while the bot is thinking
 
     async function playBotMove() {
@@ -151,7 +175,7 @@ export default function Game({ bot, startColor, onExit }) {
     return () => {
       cancelled = true
     }
-  }, [fen, playerColor, botColor, botTimeLeft, game, gameOver, bot])
+  }, [fen, playerColor, botColor, botTimeLeft, game, gameOver, inLesson, bot])
 
   // Tries to play the player's move. Returns true if it was legal.
   // A pawn reaching the last rank first opens the promotion picker, unless
@@ -159,6 +183,12 @@ export default function Game({ bot, startColor, onExit }) {
   function tryPlayerMove(from, to, promotion) {
     const legal = game.moves({ square: from, verbose: true }).filter((m) => m.to === to)
     if (legal.length === 0) return false
+    // In a lesson, only the move the coach asked for is allowed.
+    if (inLesson && (replyPending || from + to !== step.move)) {
+      setLessonHint(step.move ? "That's a legal move, but let's practise this one first." : 'Press Continue first.')
+      setSelected(null)
+      return false
+    }
     setSelected(null)
     if (legal[0].promotion && !promotion) {
       setPendingPromotion({ from, to })
@@ -168,8 +198,17 @@ export default function Game({ bot, startColor, onExit }) {
     setClock((c) => pressClock(c, playerColor))
     const line = reactionLine(bot, move, playerColor)
     if (line) setSpeech(line)
+    if (inLesson) {
+      setLessonHint(null)
+      setReplyPending(true)
+    }
     setFen(game.fen())
     return true
+  }
+
+  function continueLesson() {
+    setLessonHint(null)
+    setLessonStep((n) => n + 1)
   }
 
   // Queues a premove while the bot is thinking. Returns true if it was accepted.
@@ -192,7 +231,8 @@ export default function Game({ bot, startColor, onExit }) {
   // bot's turn and end after the bot has moved.
   function moveIntent(from, to) {
     if (gameOver || game.isGameOver() || viewing) return false
-    return game.turn() === playerColor ? tryPlayerMove(from, to) : tryPremove(from, to)
+    if (game.turn() === playerColor) return tryPlayerMove(from, to)
+    return inLesson ? false : tryPremove(from, to)
   }
 
   function onPieceDrop({ sourceSquare, targetSquare }) {
@@ -224,8 +264,9 @@ export default function Game({ bot, startColor, onExit }) {
   }
 
   // Leaving during a game asks first, because it counts as resigning.
+  // (Not during a lesson, which isn't a real game yet.)
   function leave() {
-    if (gameOver) onExit()
+    if (gameOver || inLesson) onExit()
     else setConfirming('leave')
   }
 
@@ -239,6 +280,9 @@ export default function Game({ bot, startColor, onExit }) {
     setPendingPromotion(null)
     setResigned(false)
     setConfirming(null)
+    setLessonStep(0)
+    setReplyPending(false)
+    setLessonHint(null)
     setClock(freshClock())
     setSpeech(pickLine(bot, 'start'))
     setDialogClosed(false)
@@ -247,24 +291,45 @@ export default function Game({ bot, startColor, onExit }) {
 
   const botLine = result ? endLine(bot, result, game) : speech
 
+  // The green arrow showing the move the coach asks for.
+  const lessonArrows =
+    step?.move && !replyPending
+      ? [{ startSquare: step.move.slice(0, 2), endSquare: step.move.slice(2, 4), color: 'rgba(56, 158, 72, 0.85)' }]
+      : []
+  const lessonHighlights = Object.fromEntries(
+    (step?.highlight ?? []).map((square) => [square, { background: 'rgba(76, 175, 80, 0.45)' }]),
+  )
+
   return (
-    <main className="app">
+    <main className="game-screen">
       <button className="back" onClick={leave}>
-        ← Menu
+        ← Back
       </button>
 
-      <header className="player-bar">
+      <header className="player-bar opponent-bar">
         <Avatar bot={bot} />
         <div className="player-info">
           <div className="opponent-name">
             {bot.name} <span className="rating">({bot.rating})</span>
             {botThinking && <span className="thinking"> thinking…</span>}
           </div>
-          <div className="speech">“{botLine}”</div>
+          {!inLesson && <div className="speech">“{botLine}”</div>}
           <CapturedPieces color={botColor} captured={captured[botColor]} advantage={advantage(botColor)} />
         </div>
-        <Clock ms={timeLeft[botColor]} active={clockRunning && turn === botColor} />
+        {timed && <Clock ms={timeLeft[botColor]} active={clockRunning && turn === botColor} />}
       </header>
+
+      {inLesson && (
+        <LessonPanel
+          bot={bot}
+          step={step}
+          stepNumber={lessonStep + 1}
+          totalSteps={lesson.length}
+          hint={lessonHint}
+          busy={replyPending}
+          onContinue={continueLesson}
+        />
+      )}
 
       <div className="board">
         <Chessboard
@@ -277,7 +342,8 @@ export default function Game({ bot, startColor, onExit }) {
             canDragPiece: ({ piece }) => !gameOver && !viewing && piece.pieceType[0] === playerColor,
             squareStyles: viewing
               ? reviewStyles(history[viewPly - 1])
-              : squareStyles(game, selected, premove, isPlayersTurn),
+              : { ...squareStyles(game, selected, premove, isPlayersTurn), ...lessonHighlights },
+            arrows: viewing ? [] : lessonArrows,
             animationDurationInMs: 200,
           }}
         />
@@ -286,14 +352,18 @@ export default function Game({ bot, startColor, onExit }) {
         )}
       </div>
 
-      <div className="player-bar">
+      <div className="player-bar you-bar">
         <div className="player-info">
           <p className="status">
-            {viewing ? viewingText(history, viewPly) : statusText(game, result, playerColor, bot)}
+            {viewing
+              ? viewingText(history, viewPly)
+              : inLesson
+                ? `Lesson with ${bot.name}`
+                : statusText(game, result, playerColor, bot)}
           </p>
           <CapturedPieces color={playerColor} captured={captured[playerColor]} advantage={advantage(playerColor)} />
         </div>
-        <Clock ms={timeLeft[playerColor]} active={clockRunning && turn === playerColor} />
+        {timed && <Clock ms={timeLeft[playerColor]} active={clockRunning && turn === playerColor} />}
       </div>
 
       <div className="review-nav">
@@ -313,7 +383,7 @@ export default function Game({ bot, startColor, onExit }) {
         <button aria-label="Latest move" onClick={() => setViewPly(null)} disabled={!viewing}>
           »
         </button>
-        <button className="resign" onClick={() => setConfirming('resign')} disabled={gameOver}>
+        <button className="resign" onClick={() => setConfirming('resign')} disabled={gameOver || inLesson}>
           Resign
         </button>
       </div>

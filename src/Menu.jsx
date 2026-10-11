@@ -12,12 +12,15 @@ const COLOR_CHOICES = [
   { value: 'random', label: 'Random' },
 ]
 
-// The main menu: pick a colour, then tap an opponent to start a game.
-export default function Menu({ colorChoice, onColorChoice, onPlay }) {
+// The developer menu: play any bot, for testing. Pick a colour, then tap an opponent.
+export default function Menu({ colorChoice, onColorChoice, onPlay, onBack }) {
   return (
     <main className="app menu">
-      <h1>Chess Career</h1>
-      <p className="subtitle">Amateur tier · choose your opponent</p>
+      <button className="back" onClick={onBack}>
+        ← Home
+      </button>
+      <h1>Developer menu</h1>
+      <p className="subtitle">Amateur tier · play any bot with a 10-minute clock</p>
 
       <div className="color-choice" role="radiogroup" aria-label="Play as">
         <span>Play as</span>

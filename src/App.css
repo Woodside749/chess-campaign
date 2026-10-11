@@ -1,4 +1,5 @@
-.app {
+.app,
+.game-screen {
   width: min(560px, 100%);
   margin: 0 auto;
   padding: 16px;
@@ -440,4 +441,246 @@
 .play-arrow {
   color: var(--accent);
   font-size: 18px;
+}
+
+/* Game screen on wide screens: board on the left, everything else in a panel on the right.
+   On narrow screens (phones) the parts simply stack, in the order they appear in Game.jsx. */
+
+@media (min-width: 900px) {
+  .game-screen {
+    width: min(1180px, 100%);
+    display: grid;
+    /* The board column is as wide as the screen is tall, so the whole board fits. */
+    grid-template-columns: min(calc(100vh - 48px), 720px) minmax(300px, 400px);
+    grid-template-rows: repeat(6, auto) 1fr;
+    grid-template-areas:
+      'board back'
+      'board opponent'
+      'board lesson'
+      'board you'
+      'board nav'
+      'board moves'
+      'board .';
+    column-gap: 28px;
+    justify-content: center;
+    align-items: start;
+    padding: 24px;
+  }
+
+  .game-screen > .back {
+    grid-area: back;
+    justify-self: start;
+  }
+  .game-screen > .opponent-bar {
+    grid-area: opponent;
+  }
+  .game-screen > .lesson-panel {
+    grid-area: lesson;
+  }
+  .game-screen > .board {
+    grid-area: board;
+  }
+  .game-screen > .you-bar {
+    grid-area: you;
+  }
+  .game-screen > .review-nav {
+    grid-area: nav;
+  }
+  .game-screen > .moves {
+    grid-area: moves;
+    max-height: 30vh;
+    overflow-y: auto;
+  }
+}
+
+/* The coach's panel during a lesson */
+
+.lesson-panel {
+  margin: 4px 0 12px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 2px solid var(--accent);
+  border-radius: 12px;
+}
+
+.lesson-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.lesson-header .flag {
+  font-size: 14px;
+}
+
+.lesson-progress {
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.lesson-text {
+  margin: 0 0 12px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.lesson-hint {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: #d32f2f;
+}
+
+.lesson-instruction {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.lesson-continue {
+  width: 100%;
+  padding: 12px;
+  font: inherit;
+  font-weight: 600;
+  color: white;
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.lesson-continue:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Home screen: the title on the left, the career events in a row on the right */
+
+.home {
+  width: min(1180px, 100%);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 48px;
+  display: flex;
+  align-items: center;
+  gap: 56px;
+}
+
+.home-intro {
+  flex: 0 0 340px;
+}
+
+.home-intro h1 {
+  margin: 0 0 12px;
+  font-size: 48px;
+  line-height: 1.1;
+}
+
+.home-intro p {
+  margin: 0 0 24px;
+  font-size: 17px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.dev-link {
+  padding: 0;
+  font: inherit;
+  font-size: 13px;
+  color: var(--muted);
+  background: none;
+  border: none;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.event-row {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 8px 4px 16px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+}
+
+.event-card {
+  flex: 0 0 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  scroll-snap-align: start;
+}
+
+.event-place {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.event-card h2 {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.2;
+}
+
+.event-opponent {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.event-description {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.event-play {
+  margin-top: 8px;
+  padding: 14px;
+  font: inherit;
+  font-weight: 700;
+  color: white;
+  background: var(--accent);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.event-play:hover {
+  filter: brightness(1.1);
+}
+
+@media (max-width: 800px) {
+  .home {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 24px;
+    padding: 32px 16px;
+  }
+
+  .home-intro,
+  .event-row {
+    flex: none;
+  }
+
+  .home-intro h1 {
+    font-size: 36px;
+  }
+
+  .event-card {
+    flex-basis: min(300px, 85vw);
+  }
 }
