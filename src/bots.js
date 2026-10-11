@@ -12,6 +12,7 @@
 // - style: bonuses (or penalties, if negative) in centipawns (100 = one pawn) for kinds
 //   of moves. The traits are described in moveTraits.js.
 // - speed: multiplies thinking time. 0.5 thinks half as long, 1.5 takes 50% longer.
+// - endgameBoost: (optional) extra strength in endgames, added to `strength`.
 //
 // flag and color: shown on the bot's avatar.
 // lines: what the bot says. Each situation has a few options and one is picked at random.
@@ -460,14 +461,16 @@ export const BOTS = {
     color: '#b8862f',
     rating: 1000,
     group: 'circuit',
-    bio: 'Endgame grinder, never resigns.',
+    bio: 'Endgame specialist, plays better the fewer pieces are left.',
     strength: 0.42,
+    // In endgames he plays about 250 rating points stronger (see botStrength.js).
+    endgameBoost: 0.15,
     speed: 1.2,
     style: { tradeWhenAhead: 70, kingActivity: 50, evenTrade: 20 },
     lines: {
       start: [
         'We will play until the very last pawn.',
-        'I never resign. Remember that.',
+        'Trade the pieces off, and the board becomes mine.',
       ],
       playerCaptures: [
         'Fine. The endgame is still far away.',

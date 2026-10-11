@@ -25,3 +25,14 @@ export function materialScore(game) {
   }
   return score
 }
+
+// Whether the position is an endgame: the pieces left (not counting kings and pawns)
+// are worth 26 points or less in total, out of 62 at the start. For example each side
+// down to a rook, bishop and knight, or the queens traded off and a few pieces gone.
+export function isEndgame(game) {
+  let pieces = 0
+  for (const piece of game.board().flat()) {
+    if (piece && piece.type !== 'p') pieces += PIECE_VALUES[piece.type]
+  }
+  return pieces <= 26
+}

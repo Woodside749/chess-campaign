@@ -1,7 +1,7 @@
 // Describes a move with simple "traits" that bot personalities can like or dislike.
 // Each trait is true or false. Bots give a bonus (or penalty) for traits in bots.js.
 import { Chess } from 'chess.js'
-import { PIECE_VALUES, materialScore } from './material.js'
+import { PIECE_VALUES, isEndgame, materialScore } from './material.js'
 
 const FILES = 'abcdefgh'
 const distance = (a, b) =>
@@ -82,10 +82,4 @@ function leavesPieceHanging(position, me, them) {
         position.isAttacked(piece.square, them) &&
         !position.isAttacked(piece.square, me),
     )
-}
-
-// Few pieces left besides kings and pawns.
-function isEndgame(game) {
-  const pieces = game.board().flat().filter((p) => p && p.type !== 'k' && p.type !== 'p')
-  return pieces.length <= 4
 }

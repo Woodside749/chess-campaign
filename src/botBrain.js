@@ -35,8 +35,8 @@ function timePressure(timeLeftMs) {
 }
 
 // The bot's chance of a random move, which rises when its clock is low.
-export function blunderChanceNow(bot, timeLeftMs) {
-  return botSettings(bot).blunderChance + timePressure(timeLeftMs) * MAX_EXTRA_BLUNDER
+export function blunderChanceNow(bot, timeLeftMs, game) {
+  return botSettings(bot, game).blunderChance + timePressure(timeLeftMs) * MAX_EXTRA_BLUNDER
 }
 
 // Picks the bot's move, in this order:
@@ -52,9 +52,9 @@ export async function chooseBotMove(game, bot, timeLeftMs, engine = getEngine())
   const bookMove = openingBookMove(game, bot)
   if (bookMove) return bookMove
 
-  if (Math.random() < blunderChanceNow(bot, timeLeftMs)) return pickRandom(legalMoves).san
+  if (Math.random() < blunderChanceNow(bot, timeLeftMs, game)) return pickRandom(legalMoves).san
 
-  const settings = botSettings(bot)
+  const settings = botSettings(bot, game)
   const candidates = await engine.analyse(game.fen(), { depth: settings.depth, multiPv: settings.candidates })
   // Safety net: if Stockfish has no suggestions, play any legal move rather than get stuck.
   if (candidates.length === 0) return pickRandom(legalMoves).san

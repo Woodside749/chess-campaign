@@ -1,3 +1,5 @@
+import { isEndgame } from './material.js'
+
 // Turns a bot's `strength` (0 = weakest, 1 = strongest) into the settings that
 // botBrain.js uses. One dial is much easier to tune than five separate numbers.
 // A bot in bots.js can still override any single setting if it needs to.
@@ -20,7 +22,10 @@ export function strengthSettings(strength) {
   }
 }
 
-// A bot's full settings: what its strength gives, plus anything set on the bot itself.
-export function botSettings(bot) {
-  return { ...strengthSettings(bot.strength ?? 0.5), ...bot }
+// A bot's full settings in the current position: what its strength gives, plus anything
+// set on the bot itself. A bot with an `endgameBoost` plays stronger in endgames.
+export function botSettings(bot, game) {
+  let strength = bot.strength ?? 0.5
+  if (bot.endgameBoost && game && isEndgame(game)) strength = Math.min(1, strength + bot.endgameBoost)
+  return { ...strengthSettings(strength), ...bot }
 }
