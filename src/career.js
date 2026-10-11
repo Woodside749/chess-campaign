@@ -76,17 +76,17 @@ export const EVENTS = [
     minutes: 10,
     championText: 'You won the Fog of War Cup!',
     bracket: [
-      ['you', 'fatima'],
+      ['you', 'priya'],
       ['liam', 'mei'],
-      ['sofia', 'priya'],
-      ['jonas', 'diego'],
+      ['ana', 'jonas'],
+      ['fatima', 'sofia'],
     ],
     rounds: [
-      { name: 'Round 1', opponent: 'fatima', color: 'w' },
+      { name: 'Round 1', opponent: 'priya', color: 'w' },
       { name: 'Semi-final', opponent: 'liam', color: 'b' },
-      { name: 'Final', opponent: 'sofia', color: 'w' },
+      { name: 'Final', opponent: 'ana', color: 'w' },
     ],
-    ranking: ['sofia', 'liam', 'jonas', 'priya', 'mei', 'diego', 'fatima'],
+    ranking: ['ana', 'liam', 'sofia', 'jonas', 'fatima', 'mei', 'priya'],
     classmates: {},
   },
   {
