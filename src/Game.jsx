@@ -9,6 +9,7 @@ import { boardResult, reactionTo, timeoutResult } from './rules.js'
 import Avatar from './Avatar.jsx'
 import CapturedPieces from './CapturedPieces.jsx'
 import Clock from './Clock.jsx'
+import ConfirmDialog from './ConfirmDialog.jsx'
 import GameOverDialog from './GameOverDialog.jsx'
 import PromotionPicker from './PromotionPicker.jsx'
 
@@ -42,6 +43,9 @@ export default function Game({ bot, startColor, onExit }) {
   const [viewPly, setViewPly] = useState(null)
   // A pawn move to the last rank waiting for you to pick a piece, like { from: 'e7', to: 'e8' }.
   const [pendingPromotion, setPendingPromotion] = useState(null)
+  const [resigned, setResigned] = useState(false)
+  // Which "are you sure?" pop-up is open: 'resign', 'leave' or null.
+  const [confirming, setConfirming] = useState(null)
   // A move the player has queued while the bot is thinking, like { from: 'e2', to: 'e4' }.
   // It is kept in state (to draw it) and in a ref (so the bot's move code can read it).
   const [premove, setPremoveState] = useState(null)
@@ -54,16 +58,21 @@ export default function Game({ bot, startColor, onExit }) {
   const botColor = playerColor === 'w' ? 'b' : 'w'
   const turn = game.turn()
 
-  // Time left on each clock right now. Only the side to move is losing time.
+  // Time left on each clock right now. Only the side to move is losing time,
+  // and the clocks stop once the game is decided on the board or you resign.
   const finishedOnBoard = boardResult(game, playerColor)
-  const elapsed = finishedOnBoard ? 0 : Math.max(0, now - clock.turnStart)
+  const stopped = finishedOnBoard || resigned
+  const elapsed = stopped ? 0 : Math.max(0, now - clock.turnStart)
   const timeLeft = {
     w: clock.w - (turn === 'w' ? elapsed : 0),
     b: clock.b - (turn === 'b' ? elapsed : 0),
   }
 
-  // The game is over by checkmate/draw on the board, or because a clock hit zero.
-  const result = finishedOnBoard ?? (timeLeft[turn] <= 0 ? timeoutResult(game, turn, playerColor) : null)
+  // The game is over by checkmate/draw on the board, by resigning, or because a clock hit zero.
+  const result =
+    finishedOnBoard ??
+    (resigned ? { outcome: 'loss', reason: 'You resigned.' } : null) ??
+    (timeLeft[turn] <= 0 ? timeoutResult(game, turn, playerColor) : null)
   const gameOver = result !== null
   const clockRunning = !gameOver
   const isPlayersTurn = turn === playerColor && !gameOver
@@ -205,6 +214,21 @@ export default function Game({ bot, startColor, onExit }) {
     setSelected(isOwnPiece && !gameOver ? square : null)
   }
 
+  function resign() {
+    // Stop the clock where it is: the time spent on this move is taken off.
+    setClock((c) => pressClock(c, game.turn()))
+    setResigned(true)
+    setConfirming(null)
+    setPendingPromotion(null)
+    setPremove(null)
+  }
+
+  // Leaving during a game asks first, because it counts as resigning.
+  function leave() {
+    if (gameOver) onExit()
+    else setConfirming('leave')
+  }
+
   // Starts a new game against the same bot, with the same colour.
   function newGame() {
     const fresh = new Chess()
@@ -213,6 +237,8 @@ export default function Game({ bot, startColor, onExit }) {
     setPremove(null)
     setViewPly(null)
     setPendingPromotion(null)
+    setResigned(false)
+    setConfirming(null)
     setClock(freshClock())
     setSpeech(pickLine(bot, 'start'))
     setDialogClosed(false)
@@ -223,7 +249,7 @@ export default function Game({ bot, startColor, onExit }) {
 
   return (
     <main className="app">
-      <button className="back" onClick={onExit}>
+      <button className="back" onClick={leave}>
         ← Menu
       </button>
 
@@ -287,9 +313,30 @@ export default function Game({ bot, startColor, onExit }) {
         <button aria-label="Latest move" onClick={() => setViewPly(null)} disabled={!viewing}>
           »
         </button>
+        <button className="resign" onClick={() => setConfirming('resign')} disabled={gameOver}>
+          Resign
+        </button>
       </div>
 
       <MoveList history={history} currentPly={shownPly} onSelect={(ply) => setViewPly(ply >= plyCount ? null : ply)} />
+
+      {confirming === 'resign' && (
+        <ConfirmDialog
+          title="Resign this game?"
+          confirmLabel="Resign"
+          onConfirm={resign}
+          onCancel={() => setConfirming(null)}
+        />
+      )}
+      {confirming === 'leave' && (
+        <ConfirmDialog
+          title="Leave the game?"
+          text="Leaving counts as resigning."
+          confirmLabel="Resign and leave"
+          onConfirm={onExit}
+          onCancel={() => setConfirming(null)}
+        />
+      )}
 
       {result && !dialogClosed && (
         <GameOverDialog
