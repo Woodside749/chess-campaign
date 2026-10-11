@@ -2,19 +2,17 @@
 // grouped into the Chess School and the Amateur circuit.
 //
 // How a bot plays (see botBrain.js):
+// - strength: 0 (weakest) to 1 (strongest). Sets how often it blunders, how far it
+//   looks ahead and how much worse than the best move it will play (see botStrength.js).
+//   Measured with `npm run calibrate`: 0 is about 380, 0.1 about 520, 0.2 about 600,
+//   0.3 about 740, 0.4 about 900, 0.5 about 1100, 0.6 about 1260, 0.7 about 1560.
+//   We aim for bots to play about 200 below their rating label, so players can feel
+//   they punch a little above their weight.
 // - openings: move lists (in chess notation) the bot plays from memory as White (w) and
 //   as Black (b), as long as the game follows one of them.
-// - blunderChance: chance (0 to 1) of playing a completely random move.
-// - depth: how many moves ahead Stockfish looks when scoring the candidate moves.
-// - candidates: how many of Stockfish's top moves the bot considers.
-// - tolerance: how much worse than the best move (in centipawns, 100 = one pawn)
-//   a move can be and still be considered. Bigger means more mistakes.
-// - noise: random amount (up to +/- this many centipawns) added to every move,
-//   so the bot isn't predictable. Bigger means more erratic.
-// - style: bonuses (or penalties, if negative) in centipawns for kinds of moves.
-//   The traits are described in moveTraits.js.
+// - style: bonuses (or penalties, if negative) in centipawns (100 = one pawn) for kinds
+//   of moves. The traits are described in moveTraits.js.
 // - speed: multiplies thinking time. 0.5 thinks half as long, 1.5 takes 50% longer.
-// These numbers are a first guess to tune by playtesting.
 //
 // flag and color: shown on the bot's avatar.
 // lines: what the bot says. Each situation has a few options and one is picked at random.
@@ -29,11 +27,7 @@ export const BOTS = {
     rating: 400,
     group: 'school',
     bio: 'Patient teacher, plays by the textbook principles.',
-    blunderChance: 0.2,
-    depth: 2,
-    candidates: 8,
-    tolerance: 250,
-    noise: 120,
+    strength: 0,
     speed: 1,
     style: { develop: 40, castle: 50, earlyQueen: -40 },
     lines: {
@@ -80,11 +74,7 @@ export const BOTS = {
     rating: 400,
     group: 'school',
     bio: 'Nervous beginner, hangs pieces.',
-    blunderChance: 0.2,
-    depth: 2,
-    candidates: 10,
-    tolerance: 350,
-    noise: 120,
+    strength: 0,
     speed: 1,
     style: { hangs: 150, retreat: 20 },
     lines: {
@@ -131,11 +121,7 @@ export const BOTS = {
     rating: 500,
     group: 'school',
     bio: 'Solid and careful, trades when unsure.',
-    blunderChance: 0.15,
-    depth: 2,
-    candidates: 8,
-    tolerance: 200,
-    noise: 100,
+    strength: 0.05,
     speed: 1.1,
     style: { evenTrade: 60, castle: 40, retreat: 25, quiet: 15 },
     lines: {
@@ -182,11 +168,7 @@ export const BOTS = {
     rating: 550,
     group: 'school',
     bio: 'Attacks early, often too early.',
-    blunderChance: 0.125,
-    depth: 2,
-    candidates: 8,
-    tolerance: 220,
-    noise: 100,
+    strength: 0.1,
     speed: 0.9,
     style: { check: 60, capture: 25, towardKing: 40, earlyQueen: 50, castle: -30 },
     lines: {
@@ -233,11 +215,7 @@ export const BOTS = {
     rating: 600,
     group: 'school',
     bio: 'Your rival. Tricky and competitive.',
-    blunderChance: 0.11,
-    depth: 3,
-    candidates: 8,
-    tolerance: 180,
-    noise: 90,
+    strength: 0.13,
     speed: 1,
     style: { threat: 50, check: 30, capture: 15 },
     lines: {
@@ -284,11 +262,7 @@ export const BOTS = {
     rating: 700,
     group: 'circuit',
     bio: 'Slow and solid, likes closed positions.',
-    blunderChance: 0.09,
-    depth: 3,
-    candidates: 6,
-    tolerance: 150,
-    noise: 80,
+    strength: 0.2,
     speed: 1.3,
     style: { lockPawns: 50, quiet: 25, evenTrade: 15, capture: -15 },
     lines: {
@@ -335,11 +309,7 @@ export const BOTS = {
     rating: 800,
     group: 'circuit',
     bio: 'Trap setter, loves cheap tricks.',
-    blunderChance: 0.07,
-    depth: 4,
-    candidates: 6,
-    tolerance: 130,
-    noise: 70,
+    strength: 0.21,
     speed: 1,
     style: { threat: 70, check: 35 },
     lines: {
@@ -386,11 +356,7 @@ export const BOTS = {
     rating: 850,
     group: 'circuit',
     bio: 'Fast blitz hustler, talks a lot.',
-    blunderChance: 0.06,
-    depth: 4,
-    candidates: 6,
-    tolerance: 120,
-    noise: 70,
+    strength: 0.23,
     speed: 0.45,
     style: { capture: 25, check: 25, towardKing: 20 },
     lines: {
@@ -437,11 +403,7 @@ export const BOTS = {
     rating: 900,
     group: 'circuit',
     bio: 'Opening specialist, always plays the Italian Game.',
-    blunderChance: 0.05,
-    depth: 5,
-    candidates: 6,
-    tolerance: 100,
-    noise: 60,
+    strength: 0.26,
     speed: 1,
     style: { develop: 40, castle: 40 },
     openings: {
@@ -500,11 +462,7 @@ export const BOTS = {
     rating: 1000,
     group: 'circuit',
     bio: 'Endgame grinder, never resigns.',
-    blunderChance: 0.04,
-    depth: 6,
-    candidates: 5,
-    tolerance: 80,
-    noise: 50,
+    strength: 0.35,
     speed: 1.2,
     style: { tradeWhenAhead: 70, kingActivity: 50, evenTrade: 20 },
     lines: {
@@ -551,11 +509,7 @@ export const BOTS = {
     rating: 1100,
     group: 'circuit',
     bio: 'Speed player, dangerous in bullet.',
-    blunderChance: 0.03,
-    depth: 6,
-    candidates: 5,
-    tolerance: 70,
-    noise: 40,
+    strength: 0.4,
     speed: 0.35,
     style: { capture: 20, check: 20 },
     lines: {
@@ -602,11 +556,7 @@ export const BOTS = {
     rating: 1300,
     group: 'circuit',
     bio: 'Amateur champion, only plays gambits.',
-    blunderChance: 0.015,
-    depth: 8,
-    candidates: 5,
-    tolerance: 50,
-    noise: 30,
+    strength: 0.5,
     speed: 1,
     style: { towardKing: 40, check: 40, threat: 30 },
     openings: {

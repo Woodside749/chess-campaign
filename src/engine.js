@@ -4,8 +4,10 @@
 const ENGINE_URL = '/stockfish/stockfish-19-lite-single.js'
 
 export class Engine {
-  constructor() {
-    this.worker = new Worker(ENGINE_URL)
+  // `worker` is anything with postMessage() and onmessage, like a browser Web Worker.
+  // The calibration script passes in a stand-in that runs Stockfish in Node instead.
+  constructor(worker = new Worker(ENGINE_URL)) {
+    this.worker = worker
     this.listeners = new Set()
     this.worker.onmessage = (event) => {
       const line = typeof event.data === 'string' ? event.data : ''

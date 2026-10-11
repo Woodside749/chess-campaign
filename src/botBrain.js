@@ -1,6 +1,7 @@
 // How a bot decides on a move and how long it "thinks" about it.
 import { getEngine } from './engine.js'
 import { moveTraits } from './moveTraits.js'
+import { botSettings } from './botStrength.js'
 
 // On average the bot spends this fraction of its remaining time on a move
 // (before its own `speed` is applied). Lower makes bots think longer.
@@ -35,7 +36,7 @@ function timePressure(timeLeftMs) {
 
 // The bot's chance of a random move, which rises when its clock is low.
 export function blunderChanceNow(bot, timeLeftMs) {
-  return bot.blunderChance + timePressure(timeLeftMs) * MAX_EXTRA_BLUNDER
+  return botSettings(bot).blunderChance + timePressure(timeLeftMs) * MAX_EXTRA_BLUNDER
 }
 
 // Picks the bot's move, in this order:
@@ -44,7 +45,7 @@ export function blunderChanceNow(bot, timeLeftMs) {
 // 3. Otherwise: Stockfish suggests its top moves, and the bot picks one using its
 //    personality (style bonuses), a bit of randomness, and how far below the best
 //    move it is willing to go (tolerance).
-export async function chooseBotMove(game, bot, timeLeftMs) {
+export async function chooseBotMove(game, bot, timeLeftMs, engine = getEngine()) {
   const legalMoves = game.moves({ verbose: true })
   if (legalMoves.length === 1) return legalMoves[0].san
 
@@ -53,10 +54,11 @@ export async function chooseBotMove(game, bot, timeLeftMs) {
 
   if (Math.random() < blunderChanceNow(bot, timeLeftMs)) return pickRandom(legalMoves).san
 
-  const candidates = await getEngine().analyse(game.fen(), { depth: bot.depth, multiPv: bot.candidates })
+  const settings = botSettings(bot)
+  const candidates = await engine.analyse(game.fen(), { depth: settings.depth, multiPv: settings.candidates })
   const bestScore = candidates[0].score
   // Under time pressure the bot also accepts worse moves.
-  const tolerance = bot.tolerance * (1 + timePressure(timeLeftMs))
+  const tolerance = settings.tolerance * (1 + timePressure(timeLeftMs))
 
   let choice = null
   let choiceTotal = -Infinity
@@ -64,7 +66,7 @@ export async function chooseBotMove(game, bot, timeLeftMs) {
     if (candidate.score < bestScore - tolerance) continue
     const move = legalMoves.find((m) => m.lan === candidate.uci)
     if (!move) continue
-    const total = candidate.score + styleBonus(game, move, bot) + randomBetween(-bot.noise, bot.noise)
+    const total = candidate.score + styleBonus(game, move, bot) + randomBetween(-settings.noise, settings.noise)
     if (total > choiceTotal) {
       choice = move
       choiceTotal = total
