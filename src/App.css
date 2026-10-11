@@ -560,161 +560,26 @@
   cursor: default;
 }
 
-/* Home screen: the title on the left, the career events in a row on the right */
+/* Home screen: a horizontal career road you scroll along from left to right:
+   the title, the Chess School events in order, then the Amateur Leagues grid.
+   On phones the parts stack vertically instead. */
 
 .home {
-  width: min(1240px, 100%);
   min-height: 100vh;
-  margin: 0 auto;
-  padding: 48px;
   display: flex;
   align-items: center;
-  gap: 56px;
-}
-
-/* Wide screens: the Chess School column and the leagues grid side by side. */
-.career {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: flex-start;
-  gap: 28px;
-}
-
-.career > .school-section {
-  flex: 0 0 270px;
-}
-
-.career > .school-section .event-row {
-  flex-direction: column;
-  gap: 14px;
-  padding: 0;
-}
-
-.career > .school-section .event-card {
-  flex: none;
-  gap: 10px;
-  padding: 18px;
-}
-
-.career > .school-section .event-card h3 {
-  font-size: 20px;
-}
-
-.career > .school-section .event-description {
-  font-size: 14px;
-}
-
-.career > .school-section .event-play {
-  margin-top: 4px;
-  padding: 11px;
-}
-
-.career > .leagues-section {
-  flex: 1;
-  min-width: 0;
-}
-
-/* Medium screens: the leagues go below the Chess School cards. */
-@media (max-width: 1100px) {
-  .career {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .career > .school-section {
-    flex: none;
-  }
-
-  .career > .school-section .event-row {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-/* Phones: the Chess School cards scroll sideways instead. */
-@media (max-width: 800px) {
-  .career > .school-section .event-row {
-    display: flex;
-  }
-
-  .career > .school-section .event-card {
-    flex: 0 0 min(300px, 85vw);
-  }
-}
-
-.section-title {
-  margin: 0 0 12px;
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-.section-lock {
-  font-weight: 500;
-  letter-spacing: 0;
-  text-transform: none;
-}
-
-/* The leagues: 3 columns, 2 rows, to show they can be played in any order. */
-.league-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.league-card {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 16px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-}
-
-.league-card.unavailable {
-  opacity: 0.55;
-}
-
-.league-icon {
-  font-size: 26px;
-  line-height: 1;
-}
-
-.league-card h3 {
-  margin: 4px 0 0;
-  font-size: 17px;
-}
-
-.league-card .event-description {
-  flex: 1;
-  font-size: 13px;
-  line-height: 1.4;
-}
-
-.league-card .event-play {
-  margin-top: 6px;
-  padding: 9px;
-  font-size: 14px;
-}
-
-.league-status {
-  margin-top: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--muted);
+  gap: 40px;
+  padding: 48px;
+  overflow-x: auto;
 }
 
 .home-intro {
-  flex: 0 0 260px;
+  flex: 0 0 280px;
 }
 
 .home-intro h1 {
   margin: 0 0 12px;
-  font-size: 48px;
+  font-size: 44px;
   line-height: 1.1;
 }
 
@@ -736,26 +601,49 @@
   cursor: pointer;
 }
 
-.event-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 20px;
-  padding: 4px 4px 8px;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
+.stage {
+  flex: none;
 }
 
+.section-title {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.section-lock {
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* The arrows between events that are played in order. */
+.stage-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.stage-arrow {
+  flex: none;
+  font-size: 28px;
+  color: var(--muted);
+}
+
+/* Big cards for the Chess School events. */
 .event-card {
-  flex: 0 0 300px;
+  flex: 0 0 280px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 24px;
+  gap: 12px;
+  padding: 22px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 16px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  scroll-snap-align: start;
 }
 
 .event-place {
@@ -768,7 +656,7 @@
 
 .event-card h3 {
   margin: 0;
-  font-size: 24px;
+  font-size: 22px;
   line-height: 1.2;
 }
 
@@ -786,8 +674,8 @@
 }
 
 .event-play {
-  margin-top: 8px;
-  padding: 14px;
+  margin-top: 4px;
+  padding: 13px;
   font: inherit;
   font-weight: 700;
   color: white;
@@ -801,29 +689,103 @@
   filter: brightness(1.1);
 }
 
+/* The leagues: 3 columns, 2 rows, to show they can be played in any order.
+   The cards are wide and short: icon and title on one line, then the description. */
+.league-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 250px);
+  gap: 14px;
+}
+
+.league-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.league-card.unavailable {
+  opacity: 0.55;
+}
+
+.league-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.league-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.league-card h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.league-card .event-description {
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.league-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.league-card .event-play {
+  margin: 0;
+  padding: 7px 14px;
+  font-size: 13px;
+}
+
+.league-status {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* Phones: everything stacks vertically. */
 @media (max-width: 800px) {
   .home {
     flex-direction: column;
     align-items: stretch;
-    gap: 24px;
+    gap: 28px;
     padding: 32px 16px;
+    overflow-x: visible;
   }
 
-  .home-intro,
-  .career {
+  .home-intro {
     flex: none;
-  }
-
-  .league-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .home-intro h1 {
     font-size: 36px;
   }
 
+  .stage-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .stage-arrow {
+    align-self: center;
+    transform: rotate(90deg);
+  }
+
   .event-card {
-    flex-basis: min(300px, 85vw);
+    flex: none;
+  }
+
+  .league-grid {
+    grid-template-columns: 1fr;
   }
 }
 
