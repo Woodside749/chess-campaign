@@ -292,6 +292,15 @@
   border-color: var(--accent);
 }
 
+.group-title {
+  margin: 24px 0 10px;
+  font-size: 15px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
 .bot-list {
   list-style: none;
   padding: 0;

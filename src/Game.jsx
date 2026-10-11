@@ -83,7 +83,7 @@ export default function Game({ bot, startColor, onExit }) {
 
     async function playBotMove() {
       const started = Date.now()
-      const thinkMs = thinkTimeMs(game, botTimeLeft)
+      const thinkMs = thinkTimeMs(game, bot, botTimeLeft)
       const choice = await chooseBotMove(game, bot, botTimeLeft)
       // Wait out the rest of the thinking time, so the bot doesn't reply instantly.
       const wait = thinkMs - (Date.now() - started)

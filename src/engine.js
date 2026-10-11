@@ -39,16 +39,27 @@ export class Engine {
     await this.request('isready', (line) => line === 'readyok')
   }
 
-  // Asks Stockfish for its best move in the position (given as a FEN string).
-  // Returns a move in UCI format, for example "e2e4" or "e7e8q".
-  bestMove(fen, { skillLevel = 20, depth = 10 } = {}) {
+  // Asks Stockfish for its top `multiPv` moves in the position (given as a FEN string),
+  // searching `depth` moves ahead. Returns a list like
+  //   [{ uci: 'e2e4', score: 35 }, { uci: 'd2d4', score: 30 }, ...]
+  // best first. Scores are in centipawns (100 = one pawn) for the side to move.
+  // A forced mate gets a huge score: about +10000 if we mate, -10000 if we get mated.
+  analyse(fen, { depth = 8, multiPv = 5 } = {}) {
     const search = this.queue.then(async () => {
-      this.send(`setoption name Skill Level value ${skillLevel}`)
+      const lines = new Map() // multipv number -> latest result for that line
+      const collect = (line) => {
+        const info = parseInfo(line)
+        if (info) lines.set(info.rank, info)
+      }
+      this.listeners.add(collect)
+      this.send('setoption name Skill Level value 20')
+      this.send(`setoption name MultiPV value ${multiPv}`)
       this.send(`position fen ${fen}`)
-      const line = await this.request(`go depth ${depth}`, (l) => l.startsWith('bestmove'))
-      return line.split(' ')[1]
+      await this.request(`go depth ${depth}`, (l) => l.startsWith('bestmove'))
+      this.listeners.delete(collect)
+      return [...lines.values()].sort((x, y) => x.rank - y.rank).map(({ uci, score }) => ({ uci, score }))
     })
-    this.queue = search
+    this.queue = search.catch(() => {})
     return search
   }
 
@@ -56,6 +67,26 @@ export class Engine {
     this.worker.terminate()
     this.listeners.clear()
   }
+}
+
+// Reads a Stockfish line like
+//   "info depth 8 ... multipv 2 score cp -15 ... pv d2d4 d7d5 ..."
+// and returns { rank: 2, score: -15, uci: 'd2d4' }, or null for other lines.
+function parseInfo(line) {
+  if (!line.startsWith('info') || !line.includes(' pv ')) return null
+  if (line.includes('lowerbound') || line.includes('upperbound')) return null
+  const words = line.split(' ')
+  const after = (word) => words[words.indexOf(word) + 1]
+  const rank = words.includes('multipv') ? Number(after('multipv')) : 1
+  const uci = after('pv')
+  let score
+  if (words.includes('mate')) {
+    const movesToMate = Number(after('mate'))
+    score = movesToMate > 0 ? 10000 - movesToMate : -10000 - movesToMate
+  } else {
+    score = Number(after('cp'))
+  }
+  return { rank, score, uci }
 }
 
 // One shared engine for the whole app, started the first time a bot needs it.

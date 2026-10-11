@@ -1,6 +1,11 @@
 import { BOTS } from './bots.js'
 import Avatar from './Avatar.jsx'
 
+const GROUPS = [
+  { id: 'school', title: 'Chess School' },
+  { id: 'circuit', title: 'Amateur circuit' },
+]
+
 const COLOR_CHOICES = [
   { value: 'w', label: 'White' },
   { value: 'b', label: 'Black' },
@@ -12,7 +17,7 @@ export default function Menu({ colorChoice, onColorChoice, onPlay }) {
   return (
     <main className="app menu">
       <h1>Chess Career</h1>
-      <p className="subtitle">Chess School · choose your opponent</p>
+      <p className="subtitle">Amateur tier · choose your opponent</p>
 
       <div className="color-choice" role="radiogroup" aria-label="Play as">
         <span>Play as</span>
@@ -29,26 +34,37 @@ export default function Menu({ colorChoice, onColorChoice, onPlay }) {
         ))}
       </div>
 
-      <ul className="bot-list">
-        {Object.values(BOTS).map((bot) => (
-          <li key={bot.id}>
-            <button className="bot-card" onClick={() => onPlay(bot)}>
-              <Avatar bot={bot} size={56} />
-              <div className="bot-card-text">
-                <div className="opponent-name">
-                  {bot.name} <span className="rating">({bot.rating})</span>
-                </div>
-                <div className="bot-bio">
-                  {bot.country} · {bot.bio}
-                </div>
-              </div>
-              <span className="play-arrow" aria-hidden="true">
-                ▶
-              </span>
-            </button>
-          </li>
-        ))}
-      </ul>
+      {GROUPS.map((group) => (
+        <section key={group.id}>
+          <h2 className="group-title">{group.title}</h2>
+          <BotList bots={Object.values(BOTS).filter((bot) => bot.group === group.id)} onPlay={onPlay} />
+        </section>
+      ))}
     </main>
+  )
+}
+
+function BotList({ bots, onPlay }) {
+  return (
+    <ul className="bot-list">
+      {bots.map((bot) => (
+        <li key={bot.id}>
+          <button className="bot-card" onClick={() => onPlay(bot)}>
+            <Avatar bot={bot} size={56} />
+            <div className="bot-card-text">
+              <div className="opponent-name">
+                {bot.name} <span className="rating">({bot.rating})</span>
+              </div>
+              <div className="bot-bio">
+                {bot.country} · {bot.bio}
+              </div>
+            </div>
+            <span className="play-arrow" aria-hidden="true">
+              ▶
+            </span>
+          </button>
+        </li>
+      ))}
+    </ul>
   )
 }
