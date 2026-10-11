@@ -30,7 +30,7 @@ export default function Home({ progress, onOpenEvent, onOpenDevMenu }) {
       </section>
 
       <div className="career">
-        <section aria-labelledby="school-title">
+        <section className="school-section" aria-labelledby="school-title">
           <h2 id="school-title" className="section-title">
             Chess School
           </h2>
@@ -41,7 +41,7 @@ export default function Home({ progress, onOpenEvent, onOpenDevMenu }) {
           </div>
         </section>
 
-        <section aria-labelledby="leagues-title">
+        <section className="leagues-section" aria-labelledby="leagues-title">
           <h2 id="leagues-title" className="section-title">
             Amateur Leagues
             {!leaguesOpen && <span className="section-lock"> · 🔒 Win the School Tournament to unlock</span>}

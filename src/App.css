@@ -572,12 +572,75 @@
   gap: 56px;
 }
 
+/* Wide screens: the Chess School column and the leagues grid side by side. */
 .career {
   flex: 1;
   min-width: 0;
   display: flex;
-  flex-direction: column;
+  align-items: flex-start;
   gap: 28px;
+}
+
+.career > .school-section {
+  flex: 0 0 270px;
+}
+
+.career > .school-section .event-row {
+  flex-direction: column;
+  gap: 14px;
+  padding: 0;
+}
+
+.career > .school-section .event-card {
+  flex: none;
+  gap: 10px;
+  padding: 18px;
+}
+
+.career > .school-section .event-card h3 {
+  font-size: 20px;
+}
+
+.career > .school-section .event-description {
+  font-size: 14px;
+}
+
+.career > .school-section .event-play {
+  margin-top: 4px;
+  padding: 11px;
+}
+
+.career > .leagues-section {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Medium screens: the leagues go below the Chess School cards. */
+@media (max-width: 1100px) {
+  .career {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .career > .school-section {
+    flex: none;
+  }
+
+  .career > .school-section .event-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Phones: the Chess School cards scroll sideways instead. */
+@media (max-width: 800px) {
+  .career > .school-section .event-row {
+    display: flex;
+  }
+
+  .career > .school-section .event-card {
+    flex: 0 0 min(300px, 85vw);
+  }
 }
 
 .section-title {
@@ -646,7 +709,7 @@
 }
 
 .home-intro {
-  flex: 0 0 340px;
+  flex: 0 0 260px;
 }
 
 .home-intro h1 {
