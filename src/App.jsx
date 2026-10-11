@@ -1,17 +1,21 @@
 import { useState } from 'react'
 import { BOTS } from './bots.js'
+import { EVENTS } from './career.js'
 import { LESSONS } from './lessons.js'
+import { loadProgress, roundsWon, saveProgress, withRoundWon } from './progress.js'
 import Home from './Home.jsx'
 import Menu from './Menu.jsx'
+import Tournament from './Tournament.jsx'
 import Game from './Game.jsx'
 import './App.css'
 
-// The top of the app. It only decides which screen to show:
-// the home screen, the developer menu (every bot), or a game.
+// The top of the app. It decides which screen to show: the home screen, the developer
+// menu (every bot), a tournament's bracket, or a game. It also keeps the career progress.
 export default function App() {
-  const [screen, setScreen] = useState('home') // 'home' or 'dev'
+  const [screen, setScreen] = useState('home') // 'home', 'dev', or a tournament's event id
   const [colorChoice, setColorChoice] = useState('w') // developer menu: 'w', 'b' or 'random'
   const [match, setMatch] = useState(null) // the game being played, or null
+  const [progress, setProgress] = useState(loadProgress)
 
   // A game from the developer menu: any bot, with clocks.
   function playBot(bot) {
@@ -19,14 +23,32 @@ export default function App() {
     setMatch({ bot, color, timed: true, lesson: null })
   }
 
-  // A game from the career screen.
-  function playEvent(event) {
+  // An event card on the home screen: a tournament opens its bracket, anything else starts a game.
+  function openEvent(event) {
+    if (event.type === 'tournament') {
+      setScreen(event.id)
+      return
+    }
     setMatch({
       bot: BOTS[event.bot],
       color: event.color,
       timed: event.timed,
       lesson: event.lesson ? LESSONS[event.lesson] : null,
     })
+  }
+
+  function playTournamentRound(event, round) {
+    const { opponent, color } = event.rounds[round]
+    setMatch({ bot: BOTS[opponent], color, timed: event.timed, lesson: null, tournament: { event, round } })
+  }
+
+  // Called by the game when it ends. Winning a tournament round is saved.
+  function handleResult(result) {
+    const tournament = match?.tournament
+    if (!tournament || result.outcome !== 'win') return
+    const next = withRoundWon(progress, tournament.event.id, tournament.round)
+    setProgress(next)
+    saveProgress(next)
   }
 
   if (match) {
@@ -36,6 +58,8 @@ export default function App() {
         startColor={match.color}
         timed={match.timed}
         lesson={match.lesson}
+        onResult={handleResult}
+        exitLabel={match.tournament ? 'Back to bracket' : 'Back to menu'}
         onExit={() => setMatch(null)}
       />
     )
@@ -50,5 +74,16 @@ export default function App() {
       />
     )
   }
-  return <Home onPlayEvent={playEvent} onOpenDevMenu={() => setScreen('dev')} />
+  const tournament = EVENTS.find((event) => event.id === screen)
+  if (tournament) {
+    return (
+      <Tournament
+        event={tournament}
+        roundsWon={roundsWon(progress, tournament.id)}
+        onPlayRound={(round) => playTournamentRound(tournament, round)}
+        onBack={() => setScreen('home')}
+      />
+    )
+  }
+  return <Home progress={progress} onOpenEvent={openEvent} onOpenDevMenu={() => setScreen('dev')} />
 }

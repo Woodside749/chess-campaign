@@ -1,0 +1,65 @@
+import { BOTS } from './bots.js'
+import Avatar from './Avatar.jsx'
+import Bracket from './Bracket.jsx'
+
+// A tournament: the bracket on the left, and the player's rounds on the right.
+// A round unlocks when the round before it is won, and any unlocked round can be replayed.
+export default function Tournament({ event, roundsWon, onPlayRound, onBack }) {
+  const champion = roundsWon >= event.rounds.length
+  return (
+    <main className="tournament-screen">
+      <div className="bracket-area">
+        <Bracket event={event} roundsWon={roundsWon} />
+      </div>
+
+      <aside className="tournament-panel">
+        <button className="back" onClick={onBack}>
+          ← Home
+        </button>
+        <div className="event-place">{event.place}</div>
+        <h1>{event.title}</h1>
+        <p className="event-description">{event.description}</p>
+
+        {champion && <p className="champion-banner">🏆 You are the school champion!</p>}
+
+        <ol className="round-list">
+          {event.rounds.map((round, i) => {
+            const bot = BOTS[round.opponent]
+            const won = i < roundsWon
+            const locked = i > roundsWon
+            return (
+              <li key={round.name} className={`round-item${locked ? ' locked' : ''}`}>
+                <div className="round-name">
+                  {round.name}
+                  {won && <span className="round-won"> ✓ Won</span>}
+                </div>
+                <div className="round-opponent">
+                  <Avatar bot={bot} size={36} />
+                  <div>
+                    <div className="opponent-name">
+                      {bot.name} <span className="rating">({bot.rating})</span>
+                    </div>
+                    <div className="bot-bio">You play {round.color === 'w' ? 'White' : 'Black'} · 10 min</div>
+                  </div>
+                </div>
+                {locked ? (
+                  <p className="round-locked">🔒 Win {unlockName(event.rounds[i - 1].name)} to unlock</p>
+                ) : (
+                  <button className={won ? 'round-play secondary' : 'round-play'} onClick={() => onPlayRound(i)}>
+                    {won ? 'Play again' : `Play ${round.name.toLowerCase()}`}
+                  </button>
+                )}
+              </li>
+            )
+          })}
+        </ol>
+      </aside>
+    </main>
+  )
+}
+
+// "Round 1" -> "round 1", "Semi-final" -> "the semi-final", for "Win ... to unlock".
+function unlockName(name) {
+  const lower = name.toLowerCase()
+  return lower.startsWith('round') ? lower : `the ${lower}`
+}

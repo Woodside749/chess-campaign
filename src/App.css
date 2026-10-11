@@ -684,3 +684,194 @@
     flex-basis: min(300px, 85vw);
   }
 }
+
+/* Tournament screen: the bracket on the left, the rounds on the right */
+
+.tournament-screen {
+  width: min(1180px, 100%);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 24px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
+  gap: 32px;
+  align-items: center;
+}
+
+.bracket-area {
+  min-width: 0;
+}
+
+.bracket {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.bracket-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  fill: var(--muted);
+}
+
+.bracket-line {
+  fill: none;
+  stroke: var(--border);
+  stroke-width: 2;
+}
+
+.bracket-line.decided {
+  stroke: var(--muted);
+}
+
+.bracket-box {
+  fill: var(--surface);
+  stroke: var(--border);
+  stroke-width: 1.5;
+}
+
+.bracket-box.empty {
+  fill: none;
+  stroke-dasharray: 4 3;
+}
+
+.bracket-box.won {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.bracket-box.you {
+  fill: color-mix(in srgb, var(--accent) 18%, var(--surface));
+}
+
+.bracket-initial {
+  font-size: 11px;
+  font-weight: 700;
+  fill: white;
+}
+
+.bracket-name {
+  font-size: 12px;
+  fill: var(--text);
+}
+
+.bracket-name.won {
+  font-weight: 700;
+}
+
+.bracket-flag {
+  font-size: 12px;
+}
+
+.bracket-unknown {
+  font-size: 13px;
+  fill: var(--muted);
+}
+
+.tournament-panel h1 {
+  margin: 6px 0 8px;
+  font-size: 32px;
+}
+
+.champion-banner {
+  margin: 16px 0 0;
+  padding: 12px 14px;
+  font-weight: 700;
+  color: var(--text);
+  background: color-mix(in srgb, var(--accent) 22%, var(--surface));
+  border-radius: 10px;
+}
+
+.round-list {
+  list-style: none;
+  margin: 20px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.round-item {
+  padding: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.round-item.locked {
+  opacity: 0.6;
+}
+
+.round-name {
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.round-won {
+  color: var(--accent);
+}
+
+.round-opponent {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.round-opponent .flag {
+  font-size: 14px;
+}
+
+.round-play {
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px;
+  font: inherit;
+  font-weight: 700;
+  color: white;
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.round-play.secondary {
+  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--border);
+}
+
+.round-locked {
+  margin: 12px 0 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+/* Tournament card on the home screen: the opponents' avatars side by side */
+
+.avatar-stack {
+  display: flex;
+}
+
+.avatar-stack .avatar + .avatar {
+  margin-left: -8px;
+  box-shadow: 0 0 0 2px var(--surface);
+}
+
+@media (max-width: 900px) {
+  .tournament-screen {
+    grid-template-columns: 1fr;
+    align-items: start;
+    padding: 16px;
+  }
+
+  /* On narrow screens the rounds come first, then the bracket below. */
+  .tournament-panel {
+    order: -1;
+  }
+}

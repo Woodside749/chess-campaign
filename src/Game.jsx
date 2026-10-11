@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Chess } from 'chess.js'
 import { Chessboard } from 'react-chessboard'
 import { pickLine } from './bots.js'
@@ -30,7 +30,9 @@ function pressClock(clock, color) {
 // The game screen: games against `bot`, with the player as `startColor` ('w' or 'b').
 // `timed` turns the clocks on or off. `lesson` is an optional script from lessons.js
 // that the coach walks through before the game carries on normally.
-export default function Game({ bot, startColor, timed = true, lesson = null, onExit }) {
+// `onResult` is called once with the result when a game ends. `exitLabel` names the
+// game-over pop-up's way out, like "Back to bracket".
+export default function Game({ bot, startColor, timed = true, lesson = null, onResult, exitLabel, onExit }) {
   // chess.js holds the real game (rules, history). `fen` is a text snapshot of the
   // position that we keep in React state, so the screen re-draws after every move.
   const [game, setGame] = useState(() => new Chess())
@@ -78,10 +80,16 @@ export default function Game({ bot, startColor, timed = true, lesson = null, onE
     : { w: Infinity, b: Infinity }
 
   // The game is over by checkmate/draw on the board, by resigning, or because a clock hit zero.
-  const result =
-    finishedOnBoard ??
-    (resigned ? { outcome: 'loss', reason: 'You resigned.' } : null) ??
-    (timeLeft[turn] <= 0 ? timeoutResult(game, turn, playerColor) : null)
+  // Only worked out again when something it depends on changes (`fen` changes with every move).
+  const flagged = timeLeft[turn] <= 0
+  const result = useMemo(
+    () =>
+      boardResult(game, playerColor) ??
+      (resigned ? { outcome: 'loss', reason: 'You resigned.' } : null) ??
+      (flagged ? timeoutResult(game, turn, playerColor) : null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `game` changes in place; `fen` tells us when
+    [game, fen, playerColor, resigned, flagged, turn],
+  )
   const gameOver = result !== null
   const clockRunning = timed && !gameOver
   const isPlayersTurn = turn === playerColor && !gameOver
@@ -101,6 +109,14 @@ export default function Game({ bot, startColor, timed = true, lesson = null, onE
   const captured = capturedPieces(game)
   const score = materialScore(game) // positive: White is ahead
   const advantage = (color) => (color === 'w' ? score : -score)
+
+  // Tell the screen that started this game how it ended, once per game.
+  const reportedRef = useRef(false)
+  useEffect(() => {
+    if (!result || reportedRef.current) return
+    reportedRef.current = true
+    onResult?.(result)
+  }, [result, onResult])
 
   // While a clock is running, update `now` 10 times a second so the clock ticks.
   useEffect(() => {
@@ -280,6 +296,7 @@ export default function Game({ bot, startColor, timed = true, lesson = null, onE
     setPendingPromotion(null)
     setResigned(false)
     setConfirming(null)
+    reportedRef.current = false
     setLessonStep(0)
     setReplyPending(false)
     setLessonHint(null)
@@ -416,6 +433,7 @@ export default function Game({ bot, startColor, timed = true, lesson = null, onE
           onTryAgain={newGame}
           onClose={() => setDialogClosed(true)}
           onMenu={onExit}
+          menuLabel={exitLabel}
         />
       )}
     </main>
