@@ -627,9 +627,11 @@
   gap: 16px;
 }
 
-/* Big cards for the Chess School events. */
+/* Big cards for the Chess School events. A fixed width (not only a flex basis), so
+   Safari doesn't size the section as if the card text were on one long line. */
 .event-card {
-  flex: 0 0 280px;
+  flex: none;
+  width: 280px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -770,7 +772,7 @@
   }
 
   .event-card {
-    flex: none;
+    width: auto;
   }
 
   .league-grid {
