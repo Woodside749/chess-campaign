@@ -13,7 +13,7 @@ export default function GameOverDialog({ result, bot, botLine, onTryAgain, onClo
         </blockquote>
         <div className="dialog-buttons">
           <button className="primary" onClick={onTryAgain} autoFocus>
-            Try again
+            {result.outcome === 'loss' ? 'Try again' : 'Play again'}
           </button>
           <button className="secondary" onClick={onClose}>
             View board
