@@ -14,9 +14,12 @@ export default function Home({ progress, onOpenEvent, onOpenDevMenu }) {
           Travel a world tour of chess clubs, tournaments and rivals. Every opponent has their own
           style, and every event moves your career forward.
         </p>
-        <button className="dev-link" onClick={onOpenDevMenu}>
-          Developer menu
-        </button>
+        {/* Only shown while developing (npm run dev), never in the published game. */}
+        {import.meta.env.DEV && (
+          <button className="dev-link" onClick={onOpenDevMenu}>
+            Developer menu
+          </button>
+        )}
       </section>
 
       <section className="event-row" aria-label="Events">

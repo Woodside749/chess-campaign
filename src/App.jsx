@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { BOTS } from './bots.js'
 import { EVENTS } from './career.js'
 import { LESSONS } from './lessons.js'
-import { loadProgress, roundsWon, saveProgress, withRoundWon } from './progress.js'
+import { clearProgress, loadProgress, roundsWon, saveProgress, withRoundWon } from './progress.js'
 import Home from './Home.jsx'
 import Menu from './Menu.jsx'
 import Tournament from './Tournament.jsx'
@@ -71,6 +71,7 @@ export default function App() {
         onColorChoice={setColorChoice}
         onPlay={playBot}
         onBack={() => setScreen('home')}
+        onResetProgress={() => setProgress(clearProgress())}
       />
     )
   }

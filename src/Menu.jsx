@@ -1,4 +1,5 @@
 import { BOTS } from './bots.js'
+import { useState } from 'react'
 import Avatar from './Avatar.jsx'
 
 const GROUPS = [
@@ -13,7 +14,7 @@ const COLOR_CHOICES = [
 ]
 
 // The developer menu: play any bot, for testing. Pick a colour, then tap an opponent.
-export default function Menu({ colorChoice, onColorChoice, onPlay, onBack }) {
+export default function Menu({ colorChoice, onColorChoice, onPlay, onBack, onResetProgress }) {
   return (
     <main className="app menu">
       <button className="back" onClick={onBack}>
@@ -43,6 +44,9 @@ export default function Menu({ colorChoice, onColorChoice, onPlay, onBack }) {
           <BotList bots={Object.values(BOTS).filter((bot) => bot.group === group.id)} onPlay={onPlay} />
         </section>
       ))}
+
+      <h2 className="group-title">Testing</h2>
+      <ResetProgressButton onReset={onResetProgress} />
     </main>
   )
 }
@@ -69,5 +73,21 @@ function BotList({ bots, onPlay }) {
         </li>
       ))}
     </ul>
+  )
+}
+
+// Clears the saved career progress, so tournaments can be tested from the start.
+function ResetProgressButton({ onReset }) {
+  const [done, setDone] = useState(false)
+  return (
+    <button
+      className="dev-reset"
+      onClick={() => {
+        onReset()
+        setDone(true)
+      }}
+    >
+      {done ? 'Career progress reset ✓' : 'Reset career progress'}
+    </button>
   )
 }

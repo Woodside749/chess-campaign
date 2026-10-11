@@ -40,3 +40,13 @@ export function withRoundWon(progress, eventId, round) {
     tournaments: { ...progress.tournaments, [eventId]: { roundsWon: round + 1 } },
   }
 }
+
+// Clears all saved progress (used by the developer menu).
+export function clearProgress() {
+  try {
+    localStorage.removeItem(STORAGE_KEY)
+  } catch {
+    // Nothing saved, or storage is blocked: either way there is nothing to clear.
+  }
+  return EMPTY
+}

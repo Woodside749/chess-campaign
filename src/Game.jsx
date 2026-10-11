@@ -49,6 +49,8 @@ export default function Game({ bot, startColor, timed = true, lesson = null, onR
   // A pawn move to the last rank waiting for you to pick a piece, like { from: 'e7', to: 'e8' }.
   const [pendingPromotion, setPendingPromotion] = useState(null)
   const [resigned, setResigned] = useState(false)
+  // Set by the developer-only Auto-win button.
+  const [autoWon, setAutoWon] = useState(false)
   // Which "are you sure?" pop-up is open: 'resign', 'leave' or null.
   const [confirming, setConfirming] = useState(null)
   // Lesson progress: which step the coach is on, whether the coach is about to answer
@@ -73,7 +75,7 @@ export default function Game({ bot, startColor, timed = true, lesson = null, onR
   // Time left on each clock right now. Only the side to move is losing time,
   // and the clocks stop once the game is decided on the board or you resign.
   const finishedOnBoard = boardResult(game, playerColor)
-  const stopped = finishedOnBoard || resigned
+  const stopped = finishedOnBoard || resigned || autoWon
   const elapsed = stopped ? 0 : Math.max(0, now - clock.turnStart)
   const timeLeft = timed
     ? { w: clock.w - (turn === 'w' ? elapsed : 0), b: clock.b - (turn === 'b' ? elapsed : 0) }
@@ -85,10 +87,11 @@ export default function Game({ bot, startColor, timed = true, lesson = null, onR
   const result = useMemo(
     () =>
       boardResult(game, playerColor) ??
+      (autoWon ? { outcome: 'win', reason: 'Auto-win (developer button).' } : null) ??
       (resigned ? { outcome: 'loss', reason: 'You resigned.' } : null) ??
       (flagged ? timeoutResult(game, turn, playerColor) : null),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `game` changes in place; `fen` tells us when
-    [game, fen, playerColor, resigned, flagged, turn],
+    [game, fen, playerColor, resigned, autoWon, flagged, turn],
   )
   const gameOver = result !== null
   const clockRunning = timed && !gameOver
@@ -270,6 +273,14 @@ export default function Game({ bot, startColor, timed = true, lesson = null, onR
     setSelected(isOwnPiece && !gameOver ? square : null)
   }
 
+  // Developer shortcut: win the game straight away, to test what comes after a win.
+  function autoWin() {
+    setClock((c) => pressClock(c, game.turn()))
+    setAutoWon(true)
+    setPendingPromotion(null)
+    setPremove(null)
+  }
+
   function resign() {
     // Stop the clock where it is: the time spent on this move is taken off.
     setClock((c) => pressClock(c, game.turn()))
@@ -295,6 +306,7 @@ export default function Game({ bot, startColor, timed = true, lesson = null, onR
     setViewPly(null)
     setPendingPromotion(null)
     setResigned(false)
+    setAutoWon(false)
     setConfirming(null)
     reportedRef.current = false
     setLessonStep(0)
@@ -404,6 +416,13 @@ export default function Game({ bot, startColor, timed = true, lesson = null, onR
           Resign
         </button>
       </div>
+
+      {/* Only shown while developing (npm run dev), never in the published game. */}
+      {import.meta.env.DEV && (
+        <button className="dev-autowin" onClick={autoWin} disabled={gameOver}>
+          ⚡ Auto-win (developer)
+        </button>
+      )}
 
       <MoveList history={history} currentPly={shownPly} onSelect={(ply) => setViewPly(ply >= plyCount ? null : ply)} />
 
