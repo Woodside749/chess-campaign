@@ -3,6 +3,8 @@ import { Chess } from 'chess.js'
 import { Chessboard } from 'react-chessboard'
 import { pickLine } from './bots.js'
 import { chooseBotMove, thinkTimeMs } from './botBrain.js'
+import { FogGame, visibleSquares } from './fogChess.js'
+import { chooseFogMove, createFogMemory } from './fogBot.js'
 import { capturedPieces, materialScore } from './material.js'
 import { premoveTargets } from './premove.js'
 import { boardResult, reactionTo, timeoutResult } from './rules.js'
@@ -14,11 +16,20 @@ import GameOverDialog from './GameOverDialog.jsx'
 import LessonPanel from './LessonPanel.jsx'
 import PromotionPicker from './PromotionPicker.jsx'
 
-const START_TIME_MS = 10 * 60 * 1000 // 10 minutes each
+const START_TIME_MS = 10 * 60 * 1000 // 10 minutes each, unless the event says otherwise
 
 // Clock state: time left for each side when its turn began, and when the current
 // turn began. White's clock starts running as soon as the game starts.
-const freshClock = () => ({ w: START_TIME_MS, b: START_TIME_MS, turnStart: Date.now() })
+const freshClock = (minutes) => {
+  const ms = minutes ? minutes * 60 * 1000 : START_TIME_MS
+  return { w: ms, b: ms, turnStart: Date.now() }
+}
+
+// A new game: normal chess (chess.js), or Fog of War with its own rules (fogChess.js).
+const newChessGame = (variant) => (variant === 'fog' ? new FogGame() : new Chess())
+
+// What a hidden square looks like in Fog of War.
+const FOG_STYLE = { background: '#4a4844', boxShadow: 'inset 0 0 0 1px rgba(0, 0, 0, 0.15)' }
 
 // Returns the clock after `color` has moved: their thinking time is subtracted
 // and the other side's clock starts running.
@@ -31,15 +42,29 @@ function pressClock(clock, color) {
 // `timed` turns the clocks on or off. `lesson` is an optional script from lessons.js
 // that the coach walks through before the game carries on normally.
 // `onResult` is called once with the result when a game ends. `exitLabel` names the
-// game-over pop-up's way out, like "Back to bracket".
-export default function Game({ bot, startColor, timed = true, lesson = null, onResult, exitLabel, onExit }) {
-  // chess.js holds the real game (rules, history). `fen` is a text snapshot of the
-  // position that we keep in React state, so the screen re-draws after every move.
-  const [game, setGame] = useState(() => new Chess())
+// game-over pop-up's way out, like "Back to bracket". `minutes` sets the clocks, and
+// `variant` can be 'fog' for Fog of War.
+export default function Game({
+  bot,
+  startColor,
+  timed = true,
+  minutes,
+  variant = null,
+  lesson = null,
+  onResult,
+  exitLabel,
+  onExit,
+}) {
+  // chess.js (or FogGame) holds the real game (rules, history). `fen` is a text snapshot
+  // of the position that we keep in React state, so the screen re-draws after every move.
+  const [game, setGame] = useState(() => newChessGame(variant))
+  const fog = variant === 'fog'
+  // In Fog of War, the bot's memory of where it last saw the player's pieces.
+  const fogMemoryRef = useRef(null)
   const [fen, setFen] = useState(game.fen())
   const playerColor = startColor
   const [selected, setSelected] = useState(null)
-  const [clock, setClock] = useState(freshClock)
+  const [clock, setClock] = useState(() => freshClock(minutes))
   const [now, setNow] = useState(() => Date.now())
   const [speech, setSpeech] = useState(() => pickLine(bot, 'start'))
   const [dialogClosed, setDialogClosed] = useState(false)
@@ -100,6 +125,8 @@ export default function Game({ bot, startColor, timed = true, lesson = null, onR
   // The bot's time left when its turn began. Only changes when a move is made.
   // Without clocks, the bot thinks as if it had a fresh 10 minutes.
   const botTimeLeft = timed ? clock[botColor] : START_TIME_MS
+  // Fog of War: the player is told when their king is attacked, but not by what.
+  const playerInCheck = fog && !gameOver && game.kingAttacked(playerColor)
 
   // Stepping back through the game. While viewing an earlier position the board is
   // locked: you can look, but not move.
@@ -108,6 +135,12 @@ export default function Game({ bot, startColor, timed = true, lesson = null, onR
   const viewing = viewPly !== null && viewPly < plyCount
   const shownPly = viewing ? viewPly : plyCount
   const shownFen = !viewing ? fen : viewPly === 0 ? history[0].before : history[viewPly - 1].after
+
+  // Fog of War: while the game is on, the player only sees the squares their pieces can
+  // see (also when stepping back through the moves). When it ends, everything is revealed.
+  const fogActive = fog && !gameOver
+  const visible = fogActive ? visibleSquares(new FogGame(shownFen), playerColor) : null
+  const boardPosition = fogActive ? fogPosition(shownFen, playerColor, visible) : shownFen
 
   const captured = capturedPieces(game)
   const score = materialScore(game) // positive: White is ahead
@@ -162,7 +195,13 @@ export default function Game({ bot, startColor, timed = true, lesson = null, onR
     async function playBotMove() {
       const started = Date.now()
       const thinkMs = thinkTimeMs(game, bot, botTimeLeft)
-      const choice = await chooseBotMove(game, bot, botTimeLeft)
+      let choice
+      if (fog) {
+        fogMemoryRef.current ??= createFogMemory(game, botColor)
+        choice = await chooseFogMove(game, bot, botTimeLeft, fogMemoryRef.current)
+      } else {
+        choice = await chooseBotMove(game, bot, botTimeLeft)
+      }
       // Wait out the rest of the thinking time, so the bot doesn't reply instantly.
       const wait = thinkMs - (Date.now() - started)
       if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait))
@@ -194,7 +233,7 @@ export default function Game({ bot, startColor, timed = true, lesson = null, onR
     return () => {
       cancelled = true
     }
-  }, [fen, playerColor, botColor, botTimeLeft, game, gameOver, inLesson, bot])
+  }, [fen, playerColor, botColor, botTimeLeft, game, gameOver, inLesson, bot, fog])
 
   // Tries to play the player's move. Returns true if it was legal.
   // A pawn reaching the last rank first opens the promotion picker, unless
@@ -299,7 +338,8 @@ export default function Game({ bot, startColor, timed = true, lesson = null, onR
 
   // Starts a new game against the same bot, with the same colour.
   function newGame() {
-    const fresh = new Chess()
+    const fresh = newChessGame(variant)
+    fogMemoryRef.current = null
     setGame(fresh)
     setSelected(null)
     setPremove(null)
@@ -312,7 +352,7 @@ export default function Game({ bot, startColor, timed = true, lesson = null, onR
     setLessonStep(0)
     setReplyPending(false)
     setLessonHint(null)
-    setClock(freshClock())
+    setClock(freshClock(minutes))
     setSpeech(pickLine(bot, 'start'))
     setDialogClosed(false)
     setFen(fresh.fen())
@@ -363,15 +403,22 @@ export default function Game({ bot, startColor, timed = true, lesson = null, onR
       <div className="board">
         <Chessboard
           options={{
-            position: shownFen,
+            position: boardPosition,
             boardOrientation: playerColor === 'w' ? 'white' : 'black',
             onPieceDrop,
             onSquareClick,
             onSquareRightClick: () => setPremove(null),
             canDragPiece: ({ piece }) => !gameOver && !viewing && piece.pieceType[0] === playerColor,
-            squareStyles: viewing
-              ? reviewStyles(history[viewPly - 1])
-              : { ...squareStyles(game, selected, premove, isPlayersTurn), ...lessonHighlights },
+            squareStyles: withFog(
+              viewing
+                ? reviewStyles(history[viewPly - 1])
+                : {
+                    ...squareStyles(game, selected, premove, isPlayersTurn),
+                    ...lessonHighlights,
+                    ...(playerInCheck ? checkStyle(game, playerColor) : {}),
+                  },
+              visible,
+            ),
             arrows: viewing ? [] : lessonArrows,
             animationDurationInMs: 200,
           }}
@@ -388,7 +435,9 @@ export default function Game({ bot, startColor, timed = true, lesson = null, onR
               ? viewingText(history, viewPly)
               : inLesson
                 ? `Lesson with ${bot.name}`
-                : statusText(game, result, playerColor, bot)}
+                : playerInCheck && isPlayersTurn
+                  ? '⚠️ Your king is in check!'
+                  : statusText(game, result, playerColor, bot)}
           </p>
           <CapturedPieces color={playerColor} captured={captured[playerColor]} advantage={advantage(playerColor)} />
         </div>
@@ -424,7 +473,12 @@ export default function Game({ bot, startColor, timed = true, lesson = null, onR
         </button>
       )}
 
-      <MoveList history={history} currentPly={shownPly} onSelect={(ply) => setViewPly(ply >= plyCount ? null : ply)} />
+      <MoveList
+        history={history}
+        currentPly={shownPly}
+        hiddenColor={fogActive ? botColor : null}
+        onSelect={(ply) => setViewPly(ply >= plyCount ? null : ply)}
+      />
 
       {confirming === 'resign' && (
         <ConfirmDialog
@@ -518,14 +572,15 @@ function statusText(game, result, playerColor, bot) {
 
 // The moves so far. Each move can be clicked to view the position after it.
 // `currentPly` is the position being shown (number of moves from the start).
-function MoveList({ history, currentPly, onSelect }) {
+// Moves by `hiddenColor` are shown as "?" (the opponent's moves in Fog of War).
+function MoveList({ history, currentPly, hiddenColor, onSelect }) {
   if (history.length === 0) return null
   const rows = []
   for (let i = 0; i < history.length; i += 2) rows.push(i)
   const moveButton = (ply) =>
     history[ply - 1] && (
       <button className={ply === currentPly ? 'current' : ''} onClick={() => onSelect(ply)}>
-        {history[ply - 1].san}
+        {history[ply - 1].color === hiddenColor ? '?' : history[ply - 1].san}
       </button>
     )
   return (
@@ -551,4 +606,35 @@ function viewingText(history, ply) {
   if (ply === 0) return 'Viewing the start position'
   const number = Math.ceil(ply / 2)
   return `Viewing ${number}${ply % 2 === 1 ? '.' : '...'} ${history[ply - 1].san}`
+}
+
+// Fog of War: the pieces the player can see, in the form the board expects
+// ({ e4: { pieceType: 'wP' }, ... }). Enemy pieces on hidden squares are left out.
+function fogPosition(fen, playerColor, visible) {
+  const position = {}
+  for (const piece of new FogGame(fen).board().flat()) {
+    if (!piece) continue
+    if (piece.color === playerColor || visible.has(piece.square)) {
+      position[piece.square] = { pieceType: piece.color + piece.type.toUpperCase() }
+    }
+  }
+  return position
+}
+
+// Greys out every square that isn't in `visible` (if there is fog), on top of other styles.
+function withFog(styles, visible) {
+  if (!visible) return styles
+  const fogged = { ...styles }
+  for (const file of 'abcdefgh') {
+    for (let rank = 1; rank <= 8; rank++) {
+      if (!visible.has(file + rank)) fogged[file + rank] = FOG_STYLE
+    }
+  }
+  return fogged
+}
+
+// A red glow on the player's king when it's attacked (the Fog of War check warning).
+function checkStyle(game, color) {
+  const king = game.findPiece({ type: 'k', color })[0]
+  return king ? { [king]: { background: 'radial-gradient(circle, #e53935 30%, transparent 75%)' } } : {}
 }

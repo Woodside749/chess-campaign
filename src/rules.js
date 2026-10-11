@@ -3,6 +3,11 @@
 // The result of a finished game from the player's point of view, or null if the
 // game is still going. `outcome` is 'win', 'loss' or 'draw'.
 export function boardResult(game, playerColor) {
+  // Fog of War: the game is won by capturing the king.
+  if (game.winner) {
+    const playerWon = game.winner === playerColor
+    return { outcome: playerWon ? 'win' : 'loss', reason: playerWon ? 'You captured the king!' : 'Your king was captured.' }
+  }
   if (game.isCheckmate()) {
     const playerWon = game.turn() !== playerColor
     return { outcome: playerWon ? 'win' : 'loss', reason: 'Checkmate.' }

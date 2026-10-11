@@ -56,6 +56,8 @@ export async function chooseBotMove(game, bot, timeLeftMs, engine = getEngine())
 
   const settings = botSettings(bot)
   const candidates = await engine.analyse(game.fen(), { depth: settings.depth, multiPv: settings.candidates })
+  // Safety net: if Stockfish has no suggestions, play any legal move rather than get stuck.
+  if (candidates.length === 0) return pickRandom(legalMoves).san
   const bestScore = candidates[0].score
   // Under time pressure the bot also accepts worse moves.
   const tolerance = settings.tolerance * (1 + timePressure(timeLeftMs))
