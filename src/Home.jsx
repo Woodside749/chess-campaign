@@ -1,4 +1,3 @@
-import { Fragment } from 'react'
 import { BOTS } from './bots.js'
 import { EVENTS, isUnlocked } from './career.js'
 import { roundsWon } from './progress.js'
@@ -6,8 +5,8 @@ import Avatar from './Avatar.jsx'
 import Silhouette from './Silhouette.jsx'
 
 // The player's home screen: a horizontal career road, scrolled from left to right.
-// First the title, then the Chess School events (played in order, with arrows between
-// them), then the Amateur Leagues as a grid that can be played in any order.
+// First the title, then the Chess School events (played in order, side by side),
+// then the Amateur Leagues as a grid that can be played in any order.
 export default function Home({ progress, onOpenEvent, onOpenDevMenu }) {
   const wonIn = (eventId) => roundsWon(progress, eventId)
   const school = EVENTS.filter((event) => event.section === 'school')
@@ -43,16 +42,11 @@ export default function Home({ progress, onOpenEvent, onOpenDevMenu }) {
           Chess School
         </h2>
         <div className="stage-row">
-          {school.map((event, i) => (
-            <Fragment key={event.id}>
-              {i > 0 && <Arrow />}
-              <EventCard event={event} won={wonIn(event.id)} onOpen={() => onOpenEvent(event)} />
-            </Fragment>
+          {school.map((event) => (
+            <EventCard key={event.id} event={event} won={wonIn(event.id)} onOpen={() => onOpenEvent(event)} />
           ))}
         </div>
       </section>
-
-      <Arrow />
 
       <section className="stage" aria-labelledby="leagues-title">
         <h2 id="leagues-title" className="section-title">
@@ -72,14 +66,6 @@ export default function Home({ progress, onOpenEvent, onOpenDevMenu }) {
         </div>
       </section>
     </main>
-  )
-}
-
-function Arrow() {
-  return (
-    <div className="stage-arrow" aria-hidden="true">
-      →
-    </div>
   )
 }
 

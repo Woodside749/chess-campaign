@@ -568,7 +568,7 @@
   min-height: 100vh;
   display: flex;
   align-items: center;
-  gap: 40px;
+  gap: 32px;
   padding: 48px;
   overflow-x: auto;
 }
@@ -620,17 +620,11 @@
   text-transform: none;
 }
 
-/* The arrows between events that are played in order. */
+/* The Chess School events side by side, in the order they are played. */
 .stage-row {
   display: flex;
   align-items: center;
   gap: 16px;
-}
-
-.stage-arrow {
-  flex: none;
-  font-size: 28px;
-  color: var(--muted);
 }
 
 /* Big cards for the Chess School events. */
@@ -773,11 +767,6 @@
   .stage-row {
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .stage-arrow {
-    align-self: center;
-    transform: rotate(90deg);
   }
 
   .event-card {
