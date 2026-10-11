@@ -2,6 +2,7 @@ import { BOTS } from './bots.js'
 import { EVENTS } from './career.js'
 import { roundsWon } from './progress.js'
 import Avatar from './Avatar.jsx'
+import Silhouette from './Silhouette.jsx'
 
 // The player's home screen: the game's title, and the career events as a row of cards.
 export default function Home({ progress, onOpenEvent, onOpenDevMenu }) {
@@ -52,14 +53,19 @@ function Opponent({ bot }) {
 }
 
 // The tournament's opponents as a row of avatars, and how far the player has got.
+// Opponents of rounds not reached yet are shown as silhouettes.
 function TournamentSummary({ event, won }) {
   const total = event.rounds.length
   return (
     <div className="event-opponent">
       <div className="avatar-stack">
-        {event.rounds.map((round) => (
-          <Avatar key={round.opponent} bot={BOTS[round.opponent]} size={40} />
-        ))}
+        {event.rounds.map((round, i) =>
+          i <= won ? (
+            <Avatar key={round.opponent} bot={BOTS[round.opponent]} size={40} />
+          ) : (
+            <Silhouette key={round.opponent} size={40} />
+          ),
+        )}
       </div>
       <div className="bot-bio">
         {won >= total ? '🏆 Champion' : won === 0 ? `${total} rounds` : `${won} of ${total} rounds won`}

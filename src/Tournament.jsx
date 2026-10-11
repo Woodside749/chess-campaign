@@ -1,6 +1,7 @@
 import { BOTS } from './bots.js'
 import Avatar from './Avatar.jsx'
 import Bracket from './Bracket.jsx'
+import Silhouette from './Silhouette.jsx'
 
 // A tournament: the bracket on the left, and the player's rounds on the right.
 // A round unlocks when the round before it is won, and any unlocked round can be replayed.
@@ -34,10 +35,17 @@ export default function Tournament({ event, roundsWon, onPlayRound, onBack }) {
                   {won && <span className="round-won"> ✓ Won</span>}
                 </div>
                 <div className="round-opponent">
-                  <Avatar bot={bot} size={36} />
+                  {/* Opponents stay hidden until the round unlocks, like in a real tournament. */}
+                  {locked ? <Silhouette size={36} /> : <Avatar bot={bot} size={36} />}
                   <div>
                     <div className="opponent-name">
-                      {bot.name} <span className="rating">({bot.rating})</span>
+                      {locked ? (
+                        'Opponent not decided yet'
+                      ) : (
+                        <>
+                          {bot.name} <span className="rating">({bot.rating})</span>
+                        </>
+                      )}
                     </div>
                     <div className="bot-bio">You play {round.color === 'w' ? 'White' : 'Black'} · 10 min</div>
                   </div>

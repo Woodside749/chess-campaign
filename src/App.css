@@ -852,6 +852,22 @@
   color: var(--muted);
 }
 
+/* An opponent whose identity isn't revealed yet */
+
+.avatar.silhouette {
+  place-items: end center;
+  background: #55524c;
+  overflow: hidden;
+}
+
+/* The figure sits at the bottom of the circle, like a portrait. */
+.avatar.silhouette svg {
+  display: block;
+  width: 80%;
+  height: 80%;
+  fill: #141414;
+}
+
 /* Tournament card on the home screen: the opponents' avatars side by side */
 
 .avatar-stack {
