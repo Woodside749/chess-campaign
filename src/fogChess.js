@@ -335,7 +335,8 @@ function sanFor(move, allMoves) {
 }
 
 // The squares `color` can see in the position: where its pieces stand, every square
-// they can move to (including captures), and the square right in front of each pawn.
+// they can move to (including captures), and for each pawn the square right in front
+// of it and both forward diagonals (the squares it attacks, even if they're empty).
 export function visibleSquares(game, color) {
   const visible = new Set()
   for (const row of game.board()) {
@@ -343,8 +344,11 @@ export function visibleSquares(game, color) {
       if (!piece || piece.color !== color) continue
       visible.add(piece.square)
       if (piece.type === 'p') {
-        const ahead = squareAt(fileOf(piece.square), rankOf(piece.square) + (color === 'w' ? 1 : -1))
-        if (ahead) visible.add(ahead)
+        const nextRank = rankOf(piece.square) + (color === 'w' ? 1 : -1)
+        for (const df of [-1, 0, 1]) {
+          const square = squareAt(fileOf(piece.square) + df, nextRank)
+          if (square) visible.add(square)
+        }
       }
     }
   }
