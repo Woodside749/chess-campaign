@@ -64,7 +64,7 @@ export const LESSONS = {
       highlight: ['g1', 'g8'],
     },
     {
-      text: "Two more rules you'll meet: a pawn that reaches the far side becomes a queen, rook, bishop or knight, your choice. And a game can end in a draw, for example when neither side can win. That's everything! Now let's play a real game from here. Good luck!",
+      text: "A few more rules you'll meet: a pawn that reaches the far side becomes a queen, rook, bishop or knight, your choice. If an enemy pawn jumps two squares and lands right beside your pawn, you may capture it as if it had moved only one square. That's called en passant, and you can only do it straight away. And a game can end in a draw, for example when neither side can win. That's everything! Now let's play a real game from here. Good luck!",
       button: 'Start playing',
     },
   ],
