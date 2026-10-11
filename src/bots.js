@@ -6,8 +6,7 @@
 //   looks ahead and how much worse than the best move it will play (see botStrength.js).
 //   Measured with `npm run calibrate`: 0 is about 380, 0.1 about 520, 0.2 about 600,
 //   0.3 about 740, 0.4 about 900, 0.5 about 1100, 0.6 about 1260, 0.7 about 1560.
-//   We aim for bots to play about 200 below their rating label, so players can feel
-//   they punch a little above their weight.
+//   We aim for each bot to play at the strength on its rating label.
 // - openings: move lists (in chess notation) the bot plays from memory as White (w) and
 //   as Black (b), as long as the game follows one of them.
 // - style: bonuses (or penalties, if negative) in centipawns (100 = one pawn) for kinds
@@ -27,7 +26,7 @@ export const BOTS = {
     rating: 400,
     group: 'school',
     bio: 'Patient teacher, plays by the textbook principles.',
-    strength: 0,
+    strength: 0.06,
     speed: 1,
     style: { develop: 40, castle: 50, earlyQueen: -40 },
     lines: {
@@ -74,7 +73,7 @@ export const BOTS = {
     rating: 400,
     group: 'school',
     bio: 'Nervous beginner, hangs pieces.',
-    strength: 0,
+    strength: 0.06,
     speed: 1,
     style: { hangs: 150, retreat: 20 },
     lines: {
@@ -121,7 +120,7 @@ export const BOTS = {
     rating: 500,
     group: 'school',
     bio: 'Solid and careful, trades when unsure.',
-    strength: 0.05,
+    strength: 0.17,
     speed: 1.1,
     style: { evenTrade: 60, castle: 40, retreat: 25, quiet: 15 },
     lines: {
@@ -168,7 +167,7 @@ export const BOTS = {
     rating: 550,
     group: 'school',
     bio: 'Attacks early, often too early.',
-    strength: 0.1,
+    strength: 0.19,
     speed: 0.9,
     style: { check: 60, capture: 25, towardKing: 40, earlyQueen: 50, castle: -30 },
     lines: {
@@ -215,7 +214,7 @@ export const BOTS = {
     rating: 600,
     group: 'school',
     bio: 'Your rival. Tricky and competitive.',
-    strength: 0.13,
+    strength: 0.2,
     speed: 1,
     style: { threat: 50, check: 30, capture: 15 },
     lines: {
@@ -262,7 +261,7 @@ export const BOTS = {
     rating: 700,
     group: 'circuit',
     bio: 'Slow and solid, likes closed positions.',
-    strength: 0.2,
+    strength: 0.29,
     speed: 1.3,
     style: { lockPawns: 50, quiet: 25, evenTrade: 15, capture: -15 },
     lines: {
@@ -309,7 +308,7 @@ export const BOTS = {
     rating: 800,
     group: 'circuit',
     bio: 'Trap setter, loves cheap tricks.',
-    strength: 0.21,
+    strength: 0.34,
     speed: 1,
     style: { threat: 70, check: 35 },
     lines: {
@@ -356,7 +355,7 @@ export const BOTS = {
     rating: 850,
     group: 'circuit',
     bio: 'Fast blitz hustler, talks a lot.',
-    strength: 0.23,
+    strength: 0.33,
     speed: 0.45,
     style: { capture: 25, check: 25, towardKing: 20 },
     lines: {
@@ -403,7 +402,7 @@ export const BOTS = {
     rating: 900,
     group: 'circuit',
     bio: 'Opening specialist, always plays the Italian Game.',
-    strength: 0.26,
+    strength: 0.38,
     speed: 1,
     style: { develop: 40, castle: 40 },
     openings: {
@@ -462,7 +461,7 @@ export const BOTS = {
     rating: 1000,
     group: 'circuit',
     bio: 'Endgame grinder, never resigns.',
-    strength: 0.35,
+    strength: 0.42,
     speed: 1.2,
     style: { tradeWhenAhead: 70, kingActivity: 50, evenTrade: 20 },
     lines: {
@@ -509,7 +508,7 @@ export const BOTS = {
     rating: 1100,
     group: 'circuit',
     bio: 'Speed player, dangerous in bullet.',
-    strength: 0.4,
+    strength: 0.51,
     speed: 0.35,
     style: { capture: 20, check: 20 },
     lines: {
@@ -556,7 +555,7 @@ export const BOTS = {
     rating: 1300,
     group: 'circuit',
     bio: 'Amateur champion, only plays gambits.',
-    strength: 0.5,
+    strength: 0.61,
     speed: 1,
     style: { towardKing: 40, check: 40, threat: 30 },
     openings: {
