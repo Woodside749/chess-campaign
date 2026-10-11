@@ -83,6 +83,7 @@
 }
 
 .board {
+  position: relative;
   width: 100%;
   border-radius: 6px;
   overflow: hidden;
@@ -140,6 +141,84 @@
 
 .move-number {
   color: var(--muted);
+}
+
+.moves button {
+  padding: 1px 4px;
+  font: inherit;
+  color: var(--text);
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.moves button:hover {
+  background: var(--border);
+}
+
+.moves button.current {
+  color: white;
+  background: var(--accent);
+}
+
+/* Buttons for stepping back and forward through the moves */
+
+.review-nav {
+  display: flex;
+  gap: 8px;
+}
+
+.review-nav button {
+  flex: 1;
+  padding: 8px 0;
+  font: inherit;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.review-nav button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* Promotion picker, shown over the board */
+
+.promotion-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.promotion-picker {
+  display: flex;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+.promotion-picker button {
+  width: min(18vw, 72px);
+  height: min(18vw, 72px);
+  padding: 6px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.promotion-picker button:hover {
+  border-color: var(--accent);
 }
 
 /* Game-over pop-up */

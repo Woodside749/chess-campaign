@@ -10,6 +10,7 @@ import Avatar from './Avatar.jsx'
 import CapturedPieces from './CapturedPieces.jsx'
 import Clock from './Clock.jsx'
 import GameOverDialog from './GameOverDialog.jsx'
+import PromotionPicker from './PromotionPicker.jsx'
 
 const START_TIME_MS = 10 * 60 * 1000 // 10 minutes each
 
@@ -36,6 +37,11 @@ export default function Game({ bot, startColor, onExit }) {
   const [now, setNow] = useState(() => Date.now())
   const [speech, setSpeech] = useState(() => pickLine(bot, 'start'))
   const [dialogClosed, setDialogClosed] = useState(false)
+  // Which position you are looking at when stepping back through the moves:
+  // a number of moves from the start, or null for the live position.
+  const [viewPly, setViewPly] = useState(null)
+  // A pawn move to the last rank waiting for you to pick a piece, like { from: 'e7', to: 'e8' }.
+  const [pendingPromotion, setPendingPromotion] = useState(null)
   // A move the player has queued while the bot is thinking, like { from: 'e2', to: 'e4' }.
   // It is kept in state (to draw it) and in a ref (so the bot's move code can read it).
   const [premove, setPremoveState] = useState(null)
@@ -65,6 +71,14 @@ export default function Game({ bot, startColor, onExit }) {
   // The bot's time left when its turn began. Only changes when a move is made.
   const botTimeLeft = clock[botColor]
 
+  // Stepping back through the game. While viewing an earlier position the board is
+  // locked: you can look, but not move.
+  const history = game.history({ verbose: true })
+  const plyCount = history.length
+  const viewing = viewPly !== null && viewPly < plyCount
+  const shownPly = viewing ? viewPly : plyCount
+  const shownFen = !viewing ? fen : viewPly === 0 ? history[0].before : history[viewPly - 1].after
+
   const captured = capturedPieces(game)
   const score = materialScore(game) // positive: White is ahead
   const advantage = (color) => (color === 'w' ? score : -score)
@@ -75,6 +89,18 @@ export default function Game({ bot, startColor, onExit }) {
     const timer = setInterval(() => setNow(Date.now()), 100)
     return () => clearInterval(timer)
   }, [clockRunning])
+
+  // The left and right arrow keys step back and forward through the moves.
+  useEffect(() => {
+    function onKey(event) {
+      if (event.key === 'ArrowLeft') setViewPly((v) => Math.max(0, (v ?? plyCount) - 1))
+      else if (event.key === 'ArrowRight') setViewPly((v) => (v === null || v + 1 >= plyCount ? null : v + 1))
+      else return
+      event.preventDefault()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [plyCount])
 
   // Whenever the position changes and it's the bot's turn, let the bot move.
   useEffect(() => {
@@ -108,6 +134,7 @@ export default function Game({ bot, startColor, onExit }) {
       }
 
       if (line) setSpeech(line)
+      setViewPly(null) // jump back to the live position so you see the bot's move
       setFen(game.fen())
     }
     playBotMove()
@@ -118,15 +145,17 @@ export default function Game({ bot, startColor, onExit }) {
   }, [fen, playerColor, botColor, botTimeLeft, game, gameOver, bot])
 
   // Tries to play the player's move. Returns true if it was legal.
-  function tryPlayerMove(from, to) {
-    let move
-    try {
-      // Pawns that reach the last rank always become a queen, for now.
-      move = game.move({ from, to, promotion: 'q' })
-    } catch {
-      return false // chess.js throws on illegal moves
-    }
+  // A pawn reaching the last rank first opens the promotion picker, unless
+  // `promotion` (the chosen piece) is given.
+  function tryPlayerMove(from, to, promotion) {
+    const legal = game.moves({ square: from, verbose: true }).filter((m) => m.to === to)
+    if (legal.length === 0) return false
     setSelected(null)
+    if (legal[0].promotion && !promotion) {
+      setPendingPromotion({ from, to })
+      return true
+    }
+    const move = game.move({ from, to, promotion })
     setClock((c) => pressClock(c, playerColor))
     const line = reactionLine(bot, move, playerColor)
     if (line) setSpeech(line)
@@ -142,25 +171,34 @@ export default function Game({ bot, startColor, onExit }) {
     return true
   }
 
+  // Called with the piece picked in the promotion picker.
+  function choosePromotion(piece) {
+    const { from, to } = pendingPromotion
+    setPendingPromotion(null)
+    if (!gameOver && game.turn() === playerColor) tryPlayerMove(from, to, piece)
+  }
+
   // A move made by dragging or tapping: a real move on your turn, a premove otherwise.
   // We ask `game` whose turn it is right now, because a drag can start during the
   // bot's turn and end after the bot has moved.
   function moveIntent(from, to) {
-    if (gameOver || game.isGameOver()) return false
+    if (gameOver || game.isGameOver() || viewing) return false
     return game.turn() === playerColor ? tryPlayerMove(from, to) : tryPremove(from, to)
   }
 
   function onPieceDrop({ sourceSquare, targetSquare }) {
     if (!targetSquare) return false
-    const isRealMove = game.turn() === playerColor
-    const accepted = moveIntent(sourceSquare, targetSquare)
-    // A premove isn't on the board yet, so the piece snaps back to its square.
-    return accepted && isRealMove
+    const movesBefore = game.history().length
+    moveIntent(sourceSquare, targetSquare)
+    // Keep the piece on its new square only if a move was actually played. A premove,
+    // or a promotion waiting for its piece, isn't on the board yet, so it snaps back.
+    return game.history().length > movesBefore
   }
 
   // Tap-to-move: tap one of your pieces, then tap where it should go.
   // Tapping anywhere else cancels the selection and any premove.
   function onSquareClick({ piece, square }) {
+    if (viewing) return
     if (selected && moveIntent(selected, square)) return
     setPremove(null)
     const isOwnPiece = piece && piece.pieceType[0] === playerColor
@@ -173,6 +211,8 @@ export default function Game({ bot, startColor, onExit }) {
     setGame(fresh)
     setSelected(null)
     setPremove(null)
+    setViewPly(null)
+    setPendingPromotion(null)
     setClock(freshClock())
     setSpeech(pickLine(bot, 'start'))
     setDialogClosed(false)
@@ -203,27 +243,53 @@ export default function Game({ bot, startColor, onExit }) {
       <div className="board">
         <Chessboard
           options={{
-            position: fen,
+            position: shownFen,
             boardOrientation: playerColor === 'w' ? 'white' : 'black',
             onPieceDrop,
             onSquareClick,
             onSquareRightClick: () => setPremove(null),
-            canDragPiece: ({ piece }) => !gameOver && piece.pieceType[0] === playerColor,
-            squareStyles: squareStyles(game, selected, premove, isPlayersTurn),
+            canDragPiece: ({ piece }) => !gameOver && !viewing && piece.pieceType[0] === playerColor,
+            squareStyles: viewing
+              ? reviewStyles(history[viewPly - 1])
+              : squareStyles(game, selected, premove, isPlayersTurn),
             animationDurationInMs: 200,
           }}
         />
+        {pendingPromotion && !gameOver && (
+          <PromotionPicker color={playerColor} onChoose={choosePromotion} onCancel={() => setPendingPromotion(null)} />
+        )}
       </div>
 
       <div className="player-bar">
         <div className="player-info">
-          <p className="status">{statusText(game, result, playerColor, bot)}</p>
+          <p className="status">
+            {viewing ? viewingText(history, viewPly) : statusText(game, result, playerColor, bot)}
+          </p>
           <CapturedPieces color={playerColor} captured={captured[playerColor]} advantage={advantage(playerColor)} />
         </div>
         <Clock ms={timeLeft[playerColor]} active={clockRunning && turn === playerColor} />
       </div>
 
-      <MoveList history={game.history()} />
+      <div className="review-nav">
+        <button aria-label="First move" onClick={() => setViewPly(0)} disabled={shownPly === 0}>
+          «
+        </button>
+        <button aria-label="Previous move" onClick={() => setViewPly(Math.max(0, shownPly - 1))} disabled={shownPly === 0}>
+          ‹
+        </button>
+        <button
+          aria-label="Next move"
+          onClick={() => setViewPly(shownPly + 1 >= plyCount ? null : shownPly + 1)}
+          disabled={!viewing}
+        >
+          ›
+        </button>
+        <button aria-label="Latest move" onClick={() => setViewPly(null)} disabled={!viewing}>
+          »
+        </button>
+      </div>
+
+      <MoveList history={history} currentPly={shownPly} onSelect={(ply) => setViewPly(ply >= plyCount ? null : ply)} />
 
       {result && !dialogClosed && (
         <GameOverDialog
@@ -296,19 +362,39 @@ function statusText(game, result, playerColor, bot) {
   return game.inCheck() ? `${whose}. Check!` : whose
 }
 
-function MoveList({ history }) {
+// The moves so far. Each move can be clicked to view the position after it.
+// `currentPly` is the position being shown (number of moves from the start).
+function MoveList({ history, currentPly, onSelect }) {
+  if (history.length === 0) return null
   const rows = []
-  for (let i = 0; i < history.length; i += 2) {
-    rows.push({ number: i / 2 + 1, white: history[i], black: history[i + 1] })
-  }
-  if (rows.length === 0) return null
+  for (let i = 0; i < history.length; i += 2) rows.push(i)
+  const moveButton = (ply) =>
+    history[ply - 1] && (
+      <button className={ply === currentPly ? 'current' : ''} onClick={() => onSelect(ply)}>
+        {history[ply - 1].san}
+      </button>
+    )
   return (
     <ol className="moves">
-      {rows.map((row) => (
-        <li key={row.number}>
-          <span className="move-number">{row.number}.</span> {row.white} {row.black}
+      {rows.map((i) => (
+        <li key={i}>
+          <span className="move-number">{i / 2 + 1}.</span> {moveButton(i + 1)} {moveButton(i + 2)}
         </li>
       ))}
     </ol>
   )
+}
+
+// Highlights the move that led to the position being viewed.
+function reviewStyles(lastMove) {
+  if (!lastMove) return {}
+  const highlight = { background: 'rgba(255, 213, 79, 0.45)' }
+  return { [lastMove.from]: highlight, [lastMove.to]: highlight }
+}
+
+// For example "Viewing 12... Nc6", or "Viewing the start position".
+function viewingText(history, ply) {
+  if (ply === 0) return 'Viewing the start position'
+  const number = Math.ceil(ply / 2)
+  return `Viewing ${number}${ply % 2 === 1 ? '.' : '...'} ${history[ply - 1].san}`
 }
