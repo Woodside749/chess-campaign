@@ -14,15 +14,14 @@ import GameOverDialog from './GameOverDialog.jsx'
 const START_TIME_MS = 10 * 60 * 1000 // 10 minutes each
 
 // Clock state: time left for each side when its turn began, and when the current
-// turn began. `turnStart` is null until White's first move, so the clocks start then.
-const freshClock = () => ({ w: START_TIME_MS, b: START_TIME_MS, turnStart: null })
+// turn began. White's clock starts running as soon as the game starts.
+const freshClock = () => ({ w: START_TIME_MS, b: START_TIME_MS, turnStart: Date.now() })
 
 // Returns the clock after `color` has moved: their thinking time is subtracted
 // and the other side's clock starts running.
 function pressClock(clock, color) {
   const now = Date.now()
-  const spent = clock.turnStart === null ? 0 : now - clock.turnStart
-  return { ...clock, [color]: clock[color] - spent, turnStart: now }
+  return { ...clock, [color]: clock[color] - (now - clock.turnStart), turnStart: now }
 }
 
 // The game screen: games against `bot`, starting with the player as `startColor` ('w' or 'b').
@@ -31,7 +30,7 @@ export default function Game({ bot, startColor, onExit }) {
   // position that we keep in React state, so the screen re-draws after every move.
   const [game, setGame] = useState(() => new Chess())
   const [fen, setFen] = useState(game.fen())
-  const [playerColor, setPlayerColor] = useState(startColor)
+  const playerColor = startColor
   const [selected, setSelected] = useState(null)
   const [clock, setClock] = useState(freshClock)
   const [now, setNow] = useState(() => Date.now())
@@ -51,7 +50,7 @@ export default function Game({ bot, startColor, onExit }) {
 
   // Time left on each clock right now. Only the side to move is losing time.
   const finishedOnBoard = boardResult(game, playerColor)
-  const elapsed = clock.turnStart !== null && !finishedOnBoard ? Math.max(0, now - clock.turnStart) : 0
+  const elapsed = finishedOnBoard ? 0 : Math.max(0, now - clock.turnStart)
   const timeLeft = {
     w: clock.w - (turn === 'w' ? elapsed : 0),
     b: clock.b - (turn === 'b' ? elapsed : 0),
@@ -60,7 +59,7 @@ export default function Game({ bot, startColor, onExit }) {
   // The game is over by checkmate/draw on the board, or because a clock hit zero.
   const result = finishedOnBoard ?? (timeLeft[turn] <= 0 ? timeoutResult(game, turn, playerColor) : null)
   const gameOver = result !== null
-  const clockRunning = clock.turnStart !== null && !gameOver
+  const clockRunning = !gameOver
   const isPlayersTurn = turn === playerColor && !gameOver
   const botThinking = turn === botColor && !gameOver
   // The bot's time left when its turn began. Only changes when a move is made.
@@ -168,10 +167,10 @@ export default function Game({ bot, startColor, onExit }) {
     setSelected(isOwnPiece && !gameOver ? square : null)
   }
 
-  function newGame(color) {
+  // Starts a new game against the same bot, with the same colour.
+  function newGame() {
     const fresh = new Chess()
     setGame(fresh)
-    setPlayerColor(color)
     setSelected(null)
     setPremove(null)
     setClock(freshClock())
@@ -224,11 +223,6 @@ export default function Game({ bot, startColor, onExit }) {
         <Clock ms={timeLeft[playerColor]} active={clockRunning && turn === playerColor} />
       </div>
 
-      <div className="buttons">
-        <button onClick={() => newGame('w')}>New game as White</button>
-        <button onClick={() => newGame('b')}>New game as Black</button>
-      </div>
-
       <MoveList history={game.history()} />
 
       {result && !dialogClosed && (
@@ -236,7 +230,7 @@ export default function Game({ bot, startColor, onExit }) {
           result={result}
           bot={bot}
           botLine={botLine}
-          onTryAgain={() => newGame(playerColor)}
+          onTryAgain={newGame}
           onClose={() => setDialogClosed(true)}
           onMenu={onExit}
         />
