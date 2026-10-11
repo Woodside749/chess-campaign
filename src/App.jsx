@@ -25,6 +25,7 @@ export default function App() {
 
   // An event card on the home screen: a tournament opens its bracket, anything else starts a game.
   function openEvent(event) {
+    if (event.comingSoon) return
     if (event.type === 'tournament') {
       setScreen(event.id)
       return
@@ -39,7 +40,15 @@ export default function App() {
 
   function playTournamentRound(event, round) {
     const { opponent, color } = event.rounds[round]
-    setMatch({ bot: BOTS[opponent], color, timed: event.timed, lesson: null, tournament: { event, round } })
+    setMatch({
+      bot: BOTS[opponent],
+      color,
+      timed: event.timed,
+      minutes: event.minutes,
+      variant: event.variant ?? null,
+      lesson: null,
+      tournament: { event, round },
+    })
   }
 
   // Called by the game when it ends. Winning a tournament round is saved.
@@ -57,6 +66,8 @@ export default function App() {
         bot={match.bot}
         startColor={match.color}
         timed={match.timed}
+        minutes={match.minutes}
+        variant={match.variant}
         lesson={match.lesson}
         onResult={handleResult}
         exitLabel={match.tournament ? 'Back to bracket' : 'Back to menu'}

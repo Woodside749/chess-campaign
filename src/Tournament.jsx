@@ -21,7 +21,7 @@ export default function Tournament({ event, roundsWon, onPlayRound, onBack }) {
         <h1>{event.title}</h1>
         <p className="event-description">{event.description}</p>
 
-        {champion && <p className="champion-banner">🏆 You are the school champion!</p>}
+        {champion && <p className="champion-banner">🏆 {event.championText}</p>}
 
         <ol className="round-list">
           {event.rounds.map((round, i) => {
@@ -47,7 +47,9 @@ export default function Tournament({ event, roundsWon, onPlayRound, onBack }) {
                         </>
                       )}
                     </div>
-                    <div className="bot-bio">You play {round.color === 'w' ? 'White' : 'Black'} · 10 min</div>
+                    <div className="bot-bio">
+                      You play {round.color === 'w' ? 'White' : 'Black'} · {event.minutes} min
+                    </div>
                   </div>
                 </div>
                 {locked ? (
