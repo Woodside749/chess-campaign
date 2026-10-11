@@ -15,7 +15,9 @@
 // A tournament (type: 'tournament') is a knockout bracket:
 // - minutes: the clock for each game.
 // - championText: shown when the player wins the whole tournament.
-// - bracket: the first-round pairings, top to bottom. 'you' is the player.
+// - bracket: the first-round pairings, top to bottom. 'you' is the player. Neighbouring
+//   matches meet in the next round, so put the player where their opponents will come
+//   from. Varying where the player starts makes tournaments feel less scripted.
 // - rounds: the player's matches: the round's name, the opponent and the player's colour.
 // - ranking: decides matches between other players: whoever is listed first wins.
 //   It is set up so the player meets the opponents listed in `rounds`.
@@ -44,10 +46,10 @@ export const EVENTS = [
     minutes: 10,
     championText: 'You are the school champion!',
     bracket: [
-      ['you', 'lukas'],
       ['mei', 'diego'],
-      ['jonas', 'oskar'],
+      ['lukas', 'you'],
       ['priya', 'elif'],
+      ['oskar', 'jonas'],
     ],
     rounds: [
       { name: 'Round 1', opponent: 'lukas', color: 'w' },
@@ -76,10 +78,10 @@ export const EVENTS = [
     minutes: 10,
     championText: 'You won the Fog of War Cup!',
     bracket: [
-      ['you', 'priya'],
-      ['liam', 'mei'],
-      ['ana', 'jonas'],
       ['fatima', 'sofia'],
+      ['jonas', 'ana'],
+      ['mei', 'liam'],
+      ['priya', 'you'],
     ],
     rounds: [
       { name: 'Round 1', opponent: 'priya', color: 'w' },
