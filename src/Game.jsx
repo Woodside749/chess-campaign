@@ -3,7 +3,7 @@ import { Chess } from 'chess.js'
 import { Chessboard } from 'react-chessboard'
 import { pickLine } from './bots.js'
 import { chooseBotMove, thinkTimeMs } from './botBrain.js'
-import { FogGame, visibleSquares } from './fogChess.js'
+import { visibleSquares } from './fogChess.js'
 import { chooseFogMove, createFogMemory } from './fogBot.js'
 import { capturedPieces, materialScore } from './material.js'
 import { premoveTargets } from './premove.js'
@@ -24,9 +24,6 @@ const freshClock = (minutes) => {
   const ms = minutes ? minutes * 60 * 1000 : START_TIME_MS
   return { w: ms, b: ms, turnStart: Date.now() }
 }
-
-// A new game: normal chess (chess.js), or Fog of War with its own rules (fogChess.js).
-const newChessGame = (variant) => (variant === 'fog' ? new FogGame() : new Chess())
 
 // What a hidden square looks like in Fog of War.
 const FOG_STYLE = { background: '#4a4844', boxShadow: 'inset 0 0 0 1px rgba(0, 0, 0, 0.15)' }
@@ -55,9 +52,10 @@ export default function Game({
   exitLabel,
   onExit,
 }) {
-  // chess.js (or FogGame) holds the real game (rules, history). `fen` is a text snapshot
-  // of the position that we keep in React state, so the screen re-draws after every move.
-  const [game, setGame] = useState(() => newChessGame(variant))
+  // chess.js holds the real game (rules, history), also in Fog of War, which only hides
+  // squares. `fen` is a text snapshot of the position that we keep in React state, so
+  // the screen re-draws after every move.
+  const [game, setGame] = useState(() => new Chess())
   const fog = variant === 'fog'
   // In Fog of War, the bot's memory of where it last saw the player's pieces.
   const fogMemoryRef = useRef(null)
@@ -125,8 +123,8 @@ export default function Game({
   // The bot's time left when its turn began. Only changes when a move is made.
   // Without clocks, the bot thinks as if it had a fresh 10 minutes.
   const botTimeLeft = timed ? clock[botColor] : START_TIME_MS
-  // Fog of War: the player is told when their king is attacked, but not by what.
-  const playerInCheck = fog && !gameOver && game.kingAttacked(playerColor)
+  // Fog of War: the player is told when they are in check, but not by what.
+  const playerInCheck = fog && !gameOver && turn === playerColor && game.inCheck()
 
   // Stepping back through the game. While viewing an earlier position the board is
   // locked: you can look, but not move.
@@ -139,7 +137,7 @@ export default function Game({
   // Fog of War: while the game is on, the player only sees the squares their pieces can
   // see (also when stepping back through the moves). When it ends, everything is revealed.
   const fogActive = fog && !gameOver
-  const visible = fogActive ? visibleSquares(new FogGame(shownFen), playerColor) : null
+  const visible = fogActive ? visibleSquares(shownFen, playerColor) : null
   const boardPosition = fogActive ? fogPosition(shownFen, playerColor, visible) : shownFen
 
   const captured = capturedPieces(game)
@@ -338,7 +336,7 @@ export default function Game({
 
   // Starts a new game against the same bot, with the same colour.
   function newGame() {
-    const fresh = newChessGame(variant)
+    const fresh = new Chess()
     fogMemoryRef.current = null
     setGame(fresh)
     setSelected(null)
@@ -412,11 +410,7 @@ export default function Game({
             squareStyles: withFog(
               viewing
                 ? reviewStyles(history[viewPly - 1])
-                : {
-                    ...squareStyles(game, selected, premove, isPlayersTurn),
-                    ...lessonHighlights,
-                    ...(playerInCheck ? checkStyle(game, playerColor) : {}),
-                  },
+                : { ...squareStyles(game, selected, premove, isPlayersTurn), ...lessonHighlights },
               visible,
             ),
             arrows: viewing ? [] : lessonArrows,
@@ -435,7 +429,7 @@ export default function Game({
               ? viewingText(history, viewPly)
               : inLesson
                 ? `Lesson with ${bot.name}`
-                : playerInCheck && isPlayersTurn
+                : playerInCheck
                   ? '⚠️ Your king is in check!'
                   : statusText(game, result, playerColor, bot)}
           </p>
@@ -612,7 +606,7 @@ function viewingText(history, ply) {
 // ({ e4: { pieceType: 'wP' }, ... }). Enemy pieces on hidden squares are left out.
 function fogPosition(fen, playerColor, visible) {
   const position = {}
-  for (const piece of new FogGame(fen).board().flat()) {
+  for (const piece of new Chess(fen).board().flat()) {
     if (!piece) continue
     if (piece.color === playerColor || visible.has(piece.square)) {
       position[piece.square] = { pieceType: piece.color + piece.type.toUpperCase() }
@@ -631,10 +625,4 @@ function withFog(styles, visible) {
     }
   }
   return fogged
-}
-
-// A red glow on the player's king when it's attacked (the Fog of War check warning).
-function checkStyle(game, color) {
-  const king = game.findPiece({ type: 'k', color })[0]
-  return king ? { [king]: { background: 'radial-gradient(circle, #e53935 30%, transparent 75%)' } } : {}
 }

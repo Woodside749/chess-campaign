@@ -2,10 +2,10 @@
 // memory of where it last saw the opponent's pieces. From that it builds the board
 // it *believes* is on the table, and picks a move there with its normal brain
 // (Stockfish, personality and strength, see botBrain.js). The move is then played
-// on the real board, if it's possible there.
+// on the real board, if it's legal there. The rules are normal chess.
 import { Chess } from 'chess.js'
 import { chooseBotMove } from './botBrain.js'
-import { FogGame, visibleSquares } from './fogChess.js'
+import { visibleSquares } from './fogChess.js'
 
 const FILES = 'abcdefgh'
 const pickRandom = (list) => list[Math.floor(Math.random() * list.length)]
@@ -16,7 +16,7 @@ const distance = (a, b) =>
 export function createFogMemory(game, botColor) {
   const startFen = game.history({ verbose: true })[0]?.before ?? game.fen()
   const pieces = {}
-  for (const piece of new FogGame(startFen).board().flat()) {
+  for (const piece of new Chess(startFen).board().flat()) {
     if (piece && piece.color !== botColor) pieces[piece.square] = { type: piece.type, color: piece.color }
   }
   return { pieces, lastKingSquare: Object.keys(pieces).find((sq) => pieces[sq].type === 'k') }
@@ -27,7 +27,7 @@ export function createFogMemory(game, botColor) {
 // where it was remembered, so it forgets the nearest hidden piece of the same kind.
 // (Otherwise it could "remember" nine pawns, which confuses Stockfish.)
 export function updateFogMemory(memory, game, botColor) {
-  const visible = visibleSquares(game, botColor)
+  const visible = visibleSquares(game.fen(), botColor)
   const seen = []
   for (const square of visible) {
     const piece = game.get(square)
@@ -53,24 +53,20 @@ export function updateFogMemory(memory, game, botColor) {
 // Picks the bot's move in a Fog of War game. Returns { from, to, promotion }.
 export async function chooseFogMove(game, bot, timeLeftMs, memory, engine) {
   const botColor = game.turn()
-  const realMoves = game.moves({ verbose: true })
+  const realMoves = game.moves({ verbose: true }) // only legal moves, so check can't be ignored
   const asMove = (m) => ({ from: m.from, to: m.to, promotion: m.promotion })
-
-  // If the bot can see the opponent's king and take it, it always does: that wins.
-  const kingCapture = realMoves.find((m) => m.captured === 'k')
-  if (kingCapture) return asMove(kingCapture)
 
   const visible = updateFogMemory(memory, game, botColor)
   const believed = believedGame(game, botColor, memory, visible)
   if (!believed || believed.moves().length === 0) return asMove(pickRandom(realMoves))
 
-  // The bot is told when its king is attacked, but not by what. If the attacker is
-  // hidden (so the believed board doesn't show the check), it moves the king to a
-  // square it believes is safe.
+  // The bot knows when it's in check, but not always from where. If the attacker is
+  // hidden (so the believed board doesn't show the check), it plays a legal move,
+  // preferring a king move to a square it believes is safe.
   const theirColor = botColor === 'w' ? 'b' : 'w'
-  if (game.kingAttacked(botColor) && !believed.inCheck()) {
+  if (game.inCheck() && !believed.inCheck()) {
     const safeKingMoves = realMoves.filter((m) => m.piece === 'k' && !believed.isAttacked(m.to, theirColor))
-    if (safeKingMoves.length > 0) return asMove(pickRandom(safeKingMoves))
+    return asMove(pickRandom(safeKingMoves.length > 0 ? safeKingMoves : realMoves))
   }
 
   // Otherwise the normal brain chooses on the believed board. Opening books are left

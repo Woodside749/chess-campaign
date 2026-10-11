@@ -70,7 +70,7 @@ export const EVENTS = [
     icon: '🌫️',
     title: 'Fog of War Cup',
     place: 'Amateur League',
-    description: 'You only see the squares your pieces can reach. Capture the enemy king to win.',
+    description: 'You only see the squares your pieces can reach. Otherwise normal chess rules apply.',
     requires: { event: 'school-tournament' },
     timed: true,
     minutes: 10,
