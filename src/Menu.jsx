@@ -5,6 +5,7 @@ import Avatar from './Avatar.jsx'
 const GROUPS = [
   { id: 'school', title: 'Chess School' },
   { id: 'circuit', title: 'Amateur circuit' },
+  { id: 'advanced', title: 'Advanced' },
 ]
 
 const COLOR_CHOICES = [
