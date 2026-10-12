@@ -46,6 +46,13 @@ export function premoveTargets(game, square) {
     case 'q':
       slide([...STRAIGHT, ...DIAGONAL])
       break
+    // Fairy pieces: a normal piece that can also jump like a knight.
+    case 'a':
+    case 'c':
+    case 'z':
+      slide({ a: DIAGONAL, c: STRAIGHT, z: [...STRAIGHT, ...DIAGONAL] }[piece.type])
+      for (const [df, dr] of KNIGHT_JUMPS) add(file + df, rank + dr)
+      break
     case 'k': {
       for (const [df, dr] of [...STRAIGHT, ...DIAGONAL]) add(file + df, rank + dr)
       // Castling, if the king is still on its starting square.

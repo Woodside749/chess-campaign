@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { BOTS } from './bots.js'
 import { EVENTS } from './career.js'
 import { LESSONS } from './lessons.js'
+import { loadFairy } from './fairy/loadFairy.js'
+import { isFairyVariant } from './fairy/variants.js'
 import { clearProgress, loadProgress, roundsWon, saveProgress, withRoundWon } from './progress.js'
 import Home from './Home.jsx'
 import Menu from './Menu.jsx'
@@ -38,14 +40,17 @@ export default function App() {
     })
   }
 
-  function playTournamentRound(event, round) {
+  async function playTournamentRound(event, round) {
     const { opponent, color } = event.rounds[round]
+    const variant = event.rounds[round].variant ?? event.variant ?? null
+    // Fairy chess needs its rules library loaded before the game can start.
+    if (isFairyVariant(variant)) await loadFairy()
     setMatch({
       bot: BOTS[opponent],
       color,
       timed: event.timed,
       minutes: event.minutes,
-      variant: event.variant ?? null,
+      variant,
       lesson: null,
       tournament: { event, round },
     })

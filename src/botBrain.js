@@ -79,6 +79,7 @@ export async function chooseBotMove(game, bot, timeLeftMs, engine = getEngine())
 
 // Adds up the bot's bonuses for the traits this move has.
 export function styleBonus(game, move, bot) {
+  if (!bot.style || Object.keys(bot.style).length === 0) return 0
   const traits = moveTraits(game, move)
   let bonus = 0
   for (const [trait, value] of Object.entries(bot.style)) {

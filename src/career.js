@@ -18,7 +18,8 @@
 // - bracket: the first-round pairings, top to bottom. 'you' is the player. Neighbouring
 //   matches meet in the next round, so put the player where their opponents will come
 //   from. Varying where the player starts makes tournaments feel less scripted.
-// - rounds: the player's matches: the round's name, the opponent and the player's colour.
+// - rounds: the player's matches: the round's name, the opponent and the player's colour,
+//   and optionally a `variant` for just that round (otherwise the event's variant).
 // - ranking: decides matches between other players: whoever is listed first wins.
 //   It is set up so the player meets the opponents listed in `rounds`.
 // - classmates: players who only appear in the bracket and are never played.
@@ -118,14 +119,31 @@ export const EVENTS = [
     classmates: {},
   },
   {
-    id: 'bullet-dash',
+    id: 'fairy-cup',
     section: 'leagues',
-    comingSoon: true,
-    icon: '🚀',
-    title: 'Bullet Dash',
+    type: 'tournament',
+    icon: '🧚',
+    title: 'Fairy Chess Cup',
     place: 'Amateur League',
-    description: 'One minute on the clock. Every second counts.',
+    description: 'Every round brings a new piece: the Archbishop, the Chancellor and the Amazon.',
     requires: { event: 'school-tournament' },
+    timed: true,
+    minutes: 10,
+    championText: 'You won the Fairy Chess Cup!',
+    bracket: [
+      ['mei', 'you'],
+      ['jonas', 'fatima'],
+      ['kwame', 'diego'],
+      ['priya', 'liam'],
+    ],
+    // Each round is a different fairy variant (see fairy/variants.js).
+    rounds: [
+      { name: 'Round 1', opponent: 'mei', color: 'w', variant: 'archchess' },
+      { name: 'Semi-final', opponent: 'fatima', color: 'b', variant: 'chancellorchess' },
+      { name: 'Final', opponent: 'kwame', color: 'w', variant: 'amazonchess' },
+    ],
+    ranking: ['kwame', 'fatima', 'liam', 'jonas', 'priya', 'diego', 'mei'],
+    classmates: {},
   },
   {
     id: 'fischer-random-open',

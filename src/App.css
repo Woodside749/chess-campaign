@@ -543,6 +543,17 @@
   color: var(--accent);
 }
 
+.fairy-note .lesson-text {
+  margin: 6px 0 8px;
+  font-size: 15px;
+}
+
+.fairy-legend {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
 .lesson-continue {
   width: 100%;
   padding: 12px;

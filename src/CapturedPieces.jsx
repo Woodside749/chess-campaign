@@ -1,4 +1,4 @@
-import { defaultPieces } from 'react-chessboard'
+import { allPieces } from './fairy/fairyPieces.js'
 
 // Small images of the pieces `color` has captured, plus "+N" if `color` is ahead.
 // `captured` lists piece types like ['p', 'p', 'n'], and `advantage` is how many
@@ -10,7 +10,7 @@ export default function CapturedPieces({ color, captured, advantage }) {
     <div className="captured">
       {captured.map((type, i) => (
         <span key={i} className={`captured-piece${captured[i - 1] === type ? ' stacked' : ''}`}>
-          {defaultPieces[pieceColor + type.toUpperCase()]()}
+          {allPieces[pieceColor + type.toUpperCase()]()}
         </span>
       ))}
       {advantage > 0 && <span className="advantage">+{advantage}</span>}

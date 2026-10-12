@@ -5,6 +5,12 @@ import { pickLine } from './bots.js'
 import { chooseBotMove, thinkTimeMs } from './botBrain.js'
 import { visibleSquares } from './fogChess.js'
 import { chooseFogMove, createFogMemory } from './fogBot.js'
+import { FairyGame } from './fairy/FairyGame.js'
+import { fairyEngineFor } from './fairy/fairyEngine.js'
+import { simpleFairyMove } from './fairy/simpleFairyBot.js'
+import { allPieces } from './fairy/fairyPieces.js'
+import { fairyRules } from './fairy/loadFairy.js'
+import { FAIRY_PIECES, FAIRY_VARIANTS, isFairyVariant } from './fairy/variants.js'
 import { capturedPieces, materialScore } from './material.js'
 import { premoveTargets } from './premove.js'
 import { boardResult, reactionTo, timeoutResult } from './rules.js'
@@ -24,6 +30,10 @@ const freshClock = (minutes) => {
   const ms = minutes ? minutes * 60 * 1000 : START_TIME_MS
   return { w: ms, b: ms, turnStart: Date.now() }
 }
+
+// A new game: a fairy variant (the rules library must already be loaded, see
+// loadFairy.js), or normal chess, which Fog of War also uses.
+const createGame = (variant) => (isFairyVariant(variant) ? new FairyGame(fairyRules(), variant) : new Chess())
 
 // What a hidden square looks like in Fog of War.
 const FOG_STYLE = { background: '#4a4844', boxShadow: 'inset 0 0 0 1px rgba(0, 0, 0, 0.15)' }
@@ -55,8 +65,9 @@ export default function Game({
   // chess.js holds the real game (rules, history), also in Fog of War, which only hides
   // squares. `fen` is a text snapshot of the position that we keep in React state, so
   // the screen re-draws after every move.
-  const [game, setGame] = useState(() => new Chess())
+  const [game, setGame] = useState(() => createGame(variant))
   const fog = variant === 'fog'
+  const fairy = isFairyVariant(variant) ? FAIRY_VARIANTS[variant] : null
   // In Fog of War, the bot's memory of where it last saw the player's pieces.
   const fogMemoryRef = useRef(null)
   const [fen, setFen] = useState(game.fen())
@@ -197,6 +208,17 @@ export default function Game({
       if (fog) {
         fogMemoryRef.current ??= createFogMemory(game, botColor)
         choice = await chooseFogMove(game, bot, botTimeLeft, fogMemoryRef.current)
+      } else if (fairy) {
+        // Fairy chess: Fairy-Stockfish thinks, and the bot's personality bonuses (built for
+        // normal chess) and opening book are left out for now.
+        // If Fairy-Stockfish can't start in this browser, a simple backup brain plays instead.
+        const engine = await fairyEngineFor(variant).catch((error) => {
+          console.warn(`${error.message}; using the simple fairy bot instead.`)
+          return null
+        })
+        choice = engine
+          ? await chooseBotMove(game, { ...bot, style: {}, openings: null }, botTimeLeft, engine)
+          : simpleFairyMove(game, bot)
       } else {
         choice = await chooseBotMove(game, bot, botTimeLeft)
       }
@@ -231,7 +253,7 @@ export default function Game({
     return () => {
       cancelled = true
     }
-  }, [fen, playerColor, botColor, botTimeLeft, game, gameOver, inLesson, bot, fog])
+  }, [fen, playerColor, botColor, botTimeLeft, game, gameOver, inLesson, bot, fog, fairy, variant])
 
   // Tries to play the player's move. Returns true if it was legal.
   // A pawn reaching the last rank first opens the promotion picker, unless
@@ -336,7 +358,7 @@ export default function Game({
 
   // Starts a new game against the same bot, with the same colour.
   function newGame() {
-    const fresh = new Chess()
+    const fresh = createGame(variant)
     fogMemoryRef.current = null
     setGame(fresh)
     setSelected(null)
@@ -386,6 +408,16 @@ export default function Game({
         {timed && <Clock ms={timeLeft[botColor]} active={clockRunning && turn === botColor} />}
       </header>
 
+      {fairy && !inLesson && (
+        <section className="lesson-panel fairy-note">
+          <div className="opponent-name">🧚 {fairy.title}</div>
+          <p className="lesson-text">{fairy.intro}</p>
+          <p className="fairy-legend">
+            The piece with a small knight badge is the {FAIRY_PIECES[fairy.piece].name}.
+          </p>
+        </section>
+      )}
+
       {inLesson && (
         <LessonPanel
           bot={bot}
@@ -402,6 +434,7 @@ export default function Game({
         <Chessboard
           options={{
             position: boardPosition,
+            pieces: allPieces,
             boardOrientation: playerColor === 'w' ? 'white' : 'black',
             onPieceDrop,
             onSquareClick,

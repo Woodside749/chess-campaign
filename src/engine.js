@@ -46,7 +46,8 @@ export class Engine {
   //   [{ uci: 'e2e4', score: 35 }, { uci: 'd2d4', score: 30 }, ...]
   // best first. Scores are in centipawns (100 = one pawn) for the side to move.
   // A forced mate gets a huge score: about +10000 if we mate, -10000 if we get mated.
-  analyse(fen, { depth = 8, multiPv = 5 } = {}) {
+  // `variant` (Fairy-Stockfish only) names a chess variant from variants.ini.
+  analyse(fen, { depth = 8, multiPv = 5, variant } = {}) {
     const search = this.queue.then(async () => {
       const lines = new Map() // multipv number -> latest result for that line
       const collect = (line) => {
@@ -54,6 +55,7 @@ export class Engine {
         if (info) lines.set(info.rank, info)
       }
       this.listeners.add(collect)
+      if (variant) this.send(`setoption name UCI_Variant value ${variant}`)
       this.send('setoption name Skill Level value 20')
       this.send(`setoption name MultiPV value ${multiPv}`)
       this.send(`position fen ${fen}`)

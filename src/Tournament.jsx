@@ -2,6 +2,7 @@ import { BOTS } from './bots.js'
 import Avatar from './Avatar.jsx'
 import Bracket from './Bracket.jsx'
 import Silhouette from './Silhouette.jsx'
+import { FAIRY_VARIANTS } from './fairy/variants.js'
 
 // A tournament: the bracket on the left, and the player's rounds on the right.
 // A round unlocks when the round before it is won, and any unlocked round can be replayed.
@@ -48,6 +49,7 @@ export default function Tournament({ event, roundsWon, onPlayRound, onBack }) {
                       )}
                     </div>
                     <div className="bot-bio">
+                      {round.variant && `${FAIRY_VARIANTS[round.variant].title} · `}
                       You play {round.color === 'w' ? 'White' : 'Black'} · {event.minutes} min
                     </div>
                   </div>
