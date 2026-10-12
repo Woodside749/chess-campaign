@@ -653,6 +653,10 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
+.event-card.locked {
+  opacity: 0.6;
+}
+
 .event-place {
   font-size: 13px;
   font-weight: 600;

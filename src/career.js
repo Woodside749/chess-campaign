@@ -7,8 +7,10 @@
 // - color: the player's colour ('w' or 'b').
 //
 // Every event also has:
-// - section: where it is shown on the home screen ('school' or 'leagues').
-// - requires: (optional) what must be won first, like { event: 'school-tournament' }.
+// - section: where it is shown on the home screen ('school', 'leagues', 'championship'
+//   or 'advanced').
+// - requires: (optional) what must be won first: a whole event, like
+//   { event: 'school-tournament' }, or a number of leagues, like { leagues: 4 }.
 // - comingSoon: (optional) a placeholder for an event that isn't built yet.
 // - variant: (optional) a chess variant, like 'fog' for Fog of War.
 //
@@ -219,11 +221,70 @@ export const EVENTS = [
     ranking: ['kwame', 'fatima', 'liam', 'jonas', 'sofia', 'mei', 'diego'],
     classmates: {},
   },
+
+  // The Amateur tier's championship: open once 4 of the 6 leagues are won (later this
+  // could become a number of stars, as in the design doc). Winning it opens the Advanced tier.
+  {
+    id: 'amateur-super',
+    section: 'championship',
+    type: 'tournament',
+    title: 'Amateur Super Tournament',
+    place: 'Amateur Championship',
+    description: 'A 16-player knockout with the best amateurs. Win four matches, and the final is against the champion, Viktor.',
+    requires: { leagues: 4 },
+    timed: true,
+    minutes: 10,
+    championText: 'You are the Amateur Super Champion! The Advanced tier is open.',
+    bracket: [
+      ['ana', 'lukas'],
+      ['liam', 'rafael'],
+      ['sofia', 'you'],
+      ['kwame', 'ingrid'],
+      ['viktor', 'mei'],
+      ['jonas', 'aisha'],
+      ['fatima', 'mateo'],
+      ['priya', 'diego'],
+    ],
+    rounds: [
+      { name: 'Round of 16', opponent: 'sofia', color: 'w' },
+      { name: 'Quarter-final', opponent: 'kwame', color: 'b' },
+      { name: 'Semi-final', opponent: 'ana', color: 'w' },
+      { name: 'Final', opponent: 'viktor', color: 'b' },
+    ],
+    ranking: ['viktor', 'ana', 'kwame', 'sofia', 'fatima', 'liam', 'jonas', 'priya', 'diego', 'mei', 'ingrid', 'rafael', 'aisha', 'mateo', 'lukas'],
+    // Visiting players who fill the 16 places. They only appear in the bracket.
+    classmates: {
+      ingrid: { id: 'ingrid', name: 'Ingrid Holm', country: 'Denmark', flag: '🇩🇰', color: '#b0605a' },
+      rafael: { id: 'rafael', name: 'Rafael Costa', country: 'Portugal', flag: '🇵🇹', color: '#5a8f6a' },
+      aisha: { id: 'aisha', name: 'Aisha Bello', country: 'Kenya', flag: '🇰🇪', color: '#a0784a' },
+      mateo: { id: 'mateo', name: 'Mateo Ruiz', country: 'Argentina', flag: '🇦🇷', color: '#5a7aa8' },
+    },
+  },
+
+  // The next tier, not built yet.
+  {
+    id: 'advanced-cups',
+    section: 'advanced',
+    comingSoon: true,
+    icon: '🚀',
+    title: 'Advanced Cups',
+    place: 'Advanced',
+    description: 'New opponents from 1200 to 1600, new cups and a new championship.',
+    requires: { event: 'amateur-super' },
+  },
 ]
 
-// Whether an event's requirement is met: the required tournament has been won.
+// Whether an event's requirement is met. `roundsWonIn(id)` tells how many rounds of an
+// event the player has won.
 export function isUnlocked(event, roundsWonIn) {
-  if (!event.requires) return true
-  const required = EVENTS.find((other) => other.id === event.requires.event)
-  return roundsWonIn(required.id) >= required.rounds.length
+  const needs = event.requires
+  if (!needs) return true
+  const wonWhole = (other) => other.rounds && roundsWonIn(other.id) >= other.rounds.length
+  if (needs.leagues) return leaguesWon(roundsWonIn) >= needs.leagues
+  return wonWhole(EVENTS.find((other) => other.id === needs.event))
+}
+
+// How many Amateur leagues the player has won completely.
+export function leaguesWon(roundsWonIn) {
+  return EVENTS.filter((event) => event.section === 'leagues' && event.rounds && roundsWonIn(event.id) >= event.rounds.length).length
 }

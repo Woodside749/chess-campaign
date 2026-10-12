@@ -1,5 +1,5 @@
 import { BOTS } from './bots.js'
-import { EVENTS, isUnlocked } from './career.js'
+import { EVENTS, isUnlocked, leaguesWon } from './career.js'
 import { roundsWon } from './progress.js'
 import Avatar from './Avatar.jsx'
 import Silhouette from './Silhouette.jsx'
@@ -12,6 +12,8 @@ export default function Home({ progress, onOpenEvent, onOpenDevMenu }) {
   const school = EVENTS.filter((event) => event.section === 'school')
   const leagues = EVENTS.filter((event) => event.section === 'leagues')
   const leaguesOpen = leagues.some((event) => isUnlocked(event, wonIn))
+  const championship = EVENTS.filter((event) => event.section === 'championship')
+  const advanced = EVENTS.filter((event) => event.section === 'advanced')
 
   // A normal mouse wheel scrolls up and down; here it scrolls the road sideways instead.
   function scrollSideways(event) {
@@ -65,21 +67,60 @@ export default function Home({ progress, onOpenEvent, onOpenDevMenu }) {
           ))}
         </div>
       </section>
+
+      <section className="stage" aria-labelledby="championship-title">
+        <h2 id="championship-title" className="section-title">
+          Championship
+        </h2>
+        {championship.map((event) => (
+          <EventCard
+            key={event.id}
+            event={event}
+            won={wonIn(event.id)}
+            lockedText={
+              isUnlocked(event, wonIn)
+                ? null
+                : `🔒 Win ${event.requires.leagues} Amateur Leagues to unlock (${leaguesWon(wonIn)} of ${event.requires.leagues} won)`
+            }
+            onOpen={() => onOpenEvent(event)}
+          />
+        ))}
+      </section>
+
+      <section className="stage" aria-labelledby="advanced-title">
+        <h2 id="advanced-title" className="section-title">
+          Advanced
+        </h2>
+        {advanced.map((event) => (
+          <LeagueCard
+            key={event.id}
+            event={event}
+            locked={!isUnlocked(event, wonIn)}
+            won={wonIn(event.id)}
+            onOpen={() => onOpenEvent(event)}
+          />
+        ))}
+      </section>
     </main>
   )
 }
 
-// A big card for the Chess School events.
-function EventCard({ event, won, onOpen }) {
+// A big card for the Chess School events and the championship. `lockedText`, if given,
+// replaces the button and says what must be done first.
+function EventCard({ event, won, lockedText, onOpen }) {
   return (
-    <article className="event-card">
+    <article className={`event-card${lockedText ? ' locked' : ''}`}>
       <div className="event-place">{event.place}</div>
       <h3>{event.title}</h3>
       {event.type === 'tournament' ? <TournamentSummary event={event} won={won} /> : <Opponent bot={BOTS[event.bot]} />}
       <p className="event-description">{event.description}</p>
-      <button className="event-play" onClick={onOpen}>
-        {event.type === 'tournament' ? 'Open bracket' : 'Start'}
-      </button>
+      {lockedText ? (
+        <p className="league-status">{lockedText}</p>
+      ) : (
+        <button className="event-play" onClick={onOpen}>
+          {event.type === 'tournament' ? 'Open bracket' : 'Start'}
+        </button>
+      )}
     </article>
   )
 }

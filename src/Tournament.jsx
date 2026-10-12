@@ -71,8 +71,9 @@ export default function Tournament({ event, roundsWon, onPlayRound, onBack }) {
   )
 }
 
-// "Round 1" -> "round 1", "Semi-final" -> "the semi-final", for "Win ... to unlock".
+// "Round 1" -> "round 1", "Semi-final" -> "the semi-final", "Round of 16" -> "the round
+// of 16", for "Win ... to unlock".
 function unlockName(name) {
   const lower = name.toLowerCase()
-  return lower.startsWith('round') ? lower : `the ${lower}`
+  return /^round \d/.test(lower) ? lower : `the ${lower}`
 }

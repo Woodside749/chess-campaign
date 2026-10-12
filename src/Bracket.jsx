@@ -7,7 +7,12 @@ const BOX_H = 30
 const COL_GAP = 44
 const COL_W = BOX_W + COL_GAP
 const TOP = 34 // room for the column titles
-const COLUMN_TITLES = ['Quarter-finals', 'Semi-finals', 'Final', 'Champion']
+// Column titles, counted from the end: the last round is always the final.
+const ROUND_TITLES_FROM_END = ['Final', 'Semi-finals', 'Quarter-finals', 'Round of 16', 'Round of 32']
+const columnTitles = (roundCount) => [
+  ...Array.from({ length: roundCount }, (_, r) => ROUND_TITLES_FROM_END[roundCount - 1 - r]),
+  'Champion',
+]
 
 // A knockout bracket drawn as an SVG: one column per round, and a champion box at the end.
 export default function Bracket({ event, roundsWon }) {
@@ -29,7 +34,7 @@ export default function Bracket({ event, roundsWon }) {
 
   return (
     <svg className="bracket" viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`${event.title} bracket`}>
-      {COLUMN_TITLES.map((title, r) => (
+      {columnTitles(rounds.length).map((title, r) => (
         <text key={title} className="bracket-title" x={r * COL_W} y={14}>
           {title}
         </text>
