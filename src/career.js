@@ -23,6 +23,9 @@
 // - ranking: decides matches between other players: whoever is listed first wins.
 //   It is set up so the player meets the opponents listed in `rounds`.
 // - classmates: players who only appear in the bracket and are never played.
+//
+// A puzzle league (type: 'trials') is a series of puzzle trials instead, see the
+// Puzzle Trials event below.
 
 export const EVENTS = [
   {
@@ -175,12 +178,19 @@ export const EVENTS = [
   {
     id: 'puzzle-trials',
     section: 'leagues',
-    comingSoon: true,
+    type: 'trials',
     icon: '🧩',
     title: 'Puzzle Trials',
     place: 'Amateur League',
-    description: 'Solve tactics puzzles against the clock.',
+    description: 'Three puzzle trials, from easy to hard. Solve 8 of 10 to pass each one.',
     requires: { event: 'school-tournament' },
+    championText: 'You passed every Puzzle Trial!',
+    // `band` is the difficulty group in src/puzzles/puzzles.json (see scripts/pick-puzzles.py).
+    rounds: [
+      { title: 'Easy trial', band: 'easy', ratings: '600–800', count: 10, needed: 8 },
+      { title: 'Medium trial', band: 'medium', ratings: '800–1100', count: 10, needed: 8 },
+      { title: 'Hard trial', band: 'hard', ratings: '1100–1400', count: 10, needed: 8 },
+    ],
   },
   {
     id: 'king-of-the-hill',

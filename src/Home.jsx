@@ -99,7 +99,7 @@ function LeagueCard({ event, locked, won, onOpen }) {
       <div className="league-footer">
         {playable ? (
           <>
-            {event.type === 'tournament' ? <TournamentProgress event={event} won={won} /> : <span />}
+            {event.rounds ? <TournamentProgress event={event} won={won} /> : <span />}
             <button className="event-play" onClick={onOpen}>
               Open
             </button>

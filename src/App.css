@@ -1019,3 +1019,96 @@
   opacity: 0.4;
   cursor: default;
 }
+
+/* Puzzle Trials: the overview on the left, and the puzzle screen */
+
+.puzzle-intro {
+  max-width: 520px;
+  justify-self: center;
+  padding: 28px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+
+.puzzle-intro-icon {
+  font-size: 44px;
+}
+
+.puzzle-intro h2 {
+  margin: 8px 0 12px;
+}
+
+.puzzle-intro ul {
+  margin: 0 0 16px;
+  padding-left: 20px;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+.puzzle-credit {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.puzzle-credit a {
+  color: var(--accent);
+}
+
+.puzzle-dots {
+  display: flex;
+  gap: 6px;
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+}
+
+.puzzle-dots li {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--border);
+}
+
+.puzzle-dots li.current {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.puzzle-dots li.solved {
+  background: var(--accent);
+}
+
+.puzzle-dots li.missed {
+  background: #d32f2f;
+}
+
+.puzzle-score {
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.puzzle-message.solved {
+  color: var(--accent);
+}
+
+.puzzle-message.missed {
+  color: #d32f2f;
+}
+
+.puzzle-next {
+  margin-top: 4px;
+}
+
+@media (min-width: 900px) {
+  .game-screen > .puzzle-next {
+    grid-area: nav;
+  }
+}
+
+.loading {
+  padding: 48px;
+  text-align: center;
+  color: var(--muted);
+}
