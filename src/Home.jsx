@@ -14,6 +14,7 @@ export default function Home({ progress, onOpenEvent, onOpenDevMenu }) {
   const leaguesOpen = leagues.some((event) => isUnlocked(event, wonIn))
   const championship = EVENTS.filter((event) => event.section === 'championship')
   const advanced = EVENTS.filter((event) => event.section === 'advanced')
+  const advancedOpen = advanced.some((event) => isUnlocked(event, wonIn))
 
   // A normal mouse wheel scrolls up and down; here it scrolls the road sideways instead.
   function scrollSideways(event) {
@@ -89,17 +90,20 @@ export default function Home({ progress, onOpenEvent, onOpenDevMenu }) {
 
       <section className="stage" aria-labelledby="advanced-title">
         <h2 id="advanced-title" className="section-title">
-          Advanced
+          Advanced Leagues
+          {!advancedOpen && <span className="section-lock"> · 🔒 Win the Amateur Super Tournament to unlock</span>}
         </h2>
-        {advanced.map((event) => (
-          <LeagueCard
-            key={event.id}
-            event={event}
-            locked={!isUnlocked(event, wonIn)}
-            won={wonIn(event.id)}
-            onOpen={() => onOpenEvent(event)}
-          />
-        ))}
+        <div className="league-grid">
+          {advanced.map((event) => (
+            <LeagueCard
+              key={event.id}
+              event={event}
+              locked={!isUnlocked(event, wonIn)}
+              won={wonIn(event.id)}
+              onOpen={() => onOpenEvent(event)}
+            />
+          ))}
+        </div>
       </section>
     </main>
   )

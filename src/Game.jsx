@@ -13,7 +13,7 @@ import { fairyRules } from './fairy/loadFairy.js'
 import { FAIRY_PIECES, FAIRY_VARIANTS, isFairyVariant } from './fairy/variants.js'
 import { randomChess960Fen } from './fairy/chess960.js'
 import { getEngine } from './engine.js'
-import { capturedPieces, materialScore } from './material.js'
+import { capturedPieces, materialScore, missingPieces } from './material.js'
 import { premoveTargets } from './premove.js'
 import { boardResult, reactionTo, timeoutResult } from './rules.js'
 import Avatar from './Avatar.jsx'
@@ -145,6 +145,8 @@ export default function Game({
   // The bot's time left when its turn began. Only changes when a move is made.
   // Without clocks, the bot thinks as if it had a fresh 10 minutes.
   const botTimeLeft = timed ? clock[botColor] : START_TIME_MS
+  // How long each clock started with, so bots can pace themselves in fast games.
+  const clockMs = minutes ? minutes * 60 * 1000 : START_TIME_MS
   // Fog of War: the player is told when they are in check, but not by what.
   const playerInCheck = fog && !gameOver && turn === playerColor && game.inCheck()
 
@@ -162,7 +164,7 @@ export default function Game({
   const visible = fogActive ? visibleSquares(shownFen, playerColor) : null
   const boardPosition = fogActive ? fogPosition(shownFen, playerColor, visible) : shownFen
 
-  const captured = capturedPieces(game)
+  const captured = variant === 'atomic' ? missingPieces(game, game.startFen) : capturedPieces(game)
   const score = materialScore(game) // positive: White is ahead
   const advantage = (color) => (color === 'w' ? score : -score)
 
@@ -214,7 +216,7 @@ export default function Game({
 
     async function playBotMove() {
       const started = Date.now()
-      const thinkMs = thinkTimeMs(game, bot, botTimeLeft)
+      const thinkMs = thinkTimeMs(game, bot, botTimeLeft, clockMs)
       let choice
       if (fog) {
         fogMemoryRef.current ??= createFogMemory(game, botColor)
@@ -223,7 +225,7 @@ export default function Game({
         // Fischer Random: normal Stockfish in its Chess960 mode. The bot keeps its
         // personality, but opening books make no sense with a shuffled start.
         const engine = { analyse: (fen, options) => getEngine().analyse(fen, { ...options, chess960: true }) }
-        choice = await chooseBotMove(game, { ...bot, openings: null }, botTimeLeft, engine)
+        choice = await chooseBotMove(game, { ...bot, openings: null }, botTimeLeft, engine, clockMs)
       } else if (fairy) {
         // Fairy chess and King of the Hill: Fairy-Stockfish thinks. Opening books are left
         // out, and so are personality bonuses in variants with new pieces (they were built
@@ -233,10 +235,10 @@ export default function Game({
           console.warn(`${error.message}; using the simple fairy bot instead.`)
           return null
         })
-        const variantBot = { ...bot, openings: null, ...(fairy.customPieces ? { style: {} } : {}) }
-        choice = engine ? await chooseBotMove(game, variantBot, botTimeLeft, engine) : simpleFairyMove(game, bot)
+        const variantBot = { ...bot, openings: null, ...(fairy.noPersonality ? { style: {} } : {}) }
+        choice = engine ? await chooseBotMove(game, variantBot, botTimeLeft, engine, clockMs) : simpleFairyMove(game, bot)
       } else {
-        choice = await chooseBotMove(game, bot, botTimeLeft)
+        choice = await chooseBotMove(game, bot, botTimeLeft, undefined, clockMs)
       }
       // Wait out the rest of the thinking time, so the bot doesn't reply instantly.
       const wait = thinkMs - (Date.now() - started)
@@ -269,7 +271,7 @@ export default function Game({
     return () => {
       cancelled = true
     }
-  }, [fen, playerColor, botColor, botTimeLeft, game, gameOver, inLesson, bot, fog, fairy, variant])
+  }, [fen, playerColor, botColor, botTimeLeft, clockMs, game, gameOver, inLesson, bot, fog, fairy, variant])
 
   // Tries to play the player's move. Returns true if it was legal.
   // A pawn reaching the last rank first opens the promotion picker, unless

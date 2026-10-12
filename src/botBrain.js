@@ -6,7 +6,10 @@ import { botSettings } from './botStrength.js'
 // On average the bot spends this fraction of its remaining time on a move
 // (before its own `speed` is applied). Lower makes bots think longer.
 const TIME_DIVISOR = 70
-// Below this much time left, the bot starts making more mistakes.
+// The clock length these timings are tuned for. Shorter games (blitz, bullet) scale
+// them down, so a 1-minute bot doesn't panic after a few moves.
+const STANDARD_CLOCK_MS = 10 * 60 * 1000
+// With a 10-minute clock, below this much time left the bot starts making more mistakes.
 const TIME_PRESSURE_MS = 60_000
 // How much the blunder chance rises (at most) as the clock approaches zero.
 const MAX_EXTRA_BLUNDER = 0.3
@@ -15,12 +18,15 @@ const randomBetween = (min, max) => min + Math.random() * (max - min)
 const pickRandom = (list) => list[Math.floor(Math.random() * list.length)]
 
 // How long the bot should take for its next move, in milliseconds.
-export function thinkTimeMs(game, bot, timeLeftMs) {
+// `clockMs` is how long each side's clock started with.
+export function thinkTimeMs(game, bot, timeLeftMs, clockMs = STANDARD_CLOCK_MS) {
+  // Quick moves get quicker in fast games (but no less than a fifth as long).
+  const pace = Math.min(1, Math.max(0.2, clockMs / STANDARD_CLOCK_MS))
   const think = (() => {
     // Only one legal move: play it almost straight away.
-    if (game.moves().length === 1) return randomBetween(300, 800)
+    if (game.moves().length === 1) return randomBetween(300, 800) * pace
     // The first few moves are quick, like a human playing a familiar opening.
-    if (game.history().length < 8) return randomBetween(600, 2000)
+    if (game.history().length < 8) return randomBetween(600, 2000) * pace
     // Otherwise a share of the remaining time, made random between 0.4x and 1.6x.
     return (timeLeftMs / TIME_DIVISOR) * randomBetween(0.4, 1.6)
   })()
@@ -29,14 +35,16 @@ export function thinkTimeMs(game, bot, timeLeftMs) {
   return Math.max(200, Math.min(think * bot.speed, timeLeftMs / 3))
 }
 
-// 0 when relaxed, rising to 1 as the clock runs out.
-function timePressure(timeLeftMs) {
-  return Math.max(0, 1 - timeLeftMs / TIME_PRESSURE_MS)
+// 0 when relaxed, rising to 1 as the clock runs out. The pressure starts at a tenth of
+// the clock: after 9 of 10 minutes, or after 54 seconds of a 1-minute game.
+function timePressure(timeLeftMs, clockMs = STANDARD_CLOCK_MS) {
+  const startsAt = TIME_PRESSURE_MS * (clockMs / STANDARD_CLOCK_MS)
+  return Math.max(0, 1 - timeLeftMs / startsAt)
 }
 
 // The bot's chance of a random move, which rises when its clock is low.
-export function blunderChanceNow(bot, timeLeftMs, game) {
-  return botSettings(bot, game).blunderChance + timePressure(timeLeftMs) * MAX_EXTRA_BLUNDER
+export function blunderChanceNow(bot, timeLeftMs, game, clockMs) {
+  return botSettings(bot, game).blunderChance + timePressure(timeLeftMs, clockMs) * MAX_EXTRA_BLUNDER
 }
 
 // Picks the bot's move, in this order:
@@ -45,14 +53,15 @@ export function blunderChanceNow(bot, timeLeftMs, game) {
 // 3. Otherwise: Stockfish suggests its top moves, and the bot picks one using its
 //    personality (style bonuses), a bit of randomness, and how far below the best
 //    move it is willing to go (tolerance).
-export async function chooseBotMove(game, bot, timeLeftMs, engine = getEngine()) {
+// `clockMs` is how long each side's clock started with (for time pressure).
+export async function chooseBotMove(game, bot, timeLeftMs, engine = getEngine(), clockMs = STANDARD_CLOCK_MS) {
   const legalMoves = game.moves({ verbose: true })
   if (legalMoves.length === 1) return legalMoves[0].san
 
   const bookMove = openingBookMove(game, bot)
   if (bookMove) return bookMove
 
-  if (Math.random() < blunderChanceNow(bot, timeLeftMs, game)) return pickRandom(legalMoves).san
+  if (Math.random() < blunderChanceNow(bot, timeLeftMs, game, clockMs)) return pickRandom(legalMoves).san
 
   const settings = botSettings(bot, game)
   const candidates = await engine.analyse(game.fen(), { depth: settings.depth, multiPv: settings.candidates })
@@ -60,7 +69,7 @@ export async function chooseBotMove(game, bot, timeLeftMs, engine = getEngine())
   if (candidates.length === 0) return pickRandom(legalMoves).san
   const bestScore = candidates[0].score
   // Under time pressure the bot also accepts worse moves.
-  const tolerance = settings.tolerance * (1 + timePressure(timeLeftMs))
+  const tolerance = settings.tolerance * (1 + timePressure(timeLeftMs, clockMs))
 
   let choice = null
   let choiceTotal = -Infinity

@@ -15,6 +15,7 @@ export class FairyGame {
     this.is960 = is960
     this.chessBoard = fen ? new ffish.Board(variant, fen, is960) : new ffish.Board(variant)
     this.moveList = []
+    this.startFen = this.chessBoard.fen()
   }
 
   fen() {

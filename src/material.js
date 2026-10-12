@@ -16,6 +16,39 @@ export function capturedPieces(game) {
   return captured
 }
 
+// Atomic chess: explosions destroy pieces without a capture move, so instead count which
+// pieces are gone from the board since the start. (A promoted pawn isn't counted as gone:
+// it became the piece it promoted to.) Same `w`/`b` layout as capturedPieces.
+export function missingPieces(game, startFen) {
+  const count = (fen) => {
+    const counts = { w: {}, b: {} }
+    for (const char of fen.split(' ')[0]) {
+      if (!/[a-z]/i.test(char)) continue
+      const color = char === char.toUpperCase() ? 'w' : 'b'
+      const type = char.toLowerCase()
+      counts[color][type] = (counts[color][type] ?? 0) + 1
+    }
+    return counts
+  }
+  const expected = count(startFen)
+  for (const move of game.history({ verbose: true })) {
+    if (!move.promotion) continue
+    expected[move.color].p -= 1
+    expected[move.color][move.promotion] = (expected[move.color][move.promotion] ?? 0) + 1
+  }
+  const now = count(game.fen())
+  const order = 'pnbracqz'
+  const missing = { w: [], b: [] }
+  // White's captures are the black pieces that are gone, and the other way round.
+  for (const [taker, owner] of [['w', 'b'], ['b', 'w']]) {
+    for (const type of order) {
+      const gone = (expected[owner][type] ?? 0) - (now[owner][type] ?? 0)
+      for (let i = 0; i < gone; i++) missing[taker].push(type)
+    }
+  }
+  return missing
+}
+
 // White's material minus Black's, counted from the pieces on the board.
 // Positive means White is ahead, negative means Black is ahead.
 export function materialScore(game) {
