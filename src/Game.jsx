@@ -11,6 +11,8 @@ import { simpleFairyMove } from './fairy/simpleFairyBot.js'
 import { allPieces } from './fairy/fairyPieces.js'
 import { fairyRules } from './fairy/loadFairy.js'
 import { FAIRY_PIECES, FAIRY_VARIANTS, isFairyVariant } from './fairy/variants.js'
+import { randomChess960Fen } from './fairy/chess960.js'
+import { getEngine } from './engine.js'
 import { capturedPieces, materialScore } from './material.js'
 import { premoveTargets } from './premove.js'
 import { boardResult, reactionTo, timeoutResult } from './rules.js'
@@ -31,9 +33,15 @@ const freshClock = (minutes) => {
   return { w: ms, b: ms, turnStart: Date.now() }
 }
 
-// A new game: a fairy variant (the rules library must already be loaded, see
-// loadFairy.js), or normal chess, which Fog of War also uses.
-const createGame = (variant) => (isFairyVariant(variant) ? new FairyGame(fairyRules(), variant) : new Chess())
+// A new game: normal chess (which Fog of War also uses), or a variant that runs on the
+// rules library (it must already be loaded, see loadFairy.js): fairy chess, or Fischer
+// Random with a new random starting position every game.
+function createGame(variant) {
+  if (!isFairyVariant(variant)) return new Chess()
+  const info = FAIRY_VARIANTS[variant]
+  if (info.chess960) return new FairyGame(fairyRules(), info.rules, randomChess960Fen(), true)
+  return new FairyGame(fairyRules(), variant)
+}
 
 // What a hidden square looks like in Fog of War.
 const FOG_STYLE = { background: '#4a4844', boxShadow: 'inset 0 0 0 1px rgba(0, 0, 0, 0.15)' }
@@ -208,6 +216,11 @@ export default function Game({
       if (fog) {
         fogMemoryRef.current ??= createFogMemory(game, botColor)
         choice = await chooseFogMove(game, bot, botTimeLeft, fogMemoryRef.current)
+      } else if (fairy?.chess960) {
+        // Fischer Random: normal Stockfish in its Chess960 mode. The bot keeps its
+        // personality, but opening books make no sense with a shuffled start.
+        const engine = { analyse: (fen, options) => getEngine().analyse(fen, { ...options, chess960: true }) }
+        choice = await chooseBotMove(game, { ...bot, openings: null }, botTimeLeft, engine)
       } else if (fairy) {
         // Fairy chess: Fairy-Stockfish thinks, and the bot's personality bonuses (built for
         // normal chess) and opening book are left out for now.
@@ -259,8 +272,13 @@ export default function Game({
   // A pawn reaching the last rank first opens the promotion picker, unless
   // `promotion` (the chosen piece) is given.
   function tryPlayerMove(from, to, promotion) {
-    const legal = game.moves({ square: from, verbose: true }).filter((m) => m.to === to)
+    // In Fischer Random you castle by moving the king onto its rook. Dropping it on the
+    // castling square (g1/c1) also works, unless a normal king move goes there.
+    const pieceMoves = game.moves({ square: from, verbose: true })
+    let legal = pieceMoves.filter((m) => m.to === to)
+    if (legal.length === 0) legal = pieceMoves.filter((m) => m.castleTo === to)
     if (legal.length === 0) return false
+    to = legal[0].to
     // In a lesson, only the move the coach asked for is allowed.
     if (inLesson && (replyPending || from + to !== step.move)) {
       setLessonHint(step.move ? "That's a legal move, but let's practise this one first." : 'Press Continue first.')
@@ -410,11 +428,15 @@ export default function Game({
 
       {fairy && !inLesson && (
         <section className="lesson-panel fairy-note">
-          <div className="opponent-name">🧚 {fairy.title}</div>
+          <div className="opponent-name">
+            {fairy.chess960 ? '🎲' : '🧚'} {fairy.title}
+          </div>
           <p className="lesson-text">{fairy.intro}</p>
-          <p className="fairy-legend">
-            The piece with a small knight badge is the {FAIRY_PIECES[fairy.piece].name}.
-          </p>
+          {fairy.piece && (
+            <p className="fairy-legend">
+              The piece with a small knight badge is the {FAIRY_PIECES[fairy.piece].name}.
+            </p>
+          )}
         </section>
       )}
 
@@ -567,8 +589,9 @@ function squareStyles(game, selected, premove, isPlayersTurn) {
     styles[selected] = { background: 'rgba(100, 181, 246, 0.6)' }
     if (isPlayersTurn) {
       for (const move of game.moves({ square: selected, verbose: true })) {
+        // A ring around pieces you can take, or the rook you can castle with (Fischer Random).
         styles[move.to] = {
-          background: move.captured
+          background: move.captured || (move.castleTo && move.castleTo !== move.to)
             ? 'radial-gradient(circle, transparent 58%, rgba(0, 0, 0, 0.25) 60%)'
             : 'radial-gradient(circle, rgba(0, 0, 0, 0.25) 22%, transparent 24%)',
         }

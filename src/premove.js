@@ -55,9 +55,9 @@ export function premoveTargets(game, square) {
       break
     case 'k': {
       for (const [df, dr] of [...STRAIGHT, ...DIAGONAL]) add(file + df, rank + dr)
-      // Castling, if the king is still on its starting square.
+      // Castling, if the king is on its home rank (in Fischer Random it can start on any file).
       const homeRank = piece.color === 'w' ? 1 : 8
-      if (square === 'e' + homeRank) targets.push('g' + homeRank, 'c' + homeRank)
+      if (rank === homeRank) targets.push('g' + homeRank, 'c' + homeRank)
       break
     }
   }

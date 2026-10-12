@@ -1,6 +1,6 @@
-// The fairy chess variants the game knows, and their new pieces. The rules themselves
-// are in variants.ini, which both the rules library (ffish) and the engine
-// (Fairy-Stockfish) read. Here is what the game shows to players.
+// The chess variants that run on the rules library (ffish): our fairy chess variants with
+// new pieces, and Fischer Random. The fairy rules themselves are in variants.ini, which
+// both ffish and the engine (Fairy-Stockfish) read. Here is what the game shows to players.
 //
 // Each fairy piece is drawn as its base piece (`looksLike`) with a small knight badge,
 // because all of ours are a normal piece that can also jump like a knight.
@@ -27,6 +27,16 @@ export const FAIRY_VARIANTS = {
     title: 'Amazon chess',
     piece: 'z',
     intro: 'Your queen has become an Amazon: she moves like a queen and a knight. The strongest piece in the game!',
+  },
+  // Fischer Random uses normal pieces, so normal Stockfish thinks for the bots and they
+  // keep their personalities. `rules` is the ffish variant, `chess960` turns on its
+  // shuffled starts and castling rules.
+  chess960: {
+    title: 'Fischer Random',
+    rules: 'chess',
+    chess960: true,
+    intro:
+      'The back-row pieces start in a shuffled order, so no opening theory helps. To castle, move your king onto the rook you want to castle with.',
   },
 }
 

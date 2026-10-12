@@ -12,7 +12,7 @@ export function moveTraits(game, move) {
   const me = move.color
   const them = me === 'w' ? 'b' : 'w'
   const moveNumber = game.moveNumber()
-  const after = new Chess(move.after)
+  const after = chessPosition(move.after)
   const enemyKing = game.findPiece({ type: 'k', color: them })[0]
   const myMaterial = materialScore(game) * (me === 'w' ? 1 : -1) // positive: I'm ahead
   const backRank = me === 'w' ? '1' : '8'
@@ -46,6 +46,17 @@ export function moveTraits(game, move) {
     hangs: leavesPieceHanging(after, me, them),
     // In an endgame, walking the king towards the middle of the board.
     kingActivity: move.piece === 'k' && isEndgame(game) && distance(move.to, 'e4') < distance(move.from, 'e4'),
+  }
+}
+
+// A chess.js board for a position. Fischer Random positions can have castling rights
+// chess.js doesn't accept, and castling doesn't matter for the traits, so drop it then.
+function chessPosition(fen) {
+  try {
+    return new Chess(fen)
+  } catch {
+    const [placement, turn, , , halfmove, fullmove] = fen.split(' ')
+    return new Chess(`${placement} ${turn} - - ${halfmove} ${fullmove}`)
   }
 }
 

@@ -47,7 +47,9 @@ export class Engine {
   // best first. Scores are in centipawns (100 = one pawn) for the side to move.
   // A forced mate gets a huge score: about +10000 if we mate, -10000 if we get mated.
   // `variant` (Fairy-Stockfish only) names a chess variant from variants.ini.
-  analyse(fen, { depth = 8, multiPv = 5, variant } = {}) {
+  // `chess960` turns on Fischer Random castling rules. It is set on every analysis,
+  // because the engine is shared and the previous game may have used another setting.
+  analyse(fen, { depth = 8, multiPv = 5, variant, chess960 = false } = {}) {
     const search = this.queue.then(async () => {
       const lines = new Map() // multipv number -> latest result for that line
       const collect = (line) => {
@@ -56,6 +58,7 @@ export class Engine {
       }
       this.listeners.add(collect)
       if (variant) this.send(`setoption name UCI_Variant value ${variant}`)
+      this.send(`setoption name UCI_Chess960 value ${chess960}`)
       this.send('setoption name Skill Level value 20')
       this.send(`setoption name MultiPV value ${multiPv}`)
       this.send(`position fen ${fen}`)

@@ -20,7 +20,7 @@ export function simpleFairyMove(game, bot) {
   let bestScore = -Infinity
   for (const move of moves) {
     let score = PIECE_VALUES[move.captured] ?? 0
-    const after = new ffish.Board(game.variantName, move.after)
+    const after = new ffish.Board(game.variantName, move.after, game.is960)
     const replies = after.legalMoves() ? after.legalMoves().split(' ') : []
     if (replies.length === 0 && after.isCheck()) score += 1000 // checkmate
     // If the opponent can take the piece that just moved, count it as lost.
