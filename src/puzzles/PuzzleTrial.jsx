@@ -198,13 +198,21 @@ export default function PuzzleTrial({ trial, onFinish, onExit }) {
             <p className="reason">
               You solved {solvedCount} of {puzzles.length} puzzles{passed ? '.' : `; you need ${trial.needed}.`}
             </p>
+            {/* After passing, going back to the trials is the green button. */}
             <div className="dialog-buttons">
-              <button className="primary" onClick={restart} autoFocus>
+              {passed && (
+                <button className="primary" onClick={onExit} autoFocus>
+                  Back to trials
+                </button>
+              )}
+              <button className={passed ? 'secondary' : 'primary'} onClick={restart} autoFocus={!passed}>
                 {passed ? 'Play again' : 'Try again'}
               </button>
-              <button className="secondary" onClick={onExit}>
-                Back to trials
-              </button>
+              {!passed && (
+                <button className="secondary" onClick={onExit}>
+                  Back to trials
+                </button>
+              )}
             </div>
           </div>
         </div>

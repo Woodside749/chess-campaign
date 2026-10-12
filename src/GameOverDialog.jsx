@@ -11,17 +11,33 @@ export default function GameOverDialog({ result, bot, botLine, onTryAgain, onClo
           “{botLine}”
           <cite>{bot.name}</cite>
         </blockquote>
-        <div className="dialog-buttons">
-          <button className="primary" onClick={onTryAgain} autoFocus>
-            {result.outcome === 'loss' ? 'Try again' : 'Play again'}
-          </button>
-          <button className="secondary" onClick={onClose}>
-            View board
-          </button>
-          <button className="secondary" onClick={onMenu}>
-            {menuLabel}
-          </button>
-        </div>
+        {/* After a win you usually want to move on, so the way back (for example to the
+            bracket) is the green button. After a loss or draw, trying again is. */}
+        {result.outcome === 'win' ? (
+          <div className="dialog-buttons">
+            <button className="primary" onClick={onMenu} autoFocus>
+              {menuLabel}
+            </button>
+            <button className="secondary" onClick={onTryAgain}>
+              Play again
+            </button>
+            <button className="secondary" onClick={onClose}>
+              View board
+            </button>
+          </div>
+        ) : (
+          <div className="dialog-buttons">
+            <button className="primary" onClick={onTryAgain} autoFocus>
+              {result.outcome === 'loss' ? 'Try again' : 'Play again'}
+            </button>
+            <button className="secondary" onClick={onClose}>
+              View board
+            </button>
+            <button className="secondary" onClick={onMenu}>
+              {menuLabel}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

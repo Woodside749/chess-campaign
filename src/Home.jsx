@@ -70,7 +70,7 @@ export default function Home({ progress, onOpenEvent, onOpenDevMenu }) {
 
       <section className="stage" aria-labelledby="championship-title">
         <h2 id="championship-title" className="section-title">
-          Championship
+          Amateur Championship
         </h2>
         {championship.map((event) => (
           <EventCard
