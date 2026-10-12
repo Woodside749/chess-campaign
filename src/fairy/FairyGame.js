@@ -62,8 +62,10 @@ export class FairyGame {
       const clean = input.replace(/[+#?!]/g, '')
       uci = ucis.find((u) => u === input || this.sanOf(u).replace(/[+#]/g, '') === clean)
     } else {
-      const base = input.from + input.to
-      uci = ucis.find((u) => u === base + (input.promotion ?? '')) ?? ucis.find((u) => u === base + 'q')
+      // Like chess.js, `promotion` only matters if the move really is a promotion
+      // (premoves always say 'q', just in case a pawn reaches the last rank).
+      const matching = ucis.filter((u) => u.slice(0, 4) === input.from + input.to)
+      uci = matching.length === 1 ? matching[0] : matching.find((u) => u[4] === (input.promotion ?? 'q'))
     }
     if (!uci) throw new Error(`Invalid move: ${JSON.stringify(input)}`)
     const move = this.describe(uci)
