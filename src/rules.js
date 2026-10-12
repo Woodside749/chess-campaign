@@ -3,6 +3,13 @@
 // The result of a finished game from the player's point of view, or null if the
 // game is still going. `outcome` is 'win', 'loss' or 'draw'.
 export function boardResult(game, playerColor) {
+  // A variant's own way of winning, like King of the Hill (see FairyGame.specialWinner).
+  const specialWinner = game.specialWinner?.()
+  if (specialWinner) {
+    const playerWon = specialWinner === playerColor
+    const reason = game.winText?.[playerWon ? 'win' : 'loss'] ?? 'The game was won by the variant rules.'
+    return { outcome: playerWon ? 'win' : 'loss', reason }
+  }
   if (game.isCheckmate()) {
     const playerWon = game.turn() !== playerColor
     return { outcome: playerWon ? 'win' : 'loss', reason: 'Checkmate.' }

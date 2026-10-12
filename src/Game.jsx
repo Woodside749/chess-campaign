@@ -39,8 +39,11 @@ const freshClock = (minutes) => {
 function createGame(variant) {
   if (!isFairyVariant(variant)) return new Chess()
   const info = FAIRY_VARIANTS[variant]
-  if (info.chess960) return new FairyGame(fairyRules(), info.rules, randomChess960Fen(), true)
-  return new FairyGame(fairyRules(), variant)
+  const game = info.chess960
+    ? new FairyGame(fairyRules(), info.rules, randomChess960Fen(), true)
+    : new FairyGame(fairyRules(), info.rules ?? variant)
+  game.winText = info.winText // how to describe a special win, like reaching the hill
+  return game
 }
 
 // What a hidden square looks like in Fog of War.
@@ -222,16 +225,16 @@ export default function Game({
         const engine = { analyse: (fen, options) => getEngine().analyse(fen, { ...options, chess960: true }) }
         choice = await chooseBotMove(game, { ...bot, openings: null }, botTimeLeft, engine)
       } else if (fairy) {
-        // Fairy chess: Fairy-Stockfish thinks, and the bot's personality bonuses (built for
-        // normal chess) and opening book are left out for now.
-        // If Fairy-Stockfish can't start in this browser, a simple backup brain plays instead.
-        const engine = await fairyEngineFor(variant).catch((error) => {
+        // Fairy chess and King of the Hill: Fairy-Stockfish thinks. Opening books are left
+        // out, and so are personality bonuses in variants with new pieces (they were built
+        // for normal pieces). If Fairy-Stockfish can't start in this browser, a simple
+        // backup brain plays instead.
+        const engine = await fairyEngineFor(fairy.rules ?? variant).catch((error) => {
           console.warn(`${error.message}; using the simple fairy bot instead.`)
           return null
         })
-        choice = engine
-          ? await chooseBotMove(game, { ...bot, style: {}, openings: null }, botTimeLeft, engine)
-          : simpleFairyMove(game, bot)
+        const variantBot = { ...bot, openings: null, ...(fairy.customPieces ? { style: {} } : {}) }
+        choice = engine ? await chooseBotMove(game, variantBot, botTimeLeft, engine) : simpleFairyMove(game, bot)
       } else {
         choice = await chooseBotMove(game, bot, botTimeLeft)
       }
@@ -403,6 +406,10 @@ export default function Game({
     step?.move && !replyPending
       ? [{ startSquare: step.move.slice(0, 2), endSquare: step.move.slice(2, 4), color: 'rgba(56, 158, 72, 0.85)' }]
       : []
+  // King of the Hill: the centre squares to reach are tinted gold.
+  const hillStyles = Object.fromEntries(
+    (fairy?.hill ?? []).map((square) => [square, { background: 'rgba(230, 180, 40, 0.45)' }]),
+  )
   const lessonHighlights = Object.fromEntries(
     (step?.highlight ?? []).map((square) => [square, { background: 'rgba(76, 175, 80, 0.45)' }]),
   )
@@ -429,7 +436,7 @@ export default function Game({
       {fairy && !inLesson && (
         <section className="lesson-panel fairy-note">
           <div className="opponent-name">
-            {fairy.chess960 ? '🎲' : '🧚'} {fairy.title}
+            {fairy.icon} {fairy.title}
           </div>
           <p className="lesson-text">{fairy.intro}</p>
           {fairy.piece && (
@@ -465,7 +472,7 @@ export default function Game({
             squareStyles: withFog(
               viewing
                 ? reviewStyles(history[viewPly - 1])
-                : { ...squareStyles(game, selected, premove, isPlayersTurn), ...lessonHighlights },
+                : { ...hillStyles, ...squareStyles(game, selected, premove, isPlayersTurn), ...lessonHighlights },
               visible,
             ),
             arrows: viewing ? [] : lessonArrows,

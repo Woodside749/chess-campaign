@@ -1,7 +1,8 @@
 // A simple backup brain for fairy chess, used only if Fairy-Stockfish can't start in
 // this browser (it needs a "cross-origin isolated" page, see vite.config.js). It looks
-// one move ahead plus the opponent's replies: it plays mate in one, likes winning
-// material, and avoids leaving the moved piece where it can be taken. Much weaker than
+// one move ahead plus the opponent's replies: it plays a winning move (mate in one, or a
+// variant win like reaching the hill), likes winning material, and avoids leaving the
+// moved piece where it can be taken. Much weaker than
 // the real engine, but the game stays playable.
 import { PIECE_VALUES } from '../material.js'
 import { botSettings } from '../botStrength.js'
@@ -22,7 +23,8 @@ export function simpleFairyMove(game, bot) {
     let score = PIECE_VALUES[move.captured] ?? 0
     const after = new ffish.Board(game.variantName, move.after, game.is960)
     const replies = after.legalMoves() ? after.legalMoves().split(' ') : []
-    if (replies.length === 0 && after.isCheck()) score += 1000 // checkmate
+    const won = after.isGameOver(true) && after.result(true) === (move.color === 'w' ? '1-0' : '0-1')
+    if (won) score += 1000 // checkmate, or a variant win like reaching the hill
     // If the opponent can take the piece that just moved, count it as lost.
     if (replies.some((reply) => reply.slice(2, 4) === move.to)) score -= PIECE_VALUES[move.promotion ?? move.piece]
     after.delete()

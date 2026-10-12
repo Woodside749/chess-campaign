@@ -185,12 +185,29 @@ export const EVENTS = [
   {
     id: 'king-of-the-hill',
     section: 'leagues',
-    comingSoon: true,
+    type: 'tournament',
+    variant: 'kingofthehill',
     icon: '⛰️',
     title: 'King of the Hill',
     place: 'Amateur League',
     description: 'Win by checkmate, or by walking your king to one of the four centre squares.',
     requires: { event: 'school-tournament' },
+    timed: true,
+    minutes: 10,
+    championText: 'You are the King of the Hill!',
+    bracket: [
+      ['kwame', 'mei'],
+      ['jonas', 'liam'],
+      ['diego', 'you'],
+      ['fatima', 'sofia'],
+    ],
+    rounds: [
+      { name: 'Round 1', opponent: 'diego', color: 'b' },
+      { name: 'Semi-final', opponent: 'fatima', color: 'w' },
+      { name: 'Final', opponent: 'kwame', color: 'b' },
+    ],
+    ranking: ['kwame', 'fatima', 'liam', 'jonas', 'sofia', 'mei', 'diego'],
+    classmates: {},
   },
 ]
 

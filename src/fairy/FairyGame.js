@@ -95,7 +95,14 @@ export class FairyGame {
     return this.legalUcis().length === 0 && this.inCheck()
   }
   isStalemate() {
-    return this.legalUcis().length === 0 && !this.inCheck()
+    return this.legalUcis().length === 0 && !this.inCheck() && !this.specialWinner()
+  }
+  // A win by the variant's own rule instead of checkmate, like a king reaching the centre
+  // in King of the Hill: 'w' or 'b' for the winner, or null.
+  specialWinner() {
+    if (!this.chessBoard.isGameOver(true) || this.isCheckmate()) return null
+    const result = this.chessBoard.result(true)
+    return result === '1-0' ? 'w' : result === '0-1' ? 'b' : null
   }
   isInsufficientMaterial() {
     return this.chessBoard.isInsufficientMaterial()
@@ -104,7 +111,7 @@ export class FairyGame {
     return this.isDraw() && !this.isStalemate() && !this.isInsufficientMaterial() && this.chessBoard.halfmoveClock() < 100
   }
   isDraw() {
-    return this.isGameOver() && !this.isCheckmate()
+    return this.isGameOver() && !this.isCheckmate() && !this.specialWinner()
   }
 
   // Frees the rules library's memory for this game (it lives outside JavaScript).
