@@ -5,7 +5,7 @@ import { pickLine } from './bots.js'
 import { chooseBotMove, thinkTimeMs } from './botBrain.js'
 import { visibleSquares } from './fogChess.js'
 import { chooseFogMove, createFogMemory } from './fogBot.js'
-import { FairyGame } from './fairy/FairyGame.js'
+import { FairyGame, boardFen } from './fairy/FairyGame.js'
 import { fairyEngineFor } from './fairy/fairyEngine.js'
 import { simpleFairyMove } from './fairy/simpleFairyBot.js'
 import { allPieces } from './fairy/fairyPieces.js'
@@ -13,6 +13,8 @@ import { fairyRules } from './fairy/loadFairy.js'
 import { FAIRY_PIECES, FAIRY_VARIANTS, isFairyVariant } from './fairy/variants.js'
 import { randomChess960Fen } from './fairy/chess960.js'
 import { ChaosGame } from './chaos/ChaosGame.js'
+import { rollPiece } from './chaos/diceRules.js'
+import Pocket from './Pocket.jsx'
 import { chooseChaosMove } from './chaos/chaosBot.js'
 import ChaosPanel from './chaos/ChaosPanel.jsx'
 import { getEngine } from './engine.js'
@@ -44,6 +46,7 @@ const freshClock = (minutes) => {
 // position every game.
 function createGame(variant) {
   if (variant === 'chaos') return new ChaosGame()
+  if (variant === 'dice') return new ChaosGame(undefined, rollPiece)
   if (!isFairyVariant(variant)) return new Chess()
   const info = FAIRY_VARIANTS[variant]
   const game = info.chess960
@@ -52,6 +55,9 @@ function createGame(variant) {
   game.winText = info.winText // how to describe a special win, like reaching the hill
   return game
 }
+
+// A FEN the board drawing understands: without a Crazyhouse pocket or promoted-piece marks.
+const drawableFen = (fen) => [boardFen(fen), ...fen.split(' ').slice(1)].join(' ')
 
 // What a hidden square looks like in Fog of War.
 const FOG_STYLE = { background: '#4a4844', boxShadow: 'inset 0 0 0 1px rgba(0, 0, 0, 0.15)' }
@@ -91,7 +97,8 @@ export default function Game({
   // the screen re-draws after every move.
   const [game, setGame] = useState(() => createGame(variant))
   const fog = variant === 'fog'
-  const chaos = variant === 'chaos'
+  // Chaos Chess and Dice Chess both roll a rule each turn (see chaos/).
+  const chaos = variant === 'chaos' || variant === 'dice'
   const fairy = isFairyVariant(variant) ? FAIRY_VARIANTS[variant] : null
   // In Fog of War, the bot's memory of where it last saw the player's pieces.
   const fogMemoryRef = useRef(null)
@@ -177,7 +184,7 @@ export default function Game({
   // see (also when stepping back through the moves). When it ends, everything is revealed.
   const fogActive = fog && !gameOver
   const visible = fogActive ? visibleSquares(shownFen, playerColor) : null
-  const boardPosition = fogActive ? fogPosition(shownFen, playerColor, visible) : shownFen
+  const boardPosition = drawableFen(fogActive ? fogPosition(shownFen, playerColor, visible) : shownFen)
 
   const captured = variant === 'atomic' ? missingPieces(game, game.startFen) : capturedPieces(game)
   const score = materialScore(game) // positive: White is ahead
@@ -378,6 +385,13 @@ export default function Game({
     setSelected(isOwnPiece && !gameOver ? square : null)
   }
 
+  // Crazyhouse: picking up a piece from your pocket. It's "selected" like a square, using
+  // its drop moves' `from` (like "N@"), so tapping a square then drops it there.
+  function selectDrop(type) {
+    const drop = game.moves({ verbose: true }).find((m) => m.drop && m.piece === type)
+    setSelected(drop && selected !== drop.from ? drop.from : null)
+  }
+
   // Developer shortcut: win the game straight away, to test what comes after a win.
   function autoWin() {
     setClock((c) => pressClock(c, game.turn()))
@@ -516,7 +530,11 @@ export default function Game({
             {botThinking && <span className="thinking"> thinking…</span>}
           </div>
           {!inLesson && <div className="speech">“{botLine}”</div>}
-          <CapturedPieces color={botColor} captured={captured[botColor]} advantage={advantage(botColor)} />
+          {fairy?.pockets ? (
+            <Pocket pieces={game.pocket(botColor)} color={botColor} />
+          ) : (
+            <CapturedPieces color={botColor} captured={captured[botColor]} advantage={advantage(botColor)} />
+          )}
         </div>
         {timed && <Clock ms={timeLeft[botColor]} active={clockRunning && turn === botColor} />}
       </header>
@@ -541,6 +559,7 @@ export default function Game({
           yourTurn={turn === playerColor}
           botName={bot.name.split(' ')[0]}
           hasPowers={game.moves({ verbose: true }).some((m) => m.special)}
+          dice={variant === 'dice'}
         />
       )}
 
@@ -596,7 +615,16 @@ export default function Game({
                   ? '⚠️ Your king is in check!'
                   : statusText(game, result, playerColor, bot)}
           </p>
-          <CapturedPieces color={playerColor} captured={captured[playerColor]} advantage={advantage(playerColor)} />
+          {fairy?.pockets ? (
+            <Pocket
+              pieces={game.pocket(playerColor)}
+              color={playerColor}
+              onSelect={isPlayersTurn && !viewing ? selectDrop : undefined}
+              selectedType={selected?.[1] === '@' ? selected[0].toLowerCase() : null}
+            />
+          ) : (
+            <CapturedPieces color={playerColor} captured={captured[playerColor]} advantage={advantage(playerColor)} />
+          )}
         </div>
         {timed && <Clock ms={timeLeft[playerColor]} active={clockRunning && turn === playerColor} />}
       </div>

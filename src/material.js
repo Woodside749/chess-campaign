@@ -57,6 +57,9 @@ export function materialScore(game) {
     if (!piece) continue
     score += piece.color === 'w' ? PIECE_VALUES[piece.type] : -PIECE_VALUES[piece.type]
   }
+  // Crazyhouse: pieces in a pocket still count, since they can be dropped back.
+  for (const type of game.pocket?.('w') ?? []) score += PIECE_VALUES[type]
+  for (const type of game.pocket?.('b') ?? []) score -= PIECE_VALUES[type]
   return score
 }
 

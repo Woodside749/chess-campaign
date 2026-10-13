@@ -1,12 +1,13 @@
 // The chess variants that run on the rules library (ffish): our fairy chess variants with
-// new pieces, Fischer Random, King of the Hill, Pawn Race, Atomic and Horde. The fairy rules are in
+// new pieces, Fischer Random, King of the Hill, Pawn Race, Atomic, Horde, Antichess and Crazyhouse. The fairy rules are in
 // variants.ini, which both ffish and the engine (Fairy-Stockfish) read. Here is what the
 // game shows to players.
 //
 // Per variant: `title`, `icon` and `intro` for the screen; `rules`, the ffish/engine
 // variant name if it differs from the key; `noPersonality` if the bots' personality code
 // can't read its positions (new pieces, exploded kings, pawns on the first rank); `chess960` for
-// Fischer Random; `hill` for squares to highlight; `winText` for a special way to win.
+// Fischer Random; `hill` for squares to highlight; `winText` for a special way to win;
+// `pockets` for Crazyhouse, where captured pieces can be dropped back on the board.
 //
 // Each fairy piece is drawn as its base piece (`looksLike`) with a small knight badge,
 // because all of ours are a normal piece that can also jump like a knight.
@@ -83,6 +84,27 @@ export const FAIRY_VARIANTS = {
       win: 'You captured the whole horde!',
       loss: 'Your whole horde was captured.',
     },
+  },
+  // Expert tier variants (built into Fairy-Stockfish, so no entry in variants.ini).
+  antichess: {
+    title: 'Antichess',
+    icon: '🙃',
+    noPersonality: true,
+    intro:
+      'Lose all your pieces to win! If you can capture, you must. The king is an ordinary piece that can be captured, and there is no check. You also win if you have no legal moves left.',
+    winText: {
+      win: 'You got rid of all your pieces. You win!',
+      loss: 'Your opponent got rid of all their pieces first.',
+    },
+  },
+  // `pockets`: captured pieces go into the capturer's pocket and can be dropped back.
+  crazyhouse: {
+    title: 'Crazyhouse',
+    icon: '🏠',
+    noPersonality: true,
+    pockets: true,
+    intro:
+      'Pieces you capture switch sides and go into your pocket. Instead of moving, you may drop a pocket piece onto any empty square (pawns not on the first or last rank). Tap the piece in your pocket, then the square.',
   },
   // King of the Hill is built into Fairy-Stockfish, so it needs no entry in variants.ini.
   kingofthehill: {

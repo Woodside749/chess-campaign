@@ -44,6 +44,17 @@ export class FairyGame {
     return rows
   }
 
+  // Crazyhouse: the pieces `color` has in its pocket, like ['p', 'p', 'n'] (sorted).
+  // Other variants have no pocket, so this is always empty there.
+  pocket(color) {
+    const inside = this.fen().match(/\[([^\]]*)\]/)?.[1] ?? ''
+    const order = 'pnbrq'
+    return [...inside]
+      .filter((char) => (char === char.toUpperCase()) === (color === 'w'))
+      .map((char) => char.toLowerCase())
+      .sort((a, b) => order.indexOf(a) - order.indexOf(b))
+  }
+
   findPiece({ type, color }) {
     const pieces = readPlacement(this.fen())
     return Object.keys(pieces).filter((sq) => pieces[sq].type === type && pieces[sq].color === color)
@@ -137,6 +148,16 @@ export class FairyGame {
   // `castleTo`: the square the king ends up on, where a player may drop it.
   describe(uci) {
     const before = this.fen()
+    // Crazyhouse drop, like "N@f3": a piece from the pocket. Its `from` is "N@", so the
+    // game screen can select it like a square, and `drop` marks it.
+    if (uci[1] === '@') {
+      const san = this.sanOf(uci)
+      this.chessBoard.push(uci)
+      const after = this.fen()
+      this.chessBoard.pop()
+      const piece = uci[0].toLowerCase()
+      return { from: uci.slice(0, 2), to: uci.slice(2, 4), piece, color: this.turn(), flags: 'n', drop: true, san, lan: uci, before, after }
+    }
     const pieces = readPlacement(before)
     const from = uci.slice(0, 2)
     const to = uci.slice(2, 4)
@@ -166,10 +187,10 @@ export class FairyGame {
 }
 
 // The pieces in a FEN string, like { e1: { type: 'k', color: 'w' }, ... }.
+// A Crazyhouse pocket ("[Pn]") is left out, and so is its promoted-piece mark ("Q~").
 export function readPlacement(fen) {
   const pieces = {}
-  fen
-    .split(' ')[0]
+  boardFen(fen)
     .split('/')
     .forEach((row, i) => {
       let file = 0
@@ -183,4 +204,10 @@ export function readPlacement(fen) {
       }
     })
   return pieces
+}
+
+// Just the piece placement of a FEN, as the board drawing expects it: without a
+// Crazyhouse pocket ("[Pn]") or promoted-piece marks ("Q~").
+export function boardFen(fen) {
+  return fen.split(' ')[0].replace(/\[[^\]]*\]/, '').replace(/~/g, '')
 }

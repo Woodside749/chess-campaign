@@ -19,6 +19,8 @@ export default function Home({ progress, onOpenEvent, onOpenAchievements, onOpen
   const advanced = EVENTS.filter((event) => event.section === 'advanced')
   const advancedOpen = advanced.some((event) => isUnlocked(event, wonIn))
   const advancedChampionship = EVENTS.filter((event) => event.section === 'advanced-championship')
+  const expert = EVENTS.filter((event) => event.section === 'expert')
+  const expertOpen = expert.some((event) => isUnlocked(event, wonIn))
   const title = playerTitle(progress)
   const achievements = achievementsFor(progress)
 
@@ -137,6 +139,24 @@ export default function Home({ progress, onOpenEvent, onOpenAchievements, onOpen
             onOpen={() => onOpenEvent(event)}
           />
         ))}
+      </section>
+
+      <section className="stage" aria-labelledby="expert-title">
+        <h2 id="expert-title" className="section-title">
+          Expert Leagues
+          {!expertOpen && <span className="section-lock"> · 🔒 Win the Master Title Championship to unlock</span>}
+        </h2>
+        <div className="league-grid">
+          {expert.map((event) => (
+            <LeagueCard
+              key={event.id}
+              event={event}
+              locked={!isUnlocked(event, wonIn)}
+              won={wonIn(event.id)}
+              onOpen={() => onOpenEvent(event)}
+            />
+          ))}
+        </div>
       </section>
     </main>
   )
