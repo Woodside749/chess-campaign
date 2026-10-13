@@ -382,11 +382,12 @@ export const EVENTS = [
     description: 'Play three opponents on three boards at the same time. Score 2 of 3 points to pass each simul.',
     requires: { event: 'amateur-super' },
     championText: 'You beat all three simuls!',
-    // Each simul is one easy, one medium and one hard round's worth of opponents at once.
+    // Like a real simul, the opponents are weaker than you: the challenge is playing three
+    // at once. They start with Amateur bots and end with the easier Advanced ones.
     rounds: [
-      { title: 'Easy simul', opponents: ['ana', 'carlos', 'zofia'], needed: 2 },
-      { title: 'Medium simul', opponents: ['viktor', 'jake', 'meilin'], needed: 2 },
-      { title: 'Hard simul', opponents: ['ivan', 'lucia', 'erik'], needed: 2 },
+      { title: 'Easy simul', opponents: ['lukas', 'mei', 'diego'], needed: 2 },
+      { title: 'Medium simul', opponents: ['liam', 'sofia', 'kwame'], needed: 2 },
+      { title: 'Hard simul', opponents: ['carlos', 'zofia', 'jake'], needed: 2 },
     ],
   },
   {
