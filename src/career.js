@@ -8,10 +8,11 @@
 //
 // Every event also has:
 // - section: where it is shown on the home screen ('school', 'leagues', 'championship',
-//   'advanced', 'advanced-championship', 'expert', 'expert-championship' or 'master').
+//   'advanced', 'advanced-championship', 'expert', 'expert-championship', 'master' or
+//   'master-championship').
 // - requires: (optional) what must be won first: a whole event, like
 //   { event: 'school-tournament' }, or a number of leagues, like { leagues: 4 } (Amateur)
-//   or { leagues: 4, section: 'advanced' } (or 'expert').
+//   or { leagues: 4, section: 'advanced' } (or 'expert', or 'master').
 // - comingSoon: (optional) a placeholder for an event that isn't built yet.
 // - variant: (optional) a chess variant, like 'fog' for Fog of War.
 //
@@ -819,6 +820,42 @@ export const EVENTS = [
     ranking: ['dragan', 'aino', 'arman', 'maria', 'lan', 'andras', 'ruby'],
     classmates: {},
   },
+  {
+    id: 'gm-championship',
+    section: 'master-championship',
+    type: 'tournament',
+    title: 'Grandmaster Title Championship',
+    place: 'Master Championship',
+    description: 'A 16-player knockout for the Grandmaster title, the highest title in chess. Win four matches; the final is against the Master champion, Thea.',
+    requires: { leagues: 4, section: 'master' },
+    timed: true,
+    minutes: 10,
+    championText: 'You are a Grandmaster! The highest title in chess is yours.',
+    bracket: [
+      ['dragan', 'hugo'],
+      ['sipho', 'amaru'],
+      ['rashad', 'you'],
+      ['maria', 'eleni'],
+      ['thea', 'bilal'],
+      ['andras', 'ruby'],
+      ['aino', 'arman'],
+      ['lan', 'giorgi'],
+    ],
+    rounds: [
+      { name: 'Round of 16', opponent: 'rashad', color: 'w' },
+      { name: 'Quarter-final', opponent: 'maria', color: 'b' },
+      { name: 'Semi-final', opponent: 'dragan', color: 'w' },
+      { name: 'Final', opponent: 'thea', color: 'b' },
+    ],
+    ranking: ['thea', 'dragan', 'maria', 'rashad', 'aino', 'sipho', 'andras', 'lan', 'giorgi', 'ruby', 'arman', 'hugo', 'amaru', 'eleni', 'bilal'],
+    // Visiting players who fill the 16 places. They only appear in the bracket.
+    classmates: {
+      hugo: { id: 'hugo', name: 'Hugo Bernard', country: 'Belgium', flag: '🇧🇪', color: '#7a6a4a' },
+      amaru: { id: 'amaru', name: 'Amaru Quispe', country: 'Peru', flag: '🇵🇪', color: '#a0503a' },
+      eleni: { id: 'eleni', name: 'Eleni Georgiou', country: 'Greece', flag: '🇬🇷', color: '#4a6aa0' },
+      bilal: { id: 'bilal', name: 'Bilal Khan', country: 'Pakistan', flag: '🇵🇰', color: '#3a8a5a' },
+    },
+  },
 ]
 
 // Whether an event's requirement is met. `roundsWonIn(id)` tells how many rounds of an
@@ -832,7 +869,7 @@ export function isUnlocked(event, roundsWonIn) {
 }
 
 // How many leagues in a section the player has won completely: the Amateur Leagues
-// ('leagues', the default), the Advanced Leagues ('advanced') or the Expert Leagues ('expert').
+// ('leagues', the default), the Advanced, Expert or Master Leagues ('advanced', 'expert', 'master').
 export function leaguesWon(roundsWonIn, section = 'leagues') {
   return EVENTS.filter((event) => event.section === section && event.rounds && roundsWonIn(event.id) >= event.rounds.length).length
 }
