@@ -1116,3 +1116,131 @@
   text-align: center;
   color: var(--muted);
 }
+
+/* Simul: three small boards side by side (stacked on phones). */
+
+.simul-screen {
+  width: min(1400px, 100%);
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.simul-header {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin-bottom: 12px;
+}
+
+.simul-header h1 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.simul-score {
+  margin: 0;
+  color: var(--muted);
+}
+
+.simul-score strong {
+  color: var(--text);
+  font-size: 20px;
+}
+
+.simul-boards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+@media (min-width: 900px) {
+  .simul-boards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.simul-board {
+  width: 100%;
+  /* Short enough that the whole board, with its name and footer, fits on the screen. */
+  max-width: calc(100vh - 230px);
+  min-width: 0;
+  justify-self: center;
+}
+
+.simul-board .player-bar {
+  margin: 0 0 8px;
+}
+
+.simul-board .speech {
+  min-height: 2.6em;
+  font-size: 13px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* The boards waiting for your move get a green ring, so you can see where to play. */
+.simul-board .board {
+  outline: 3px solid transparent;
+  outline-offset: 2px;
+  transition: outline-color 0.2s;
+}
+
+.simul-board.your-turn .board {
+  outline-color: var(--accent);
+}
+
+.simul-board.win .board,
+.simul-board.loss .board,
+.simul-board.draw .board {
+  opacity: 0.6;
+}
+
+.simul-board-footer {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  min-height: 32px;
+}
+
+.simul-board-footer .status {
+  margin: 0;
+  font-weight: 600;
+}
+
+.simul-board.your-turn .simul-board-footer .status {
+  color: var(--accent);
+}
+
+.simul-board-footer .simul-small-button {
+  margin-left: auto;
+  padding: 4px 10px;
+  font-size: 13px;
+}
+
+.simul-board-footer .simul-small-button + .simul-small-button {
+  margin-left: 0;
+}
+
+.simul-small-button.dev {
+  color: #e0a030;
+}
+
+.simul-opponents {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 8px 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.simul-opponent {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}

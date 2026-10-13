@@ -62,6 +62,8 @@ function pressClock(clock, color, incrementMs = 0) {
 // `onResult` is called once with the result when a game ends. `exitLabel` names the
 // game-over pop-up's way out, like "Back to bracket". `minutes` sets the clocks,
 // `increment` is the seconds added after each move, and `variant` can be 'fog' for Fog of War.
+// `compact` draws a small board for the Simul screen, which shows three at once: no back
+// button, move list, review buttons or game-over pop-up (the result shows under the board).
 export default function Game({
   bot,
   startColor,
@@ -73,6 +75,7 @@ export default function Game({
   onResult,
   exitLabel,
   onExit,
+  compact = false,
 }) {
   // chess.js holds the real game (rules, history), also in Fog of War, which only hides
   // squares. `fen` is a text snapshot of the position that we keep in React state, so
@@ -417,6 +420,67 @@ export default function Game({
   const lessonHighlights = Object.fromEntries(
     (step?.highlight ?? []).map((square) => [square, { background: 'rgba(76, 175, 80, 0.45)' }]),
   )
+
+  if (compact) {
+    return (
+      <section className={`simul-board${isPlayersTurn ? ' your-turn' : ''}${result ? ` ${result.outcome}` : ''}`}>
+        <header className="player-bar opponent-bar">
+          <Avatar bot={bot} size={36} />
+          <div className="player-info">
+            <div className="opponent-name">
+              {bot.name} <span className="rating">({bot.rating})</span>
+            </div>
+            <div className="speech">“{botLine}”</div>
+          </div>
+        </header>
+        <div className="board">
+          <Chessboard
+            options={{
+              position: fen,
+              boardOrientation: playerColor === 'w' ? 'white' : 'black',
+              onPieceDrop,
+              onSquareClick,
+              onSquareRightClick: () => setPremove(null),
+              canDragPiece: ({ piece }) => !gameOver && piece.pieceType[0] === playerColor,
+              squareStyles: squareStyles(game, selected, premove, isPlayersTurn),
+              animationDurationInMs: 200,
+            }}
+          />
+          {pendingPromotion && !gameOver && (
+            <PromotionPicker color={playerColor} onChoose={choosePromotion} onCancel={() => setPendingPromotion(null)} />
+          )}
+        </div>
+        <div className="simul-board-footer">
+          <p className="status">
+            {result
+              ? { win: '✓ You won', loss: '✗ You lost', draw: '½ Draw' }[result.outcome]
+              : isPlayersTurn
+                ? 'Your move'
+                : `${bot.name} is thinking…`}
+          </p>
+          <CapturedPieces color={playerColor} captured={captured[playerColor]} advantage={advantage(playerColor)} />
+          {import.meta.env.DEV && !gameOver && (
+            <button className="simul-small-button dev" onClick={autoWin}>
+              ⚡ Win
+            </button>
+          )}
+          {!gameOver && (
+            <button className="simul-small-button" onClick={() => setConfirming('resign')}>
+              Resign
+            </button>
+          )}
+        </div>
+        {confirming === 'resign' && (
+          <ConfirmDialog
+            title={`Resign against ${bot.name}?`}
+            confirmLabel="Resign"
+            onConfirm={resign}
+            onCancel={() => setConfirming(null)}
+          />
+        )}
+      </section>
+    )
+  }
 
   return (
     <main className="game-screen">

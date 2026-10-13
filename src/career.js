@@ -375,12 +375,19 @@ export const EVENTS = [
   {
     id: 'simul',
     section: 'advanced',
-    comingSoon: true,
+    type: 'simul',
     icon: '🎭',
     title: 'Simul',
     place: 'Advanced League',
-    description: 'Play three opponents on three boards at the same time.',
+    description: 'Play three opponents on three boards at the same time. Score 2 of 3 points to pass each simul.',
     requires: { event: 'amateur-super' },
+    championText: 'You beat all three simuls!',
+    // Each simul is one easy, one medium and one hard round's worth of opponents at once.
+    rounds: [
+      { title: 'Easy simul', opponents: ['ana', 'carlos', 'zofia'], needed: 2 },
+      { title: 'Medium simul', opponents: ['viktor', 'jake', 'meilin'], needed: 2 },
+      { title: 'Hard simul', opponents: ['ivan', 'lucia', 'erik'], needed: 2 },
+    ],
   },
   {
     id: 'chaos-chess',

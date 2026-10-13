@@ -10,18 +10,21 @@ import Menu from './Menu.jsx'
 import Tournament from './Tournament.jsx'
 import Game from './Game.jsx'
 import PuzzleLeague from './puzzles/PuzzleLeague.jsx'
+import SimulLeague from './SimulLeague.jsx'
+import Simul from './Simul.jsx'
 import './App.css'
 
 // The puzzle screen (with its puzzle collection) is only downloaded when first opened.
 const PuzzleTrial = lazy(() => import('./puzzles/PuzzleTrial.jsx'))
 
 // The top of the app. It decides which screen to show: the home screen, the developer
-// menu (every bot), a tournament's bracket, or a game. It also keeps the career progress.
+// menu (every bot), a tournament's bracket, a puzzle trial, a simul, or a game. It also keeps the career progress.
 export default function App() {
   const [screen, setScreen] = useState('home') // 'home', 'dev', or a tournament's event id
   const [colorChoice, setColorChoice] = useState('w') // developer menu: 'w', 'b' or 'random'
   const [match, setMatch] = useState(null) // the game being played, or null
   const [puzzleRun, setPuzzleRun] = useState(null) // the puzzle trial being played: { event, round }
+  const [simulRun, setSimulRun] = useState(null) // the simul being played: { event, round }
   const [progress, setProgress] = useState(loadProgress)
 
   // A game from the developer menu: any bot, with clocks.
@@ -34,7 +37,7 @@ export default function App() {
   // anything else starts a game.
   function openEvent(event) {
     if (event.comingSoon) return
-    if (event.type === 'tournament' || event.type === 'trials') {
+    if (event.type === 'tournament' || event.type === 'trials' || event.type === 'simul') {
       setScreen(event.id)
       return
     }
@@ -89,6 +92,18 @@ export default function App() {
     )
   }
 
+  if (simulRun) {
+    const { event, round } = simulRun
+    return (
+      <Simul
+        key={round}
+        round={event.rounds[round]}
+        onFinish={(passed) => passed && saveRoundWon(event, round)}
+        onExit={() => setSimulRun(null)}
+      />
+    )
+  }
+
   if (match) {
     return (
       <Game
@@ -123,6 +138,16 @@ export default function App() {
         event={opened}
         roundsWon={roundsWon(progress, opened.id)}
         onPlayTrial={(round) => setPuzzleRun({ event: opened, round })}
+        onBack={() => setScreen('home')}
+      />
+    )
+  }
+  if (opened?.type === 'simul') {
+    return (
+      <SimulLeague
+        event={opened}
+        roundsWon={roundsWon(progress, opened.id)}
+        onPlayRound={(round) => setSimulRun({ event: opened, round })}
         onBack={() => setScreen('home')}
       />
     )
