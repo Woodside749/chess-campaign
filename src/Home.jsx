@@ -1,13 +1,16 @@
 import { BOTS } from './bots.js'
 import { EVENTS, isUnlocked, leaguesWon } from './career.js'
 import { roundsWon } from './progress.js'
+import { achievementsFor } from './achievements.js'
+import { PLAYER, playerTitle } from './player.js'
 import Avatar from './Avatar.jsx'
+import TitleBadge from './TitleBadge.jsx'
 import Silhouette from './Silhouette.jsx'
 
 // The player's home screen: a horizontal career road, scrolled from left to right.
 // First the title, then the Chess School events (played in order, side by side),
 // then the Amateur Leagues as a grid that can be played in any order.
-export default function Home({ progress, onOpenEvent, onOpenDevMenu }) {
+export default function Home({ progress, onOpenEvent, onOpenAchievements, onOpenDevMenu }) {
   const wonIn = (eventId) => roundsWon(progress, eventId)
   const school = EVENTS.filter((event) => event.section === 'school')
   const leagues = EVENTS.filter((event) => event.section === 'leagues')
@@ -15,6 +18,9 @@ export default function Home({ progress, onOpenEvent, onOpenDevMenu }) {
   const championship = EVENTS.filter((event) => event.section === 'championship')
   const advanced = EVENTS.filter((event) => event.section === 'advanced')
   const advancedOpen = advanced.some((event) => isUnlocked(event, wonIn))
+  const advancedChampionship = EVENTS.filter((event) => event.section === 'advanced-championship')
+  const title = playerTitle(progress)
+  const achievements = achievementsFor(progress)
 
   // A normal mouse wheel scrolls up and down; here it scrolls the road sideways instead.
   function scrollSideways(event) {
@@ -32,6 +38,18 @@ export default function Home({ progress, onOpenEvent, onOpenDevMenu }) {
           Travel a world tour of chess clubs, tournaments and rivals. Every opponent has their own
           style, and every event moves your career forward.
         </p>
+        <div className="player-card">
+          <Avatar bot={PLAYER} size={48} />
+          <div className="player-card-info">
+            <div className="player-card-name">
+              <TitleBadge title={title} /> You
+            </div>
+            <div className="player-card-title">{title ? title.name : 'No title yet'}</div>
+          </div>
+          <button className="player-card-button secondary" onClick={onOpenAchievements}>
+            🏆 {achievements.filter((a) => a.got).length}/{achievements.length}
+          </button>
+        </div>
         {/* Only shown while developing (npm run dev), never in the published game. */}
         {import.meta.env.DEV && (
           <button className="dev-link" onClick={onOpenDevMenu}>
@@ -81,7 +99,7 @@ export default function Home({ progress, onOpenEvent, onOpenDevMenu }) {
             lockedText={
               isUnlocked(event, wonIn)
                 ? null
-                : `🔒 Win ${event.requires.leagues} Amateur Leagues to unlock (${leaguesWon(wonIn)} of ${event.requires.leagues} won)`
+                : lockText(event, wonIn)
             }
             onOpen={() => onOpenEvent(event)}
           />
@@ -105,8 +123,30 @@ export default function Home({ progress, onOpenEvent, onOpenDevMenu }) {
           ))}
         </div>
       </section>
+
+      <section className="stage" aria-labelledby="advanced-championship-title">
+        <h2 id="advanced-championship-title" className="section-title">
+          Advanced Championship
+        </h2>
+        {advancedChampionship.map((event) => (
+          <EventCard
+            key={event.id}
+            event={event}
+            won={wonIn(event.id)}
+            lockedText={isUnlocked(event, wonIn) ? null : lockText(event, wonIn)}
+            onOpen={() => onOpenEvent(event)}
+          />
+        ))}
+      </section>
     </main>
   )
+}
+
+// What a locked championship asks for, like "Win 4 Amateur Leagues to unlock (1 of 4 won)".
+function lockText(event, wonIn) {
+  const { leagues, section } = event.requires
+  const name = section === 'advanced' ? 'Advanced' : 'Amateur'
+  return `🔒 Win ${leagues} ${name} Leagues to unlock (${leaguesWon(wonIn, section)} of ${leagues} won)`
 }
 
 // A big card for the Chess School events and the championship. `lockedText`, if given,

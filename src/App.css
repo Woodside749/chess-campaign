@@ -1292,3 +1292,120 @@
   font-size: 13px;
   color: #b37fd0;
 }
+
+/* The player's title badge, like "M" for Master. */
+.title-badge {
+  display: inline-block;
+  margin-right: 2px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: #a0302a;
+  color: white;
+  font-size: 0.75em;
+  font-weight: 700;
+  line-height: 1.3;
+  vertical-align: 0.1em;
+}
+
+.bracket-title-badge {
+  fill: #e0605a;
+  font-weight: 700;
+}
+
+/* The player's card on the home screen. */
+.player-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 280px;
+  margin-bottom: 20px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.player-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.player-card-name {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.player-card-title {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.player-card-button {
+  flex: none;
+  padding: 6px 10px;
+  font-size: 14px;
+}
+
+/* The achievements screen. */
+.achievements-screen {
+  width: min(640px, 100%);
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+.achievements-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 16px 0 24px;
+}
+
+.achievements-header h1 {
+  margin: 0;
+  font-size: 30px;
+}
+
+.achievements-summary {
+  margin: 4px 0 0;
+  color: var(--muted);
+}
+
+.achievement-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.achievement {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  opacity: 0.55;
+}
+
+.achievement.got {
+  opacity: 1;
+  border-color: #c9a227;
+  box-shadow: 0 0 0 1px #c9a227 inset;
+}
+
+.achievement-icon {
+  font-size: 30px;
+  width: 40px;
+  text-align: center;
+}
+
+.achievement-name {
+  font-weight: 700;
+}
+
+.achievement-text {
+  font-size: 14px;
+  color: var(--muted);
+}

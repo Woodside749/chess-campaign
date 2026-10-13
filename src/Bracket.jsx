@@ -15,10 +15,11 @@ const columnTitles = (roundCount) => [
 ]
 
 // A knockout bracket drawn as an SVG: one column per round, and a champion box at the end.
-export default function Bracket({ event, roundsWon }) {
+// `playerTitle` (optional) is the player's title, like { short: 'M' }, shown before "You".
+export default function Bracket({ event, roundsWon, playerTitle }) {
   const { rounds, champion } = buildBracket(event, roundsWon)
   const person = (id) => {
-    if (id === 'you') return { name: 'You', color: 'var(--accent)', flag: '' }
+    if (id === 'you') return { name: 'You', color: 'var(--accent)', flag: '', title: playerTitle }
     return BOTS[id] ?? event.classmates[id]
   }
 
@@ -106,7 +107,9 @@ function PlayerBox({ x, y, person, isYou, won, lost, trophy }) {
         {person.name[0]}
       </text>
       <text className={won ? 'bracket-name won' : 'bracket-name'} x={x + 31} y={y + 4}>
-        {trophy ? `🏆 ${person.name}` : person.name}
+        {trophy && '🏆 '}
+        {person.title && <tspan className="bracket-title-badge">{person.title.short} </tspan>}
+        {person.name}
       </text>
       <text className="bracket-flag" x={x + BOX_W - 8} y={y + 5} textAnchor="end">
         {person.flag}

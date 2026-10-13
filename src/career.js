@@ -7,10 +7,11 @@
 // - color: the player's colour ('w' or 'b').
 //
 // Every event also has:
-// - section: where it is shown on the home screen ('school', 'leagues', 'championship'
-//   or 'advanced').
+// - section: where it is shown on the home screen ('school', 'leagues', 'championship',
+//   'advanced' or 'advanced-championship').
 // - requires: (optional) what must be won first: a whole event, like
-//   { event: 'school-tournament' }, or a number of leagues, like { leagues: 4 }.
+//   { event: 'school-tournament' }, or a number of leagues, like { leagues: 4 } (Amateur)
+//   or { leagues: 4, section: 'advanced' }.
 // - comingSoon: (optional) a placeholder for an event that isn't built yet.
 // - variant: (optional) a chess variant, like 'fog' for Fog of War.
 //
@@ -418,6 +419,43 @@ export const EVENTS = [
     ranking: ['ivan', 'meilin', 'erik', 'lucia', 'jake', 'carlos', 'zofia'],
     classmates: {},
   },
+  {
+    id: 'master-championship',
+    section: 'advanced-championship',
+    type: 'tournament',
+    title: 'Master Title Championship',
+    place: 'Advanced Championship',
+    description: 'A 16-player knockout for the Master title. Win four matches; the final is against the Advanced champion, Amina.',
+    requires: { leagues: 4, section: 'advanced' },
+    timed: true,
+    minutes: 10,
+    championText: 'You are a Chess Master! The Master title is yours.',
+    bracket: [
+      ['erik', 'oliver'],
+      ['lucia', 'nadia'],
+      ['jake', 'you'],
+      ['ivan', 'tomas'],
+      ['amina', 'leila'],
+      ['viktor', 'carlos'],
+      ['meilin', 'kenji'],
+      ['zofia', 'ana'],
+    ],
+    rounds: [
+      { name: 'Round of 16', opponent: 'jake', color: 'w' },
+      { name: 'Quarter-final', opponent: 'ivan', color: 'b' },
+      { name: 'Semi-final', opponent: 'erik', color: 'w' },
+      { name: 'Final', opponent: 'amina', color: 'b' },
+    ],
+    ranking: ['amina', 'erik', 'ivan', 'jake', 'lucia', 'meilin', 'viktor', 'zofia', 'carlos', 'ana', 'oliver', 'nadia', 'tomas', 'leila', 'kenji'],
+    // Visiting players who fill the 16 places. They only appear in the bracket.
+    classmates: {
+      oliver: { id: 'oliver', name: 'Oliver Grant', country: 'United Kingdom', flag: '🇬🇧', color: '#6a7fa0' },
+      nadia: { id: 'nadia', name: 'Nadia Petrova', country: 'Bulgaria', flag: '🇧🇬', color: '#9a5a7a' },
+      tomas: { id: 'tomas', name: 'Tomás Herrera', country: 'Chile', flag: '🇨🇱', color: '#a0704a' },
+      leila: { id: 'leila', name: 'Leila Karimi', country: 'Iran', flag: '🇮🇷', color: '#5a9a8a' },
+      kenji: { id: 'kenji', name: 'Kenji Watanabe', country: 'Japan', flag: '🇯🇵', color: '#7a6aa8' },
+    },
+  },
 ]
 
 // Whether an event's requirement is met. `roundsWonIn(id)` tells how many rounds of an
@@ -426,11 +464,18 @@ export function isUnlocked(event, roundsWonIn) {
   const needs = event.requires
   if (!needs) return true
   const wonWhole = (other) => other.rounds && roundsWonIn(other.id) >= other.rounds.length
-  if (needs.leagues) return leaguesWon(roundsWonIn) >= needs.leagues
+  if (needs.leagues) return leaguesWon(roundsWonIn, needs.section) >= needs.leagues
   return wonWhole(EVENTS.find((other) => other.id === needs.event))
 }
 
-// How many Amateur leagues the player has won completely.
-export function leaguesWon(roundsWonIn) {
-  return EVENTS.filter((event) => event.section === 'leagues' && event.rounds && roundsWonIn(event.id) >= event.rounds.length).length
+// How many leagues in a section the player has won completely: the Amateur Leagues
+// ('leagues', the default) or the Advanced Leagues ('advanced').
+export function leaguesWon(roundsWonIn, section = 'leagues') {
+  return EVENTS.filter((event) => event.section === section && event.rounds && roundsWonIn(event.id) >= event.rounds.length).length
+}
+
+// Whether the player has won every round of an event.
+export function wonEvent(roundsWonIn, eventId) {
+  const event = EVENTS.find((other) => other.id === eventId)
+  return Boolean(event?.rounds) && roundsWonIn(eventId) >= event.rounds.length
 }

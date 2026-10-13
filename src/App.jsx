@@ -12,6 +12,8 @@ import Game from './Game.jsx'
 import PuzzleLeague from './puzzles/PuzzleLeague.jsx'
 import SimulLeague from './SimulLeague.jsx'
 import Simul from './Simul.jsx'
+import Achievements from './Achievements.jsx'
+import { playerTitle } from './player.js'
 import './App.css'
 
 // The puzzle screen (with its puzzle collection) is only downloaded when first opened.
@@ -20,7 +22,7 @@ const PuzzleTrial = lazy(() => import('./puzzles/PuzzleTrial.jsx'))
 // The top of the app. It decides which screen to show: the home screen, the developer
 // menu (every bot), a tournament's bracket, a puzzle trial, a simul, or a game. It also keeps the career progress.
 export default function App() {
-  const [screen, setScreen] = useState('home') // 'home', 'dev', or a tournament's event id
+  const [screen, setScreen] = useState('home') // 'home', 'dev', 'achievements', or an event id
   const [colorChoice, setColorChoice] = useState('w') // developer menu: 'w', 'b' or 'random'
   const [match, setMatch] = useState(null) // the game being played, or null
   const [puzzleRun, setPuzzleRun] = useState(null) // the puzzle trial being played: { event, round }
@@ -115,6 +117,7 @@ export default function App() {
         increment={match.increment}
         variant={match.variant}
         lesson={match.lesson}
+        playerTitle={playerTitle(progress)}
         onResult={handleResult}
         exitLabel={match.tournament ? 'Back to bracket' : 'Back to menu'}
         onExit={() => setMatch(null)}
@@ -132,6 +135,7 @@ export default function App() {
       />
     )
   }
+  if (screen === 'achievements') return <Achievements progress={progress} onBack={() => setScreen('home')} />
   const opened = EVENTS.find((event) => event.id === screen)
   if (opened?.type === 'trials') {
     return (
@@ -158,10 +162,18 @@ export default function App() {
       <Tournament
         event={opened}
         roundsWon={roundsWon(progress, opened.id)}
+        playerTitle={playerTitle(progress)}
         onPlayRound={(round) => playTournamentRound(opened, round)}
         onBack={() => setScreen('home')}
       />
     )
   }
-  return <Home progress={progress} onOpenEvent={openEvent} onOpenDevMenu={() => setScreen('dev')} />
+  return (
+    <Home
+      progress={progress}
+      onOpenEvent={openEvent}
+      onOpenAchievements={() => setScreen('achievements')}
+      onOpenDevMenu={() => setScreen('dev')}
+    />
+  )
 }

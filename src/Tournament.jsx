@@ -6,12 +6,12 @@ import { FAIRY_VARIANTS } from './fairy/variants.js'
 
 // A tournament: the bracket on the left, and the player's rounds on the right.
 // A round unlocks when the round before it is won, and any unlocked round can be replayed.
-export default function Tournament({ event, roundsWon, onPlayRound, onBack }) {
+export default function Tournament({ event, roundsWon, playerTitle, onPlayRound, onBack }) {
   const champion = roundsWon >= event.rounds.length
   return (
     <main className="tournament-screen">
       <div className="bracket-area">
-        <Bracket event={event} roundsWon={roundsWon} />
+        <Bracket event={event} roundsWon={roundsWon} playerTitle={playerTitle} />
       </div>
 
       <aside className="tournament-panel">
