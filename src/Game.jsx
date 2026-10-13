@@ -363,6 +363,11 @@ export default function Game({
   // Tapping anywhere else cancels the selection and any premove.
   function onSquareClick({ piece, square }) {
     if (viewing) return
+    // Tapping the selected piece again puts it down, so you can pick another one.
+    if (square === selected) {
+      setSelected(null)
+      return
+    }
     if (selected && moveIntent(selected, square)) return
     setPremove(null)
     const isOwnPiece = piece && piece.pieceType[0] === playerColor
