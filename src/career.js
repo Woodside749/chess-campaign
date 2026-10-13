@@ -330,17 +330,17 @@ export const EVENTS = [
     minutes: 10,
     championText: 'You beat the Horde!',
     bracket: [
-      ['ivan', 'jake'],
-      ['zofia', 'you'],
+      ['viktor', 'zofia'],
+      ['ana', 'you'],
       ['erik', 'carlos'],
-      ['meilin', 'lucia'],
+      ['lucia', 'ivan'],
     ],
     rounds: [
-      { name: 'Round 1', opponent: 'zofia', color: 'b' },
-      { name: 'Semi-final', opponent: 'ivan', color: 'w' },
+      { name: 'Round 1', opponent: 'ana', color: 'b' },
+      { name: 'Semi-final', opponent: 'viktor', color: 'w' },
       { name: 'Final', opponent: 'erik', color: 'b' },
     ],
-    ranking: ['erik', 'ivan', 'lucia', 'meilin', 'jake', 'carlos', 'zofia'],
+    ranking: ['erik', 'viktor', 'ivan', 'lucia', 'carlos', 'zofia', 'ana'],
     classmates: {},
   },
   {
