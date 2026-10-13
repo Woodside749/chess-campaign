@@ -56,6 +56,7 @@ export default function App() {
       color,
       timed: event.timed,
       minutes: event.minutes,
+      increment: event.increment,
       variant,
       lesson: null,
       tournament: { event, round },
@@ -95,6 +96,7 @@ export default function App() {
         startColor={match.color}
         timed={match.timed}
         minutes={match.minutes}
+        increment={match.increment}
         variant={match.variant}
         lesson={match.lesson}
         onResult={handleResult}

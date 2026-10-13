@@ -49,24 +49,25 @@ function createGame(variant) {
 // What a hidden square looks like in Fog of War.
 const FOG_STYLE = { background: '#4a4844', boxShadow: 'inset 0 0 0 1px rgba(0, 0, 0, 0.15)' }
 
-// Returns the clock after `color` has moved: their thinking time is subtracted
-// and the other side's clock starts running.
-function pressClock(clock, color) {
+// Returns the clock after `color` has moved: their thinking time is subtracted, the
+// increment (if any) is added, and the other side's clock starts running.
+function pressClock(clock, color, incrementMs = 0) {
   const now = Date.now()
-  return { ...clock, [color]: clock[color] - (now - clock.turnStart), turnStart: now }
+  return { ...clock, [color]: clock[color] - (now - clock.turnStart) + incrementMs, turnStart: now }
 }
 
 // The game screen: games against `bot`, with the player as `startColor` ('w' or 'b').
 // `timed` turns the clocks on or off. `lesson` is an optional script from lessons.js
 // that the coach walks through before the game carries on normally.
 // `onResult` is called once with the result when a game ends. `exitLabel` names the
-// game-over pop-up's way out, like "Back to bracket". `minutes` sets the clocks, and
-// `variant` can be 'fog' for Fog of War.
+// game-over pop-up's way out, like "Back to bracket". `minutes` sets the clocks,
+// `increment` is the seconds added after each move, and `variant` can be 'fog' for Fog of War.
 export default function Game({
   bot,
   startColor,
   timed = true,
   minutes,
+  increment = 0,
   variant = null,
   lesson = null,
   onResult,
@@ -147,6 +148,7 @@ export default function Game({
   const botTimeLeft = timed ? clock[botColor] : START_TIME_MS
   // How long each clock started with, so bots can pace themselves in fast games.
   const clockMs = minutes ? minutes * 60 * 1000 : START_TIME_MS
+  const incrementMs = increment * 1000
   // Fog of War: the player is told when they are in check, but not by what.
   const playerInCheck = fog && !gameOver && turn === playerColor && game.inCheck()
 
@@ -245,7 +247,7 @@ export default function Game({
       if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait))
       if (cancelled) return
       const move = game.move(choice)
-      setClock((c) => pressClock(c, botColor))
+      setClock((c) => pressClock(c, botColor, incrementMs))
       let line = reactionLine(bot, move, playerColor)
 
       // If the player queued a premove, play it straight away, if it's still legal.
@@ -255,7 +257,7 @@ export default function Game({
         setPremoveState(null)
         try {
           const reply = game.move({ ...queued, promotion: 'q' })
-          setClock((c) => pressClock(c, playerColor))
+          setClock((c) => pressClock(c, playerColor, incrementMs))
           line = reactionLine(bot, reply, playerColor) ?? line
         } catch {
           // The premove isn't legal in the new position, so it's dropped.
@@ -271,7 +273,7 @@ export default function Game({
     return () => {
       cancelled = true
     }
-  }, [fen, playerColor, botColor, botTimeLeft, clockMs, game, gameOver, inLesson, bot, fog, fairy, variant])
+  }, [fen, playerColor, botColor, botTimeLeft, clockMs, incrementMs, game, gameOver, inLesson, bot, fog, fairy, variant])
 
   // Tries to play the player's move. Returns true if it was legal.
   // A pawn reaching the last rank first opens the promotion picker, unless
@@ -296,7 +298,7 @@ export default function Game({
       return true
     }
     const move = game.move({ from, to, promotion })
-    setClock((c) => pressClock(c, playerColor))
+    setClock((c) => pressClock(c, playerColor, incrementMs))
     const line = reactionLine(bot, move, playerColor)
     if (line) setSpeech(line)
     if (inLesson) {

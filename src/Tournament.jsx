@@ -51,7 +51,7 @@ export default function Tournament({ event, roundsWon, onPlayRound, onBack }) {
                     <div className="bot-bio">
                       {(round.variant ?? event.variant) in FAIRY_VARIANTS &&
                         `${FAIRY_VARIANTS[round.variant ?? event.variant].title} · `}
-                      You play {round.color === 'w' ? 'White' : 'Black'} · {event.minutes} min
+                      You play {round.color === 'w' ? 'White' : 'Black'} · {event.minutes} min{event.increment ? ` + ${event.increment} s per move` : ''}
                     </div>
                   </div>
                 </div>

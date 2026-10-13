@@ -16,6 +16,7 @@
 //
 // A tournament (type: 'tournament') is a knockout bracket:
 // - minutes: the clock for each game.
+// - increment: (optional) seconds added to a player's clock after each of their moves.
 // - championText: shown when the player wins the whole tournament.
 // - bracket: the first-round pairings, top to bottom. 'you' is the player. Neighbouring
 //   matches meet in the next round, so put the player where their opponents will come
@@ -104,10 +105,11 @@ export const EVENTS = [
     icon: '⚡',
     title: 'Blitz League',
     place: 'Amateur League',
-    description: 'Fast 3-minute games. Think quickly or lose on time.',
+    description: 'Fast 3-minute games, plus 1 second per move. Think quickly or lose on time.',
     requires: { event: 'school-tournament' },
     timed: true,
     minutes: 3,
+    increment: 1,
     championText: 'You won the Blitz League!',
     bracket: [
       ['sofia', 'fatima'],
@@ -350,10 +352,11 @@ export const EVENTS = [
     icon: '🚀',
     title: 'Bullet Dash',
     place: 'Advanced League',
-    description: 'One minute on the clock. Think fast and move faster!',
+    description: 'One minute on the clock, plus 1 second per move. Think fast and move faster!',
     requires: { event: 'amateur-super' },
     timed: true,
     minutes: 1,
+    increment: 1,
     championText: 'You won the Bullet Dash!',
     bracket: [
       ['lucia', 'zofia'],
