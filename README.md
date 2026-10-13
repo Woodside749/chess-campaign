@@ -1,6 +1,6 @@
-# Chess Career
+# Chess Campaign
 
-A chess career game in the browser. See `Chess Career Game Design.md` for the design.
+A chess career game in the browser, to be published at chesscampaign.com. See `Chess Campaign Game Design.md` for the design.
 
 ## Run it
 

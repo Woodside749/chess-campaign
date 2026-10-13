@@ -14,6 +14,7 @@ import Silhouette from './Silhouette.jsx'
 // sideways; on a phone the page scrolls down. It is kept in the browser's session storage
 // (not just in memory), so it also survives the page reloading, which Safari sometimes
 // does to background tabs. It is forgotten when the tab is closed.
+// (The key keeps the game's first working name, so saved data isn't lost.)
 const SCROLL_KEY = 'chess-career-home-scroll'
 
 function loadScroll() {
@@ -83,7 +84,7 @@ export default function Home({ progress, onOpenEvent, onOpenAchievements, onOpen
   return (
     <main className="home" ref={roadRef} onWheel={scrollSideways}>
       <section className="home-intro">
-        <h1>Chess Career</h1>
+        <h1>Chess Campaign</h1>
         <p>
           Travel a world tour of chess clubs, tournaments and rivals. Every opponent has their own
           style, and every event moves your career forward.

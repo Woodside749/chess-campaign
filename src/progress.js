@@ -3,6 +3,8 @@
 //
 // Shape: { tournaments: { [eventId]: { roundsWon: 0 } } }
 
+// The key keeps the game's first working name ("Chess Career"): changing it would make
+// every browser forget its saved career.
 const STORAGE_KEY = 'chess-career-progress-v1'
 
 const EMPTY = { tournaments: {} }
