@@ -12,6 +12,13 @@ export const ACHIEVEMENTS = [
     text: 'Win the Master Title Championship and earn the Master title.',
     earned: (wonIn) => wonEvent(wonIn, 'master-championship'),
   },
+  {
+    id: 'international-master',
+    icon: '🎖️',
+    name: 'International Master',
+    text: 'Win the International Master Title Championship and earn the IM title.',
+    earned: (wonIn) => wonEvent(wonIn, 'im-championship'),
+  },
 ]
 
 // Every achievement with `got: true` or false for this player.

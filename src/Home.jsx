@@ -21,6 +21,7 @@ export default function Home({ progress, onOpenEvent, onOpenAchievements, onOpen
   const advancedChampionship = EVENTS.filter((event) => event.section === 'advanced-championship')
   const expert = EVENTS.filter((event) => event.section === 'expert')
   const expertOpen = expert.some((event) => isUnlocked(event, wonIn))
+  const expertChampionship = EVENTS.filter((event) => event.section === 'expert-championship')
   const title = playerTitle(progress)
   const achievements = achievementsFor(progress)
 
@@ -158,6 +159,21 @@ export default function Home({ progress, onOpenEvent, onOpenAchievements, onOpen
           ))}
         </div>
       </section>
+
+      <section className="stage" aria-labelledby="expert-championship-title">
+        <h2 id="expert-championship-title" className="section-title">
+          Expert Championship
+        </h2>
+        {expertChampionship.map((event) => (
+          <EventCard
+            key={event.id}
+            event={event}
+            won={wonIn(event.id)}
+            lockedText={isUnlocked(event, wonIn) ? null : lockText(event, wonIn)}
+            onOpen={() => onOpenEvent(event)}
+          />
+        ))}
+      </section>
     </main>
   )
 }
@@ -165,7 +181,7 @@ export default function Home({ progress, onOpenEvent, onOpenAchievements, onOpen
 // What a locked championship asks for, like "Win 4 Amateur Leagues to unlock (1 of 4 won)".
 function lockText(event, wonIn) {
   const { leagues, section } = event.requires
-  const name = section === 'advanced' ? 'Advanced' : 'Amateur'
+  const name = { advanced: 'Advanced', expert: 'Expert' }[section] ?? 'Amateur'
   return `🔒 Win ${leagues} ${name} Leagues to unlock (${leaguesWon(wonIn, section)} of ${leagues} won)`
 }
 
