@@ -62,8 +62,8 @@ function createGame(variant) {
 const drawableFen = (fen) => [boardFen(fen).replace('*', 'X'), ...fen.split(' ').slice(1)].join(' ')
 // Blindfold: an empty board.
 const EMPTY_BOARD = '8/8/8/8/8/8/8/8 w - - 0 1'
-// Blindfold: how many times you may peek at the pieces, and for how long.
-const PEEKS = 3
+// Blindfold: how long a peek at the pieces lasts. (How many peeks a game allows is the
+// `peeks` setting; none unless the event gives some.)
 const PEEK_MS = 3000
 
 // What a hidden square looks like in Fog of War.
@@ -82,6 +82,7 @@ function pressClock(clock, color, incrementMs = 0) {
 // `onResult` is called once with the result when a game ends. `exitLabel` names the
 // game-over pop-up's way out, like "Back to bracket". `minutes` sets the clocks,
 // `increment` is the seconds added after each move, and `variant` can be 'fog' for Fog of War.
+// `peeks` (Blindfold only) is how many times the player may look at the pieces for a moment.
 // `compact` draws a small board for the Simul screen, which shows three at once: no back
 // button, move list, review buttons or game-over pop-up (the result shows under the board).
 // `playerTitle` is the player's title (like Master), shown as a badge by their name.
@@ -98,6 +99,7 @@ export default function Game({
   onExit,
   compact = false,
   playerTitle = null,
+  peeks = 0,
 }) {
   // chess.js holds the real game (rules, history), also in Fog of War, which only hides
   // squares. `fen` is a text snapshot of the position that we keep in React state, so
@@ -127,7 +129,7 @@ export default function Game({
   const [pendingDuck, setPendingDuck] = useState(null)
   // Blindfold: whether the pieces are shown right now, and how many peeks are left.
   const [peeking, setPeeking] = useState(false)
-  const [peeksLeft, setPeeksLeft] = useState(PEEKS)
+  const [peeksLeft, setPeeksLeft] = useState(peeks)
   const [resigned, setResigned] = useState(false)
   // Set by the developer-only Auto-win button.
   const [autoWon, setAutoWon] = useState(false)
@@ -485,7 +487,7 @@ export default function Game({
     setPendingPromotion(null)
     setPendingDuck(null)
     setPeeking(false)
-    setPeeksLeft(PEEKS)
+    setPeeksLeft(peeks)
     setResigned(false)
     setAutoWon(false)
     setConfirming(null)
@@ -638,16 +640,18 @@ export default function Game({
             The pieces are invisible. Play from memory and the move list: tap the square of one of your
             pieces, then where it should go.
           </p>
-          <button
-            className="peek-button secondary"
-            onClick={() => {
-              setPeeksLeft((n) => n - 1)
-              setPeeking(true)
-            }}
-            disabled={peeking || peeksLeft === 0}
-          >
-            {peeking ? '👁 Peeking…' : `👁 Peek for 3 seconds (${peeksLeft} left)`}
-          </button>
+          {peeks > 0 && (
+            <button
+              className="peek-button secondary"
+              onClick={() => {
+                setPeeksLeft((n) => n - 1)
+                setPeeking(true)
+              }}
+              disabled={peeking || peeksLeft === 0}
+            >
+              {peeking ? '👁 Peeking…' : `👁 Peek for 3 seconds (${peeksLeft} left)`}
+            </button>
+          )}
         </section>
       )}
 

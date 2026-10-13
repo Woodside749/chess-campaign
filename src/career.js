@@ -18,6 +18,8 @@
 // A tournament (type: 'tournament') is a knockout bracket:
 // - minutes: the clock for each game.
 // - increment: (optional) seconds added to a player's clock after each of their moves.
+// - peeks: (optional, Blindfold) how many 3-second looks at the pieces a game allows.
+//   None by default; an easier Blindfold event could set, say, peeks: 3.
 // - championText: shown when the player wins the whole tournament.
 // - bracket: the first-round pairings, top to bottom. 'you' is the player. Neighbouring
 //   matches meet in the next round, so put the player where their opponents will come
@@ -798,7 +800,7 @@ export const EVENTS = [
     icon: '🙈',
     title: 'Blindfold',
     place: 'Master League',
-    description: 'The pieces are invisible. Play from memory, with three short peeks per game.',
+    description: 'The pieces are invisible. Play from memory and the move list.',
     requires: { event: 'im-championship' },
     timed: true,
     minutes: 10,

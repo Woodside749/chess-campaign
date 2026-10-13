@@ -62,6 +62,7 @@ export default function App() {
       timed: event.timed,
       minutes: event.minutes,
       increment: event.increment,
+      peeks: event.peeks,
       variant,
       lesson: null,
       tournament: { event, round },
@@ -115,6 +116,7 @@ export default function App() {
         timed={match.timed}
         minutes={match.minutes}
         increment={match.increment}
+        peeks={match.peeks}
         variant={match.variant}
         lesson={match.lesson}
         playerTitle={playerTitle(progress)}
