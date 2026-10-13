@@ -6,6 +6,7 @@ const GROUPS = [
   { id: 'school', title: 'Chess School' },
   { id: 'circuit', title: 'Amateur circuit' },
   { id: 'advanced', title: 'Advanced' },
+  { id: 'expert', title: 'Expert' },
 ]
 
 const COLOR_CHOICES = [
