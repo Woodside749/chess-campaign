@@ -184,7 +184,8 @@ export default function Game({
   // see (also when stepping back through the moves). When it ends, everything is revealed.
   const fogActive = fog && !gameOver
   const visible = fogActive ? visibleSquares(shownFen, playerColor) : null
-  const boardPosition = drawableFen(fogActive ? fogPosition(shownFen, playerColor, visible) : shownFen)
+  // (Fog of War gives the board a list of the pieces to show instead of a FEN.)
+  const boardPosition = fogActive ? fogPosition(shownFen, playerColor, visible) : drawableFen(shownFen)
 
   const captured = variant === 'atomic' ? missingPieces(game, game.startFen) : capturedPieces(game)
   const score = materialScore(game) // positive: White is ahead
