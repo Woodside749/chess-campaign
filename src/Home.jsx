@@ -9,10 +9,29 @@ import Icon from './Icon.jsx'
 import TitleBadge from './TitleBadge.jsx'
 import Silhouette from './Silhouette.jsx'
 
-// Where the home screen was scrolled to when the player left it (to open a bracket or a
-// game), so coming back lands in the same place instead of at the start of the road.
-// On a computer the road scrolls sideways; on a phone the page scrolls down.
-const savedScroll = { left: 0, top: 0 }
+// Where the home screen is scrolled to, so coming back from a bracket or a game lands in
+// the same place instead of at the start of the road. On a computer the road scrolls
+// sideways; on a phone the page scrolls down. It is kept in the browser's session storage
+// (not just in memory), so it also survives the page reloading, which Safari sometimes
+// does to background tabs. It is forgotten when the tab is closed.
+const SCROLL_KEY = 'chess-career-home-scroll'
+
+function loadScroll() {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(SCROLL_KEY))
+    return { left: Number(saved?.left) || 0, top: Number(saved?.top) || 0 }
+  } catch {
+    return { left: 0, top: 0 }
+  }
+}
+
+function saveScroll(road) {
+  try {
+    sessionStorage.setItem(SCROLL_KEY, JSON.stringify({ left: road.scrollLeft, top: window.scrollY }))
+  } catch {
+    // Storage can be blocked (private browsing); then the road just starts at the beginning.
+  }
+}
 
 // The player's home screen: a horizontal career road, scrolled from left to right.
 // First the title, then the Chess School events (played in order, side by side),
@@ -38,11 +57,17 @@ export default function Home({ progress, onOpenEvent, onOpenAchievements, onOpen
   const roadRef = useRef(null)
   useLayoutEffect(() => {
     const road = roadRef.current
-    road.scrollLeft = savedScroll.left
-    window.scrollTo(0, savedScroll.top)
+    const saved = loadScroll()
+    road.scrollLeft = saved.left
+    window.scrollTo(0, saved.top)
+    // Save whenever the player scrolls (sideways or down), and once more when leaving.
+    const save = () => saveScroll(road)
+    road.addEventListener('scroll', save, { passive: true })
+    window.addEventListener('scroll', save, { passive: true })
     return () => {
-      savedScroll.left = road.scrollLeft
-      savedScroll.top = window.scrollY
+      save()
+      road.removeEventListener('scroll', save)
+      window.removeEventListener('scroll', save)
     }
   }, [])
 
