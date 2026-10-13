@@ -9,6 +9,7 @@ const GROUPS = [
   { id: 'circuit', title: 'Amateur circuit' },
   { id: 'advanced', title: 'Advanced' },
   { id: 'expert', title: 'Expert' },
+  { id: 'master', title: 'Master' },
 ]
 
 const COLOR_CHOICES = [
