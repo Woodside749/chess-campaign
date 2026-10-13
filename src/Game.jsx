@@ -432,6 +432,7 @@ export default function Game({
             </div>
             <div className="speech">“{botLine}”</div>
           </div>
+          {timed && <Clock ms={timeLeft[botColor]} active={clockRunning && turn === botColor} />}
         </header>
         <div className="board">
           <Chessboard
@@ -459,6 +460,7 @@ export default function Game({
                 : `${bot.name} is thinking…`}
           </p>
           <CapturedPieces color={playerColor} captured={captured[playerColor]} advantage={advantage(playerColor)} />
+          {timed && <Clock ms={timeLeft[playerColor]} active={clockRunning && turn === playerColor} />}
           {import.meta.env.DEV && !gameOver && (
             <button className="simul-small-button dev" onClick={autoWin}>
               ⚡ Win

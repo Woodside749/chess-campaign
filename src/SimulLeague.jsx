@@ -14,7 +14,8 @@ export default function SimulLeague({ event, roundsWon, onPlayRound, onBack }) {
         <h2>How it works</h2>
         <ul>
           <li>You play three opponents at once, on three boards side by side. You have White on every board.</li>
-          <li>There are no clocks. Each opponent thinks on its own, so move on another board while one is thinking.</li>
+          <li>Every board has its own {event.minutes}-minute clocks. Your clock on a board runs whenever it is your move there, so don't leave a board waiting too long.</li>
+          <li>Each opponent thinks on its own, so move on another board while one is thinking.</li>
           <li>A win is 1 point and a draw is ½. Score {event.rounds[0].needed} of 3 to pass and unlock the next simul.</li>
         </ul>
       </section>

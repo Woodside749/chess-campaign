@@ -1244,3 +1244,13 @@
   align-items: center;
   gap: 10px;
 }
+
+/* Smaller clocks on the simul boards. */
+.simul-board .clock {
+  padding: 3px 8px;
+  font-size: 16px;
+}
+
+.simul-board-footer .clock {
+  margin-left: 0;
+}

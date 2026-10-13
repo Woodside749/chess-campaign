@@ -382,6 +382,7 @@ export const EVENTS = [
     description: 'Play three opponents on three boards at the same time. Score 2 of 3 points to pass each simul.',
     requires: { event: 'amateur-super' },
     championText: 'You beat all three simuls!',
+    minutes: 10, // on every board, for you and for the bot
     // Like a real simul, the opponents are weaker than you: the challenge is playing three
     // at once. They start with Amateur bots and end with the easier Advanced ones.
     rounds: [

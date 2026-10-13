@@ -98,6 +98,7 @@ export default function App() {
       <Simul
         key={round}
         round={event.rounds[round]}
+        minutes={event.minutes}
         onFinish={(passed) => passed && saveRoundWon(event, round)}
         onExit={() => setSimulRun(null)}
       />
