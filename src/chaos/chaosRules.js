@@ -136,7 +136,7 @@ export const RULES = [
     id: 'swap',
     icon: '🔄',
     name: 'Swap',
-    text: 'Instead of moving, you may swap two of your own pieces (not the king).',
+    text: "Instead of moving, you may swap two of your own pieces (not the king). Pawns can't be swapped onto the first or last rank.",
     hint: 'Drag one of your pieces onto the other.',
     apply: power(swaps),
   },
