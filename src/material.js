@@ -1,6 +1,7 @@
 // Piece values used for the material score shown next to each player.
-// Fairy pieces: a = Archbishop, c = Chancellor, z = Amazon (see fairy/variants.js).
-export const PIECE_VALUES = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0, a: 7, c: 8, z: 12 }
+// Fairy pieces (see fairy/variants.js): a Archbishop, c Chancellor, z Amazon, e Centaur,
+// l Camel, i Nightrider, o Cannon, h Dragon Horse.
+export const PIECE_VALUES = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0, a: 7, c: 8, z: 12, e: 5, l: 3, i: 5, o: 4, h: 7 }
 
 // The pieces each side has captured, as piece types sorted from pawn to queen.
 // `w` holds the black pieces White has taken, and `b` the white pieces Black has taken.
@@ -9,7 +10,7 @@ export function capturedPieces(game) {
   for (const move of game.history({ verbose: true })) {
     if (move.captured) captured[move.color].push(move.captured)
   }
-  const order = 'pnbracqz'
+  const order = 'pnlbieohracqz'
   for (const color of ['w', 'b']) {
     captured[color].sort((a, b) => order.indexOf(a) - order.indexOf(b))
   }
@@ -37,7 +38,7 @@ export function missingPieces(game, startFen) {
     expected[move.color][move.promotion] = (expected[move.color][move.promotion] ?? 0) + 1
   }
   const now = count(game.fen())
-  const order = 'pnbracqz'
+  const order = 'pnlbieohracqz'
   const missing = { w: [], b: [] }
   // White's captures are the black pieces that are gone, and the other way round.
   for (const [taker, owner] of [['w', 'b'], ['b', 'w']]) {

@@ -6,40 +6,78 @@
 // Per variant: `title`, `icon` and `intro` for the screen; `rules`, the ffish/engine
 // variant name if it differs from the key; `noPersonality` if the bots' personality code
 // can't read its positions (new pieces, exploded kings, pawns on the first rank); `chess960` for
-// Fischer Random; `hill` for squares to highlight; `winText` for a special way to win;
-// `pockets` for Crazyhouse, where captured pieces can be dropped back on the board.
+// Fischer Random; `pieces` for the fairy pieces in the game (letters from FAIRY_PIECES);
+// `hill` for squares to highlight; `winText` for a special way to win;
+// `pockets` for Crazyhouse, where captured pieces can be dropped back on the board;
+// `duck` for Duck Chess; `whiteView` to always show the board from White's side.
 //
-// Each fairy piece is drawn as its base piece (`looksLike`) with a small knight badge,
-// because all of ours are a normal piece that can also jump like a knight.
+// Each fairy piece is drawn as its base piece (`looksLike`) with a badge in the corner:
+// a small knight for the knight hybrids, or an emoji (`badge`) for the others.
 // `value` is its worth in pawns, used for the material score.
 
 export const FAIRY_PIECES = {
   a: { name: 'Archbishop', looksLike: 'b', value: 7, moves: 'like a bishop and a knight' },
   c: { name: 'Chancellor', looksLike: 'r', value: 8, moves: 'like a rook and a knight' },
   z: { name: 'Amazon', looksLike: 'q', value: 12, moves: 'like a queen and a knight' },
+  e: { name: 'Centaur', looksLike: 'n', badge: '👑', value: 5, moves: 'like a king and a knight' },
+  l: { name: 'Camel', looksLike: 'n', badge: '🐪', value: 3, moves: 'with a long jump: three squares one way and one to the side' },
+  i: { name: 'Nightrider', looksLike: 'n', badge: '🌙', value: 5, moves: 'like a knight, but keeps jumping in the same direction' },
+  o: {
+    name: 'Cannon',
+    looksLike: 'r',
+    badge: '💣',
+    value: 4,
+    moves: 'like a rook, but can only capture by hopping over exactly one piece',
+  },
+  h: { name: 'Dragon Horse', looksLike: 'b', badge: '🐉', value: 7, moves: 'like a bishop, plus one step straight' },
 }
 
+const FAIRY_INTRO = 'Some of your pieces have become fairy pieces. The badge in the corner tells them apart.'
+
 export const FAIRY_VARIANTS = {
+  // Amateur Fairy Cup.
   archchess: {
     title: 'Archbishop chess',
     icon: '🧚',
     noPersonality: true,
-    piece: 'a',
-    intro: 'Your queenside knight has become an Archbishop: it moves like a bishop and a knight.',
+    pieces: ['a'],
+    intro: 'Both your knights have become Archbishops.',
   },
   chancellorchess: {
     title: 'Chancellor chess',
     icon: '🧚',
     noPersonality: true,
-    piece: 'c',
-    intro: 'Your queenside knight has become a Chancellor: it moves like a rook and a knight.',
+    pieces: ['c'],
+    intro: 'Both your rooks have become Chancellors. They still castle like rooks.',
   },
   amazonchess: {
-    title: 'Amazon chess',
+    title: 'Amazon & Centaurs',
     icon: '🧚',
     noPersonality: true,
-    piece: 'z',
-    intro: 'Your queen has become an Amazon: she moves like a queen and a knight. The strongest piece in the game!',
+    pieces: ['z', 'e'],
+    intro: 'Your queen has become an Amazon, the strongest piece in the game, and your knights have become Centaurs.',
+  },
+  // Master Fairy: four fairy pieces each.
+  leapers: {
+    title: 'Leapers',
+    icon: '🧚',
+    noPersonality: true,
+    pieces: ['i', 'l'],
+    intro: `${FAIRY_INTRO} Knights have become Nightriders and bishops have become Camels.`,
+  },
+  eastern: {
+    title: 'Eastern army',
+    icon: '🧚',
+    noPersonality: true,
+    pieces: ['o', 'h'],
+    intro: `${FAIRY_INTRO} Rooks have become Cannons (from Chinese chess) and bishops Dragon Horses (from Japanese chess). Cannons still castle like rooks.`,
+  },
+  royalcourt: {
+    title: 'Royal court',
+    icon: '🧚',
+    noPersonality: true,
+    pieces: ['c', 'a'],
+    intro: `${FAIRY_INTRO} Rooks have become Chancellors and bishops Archbishops: four big hybrid pieces each.`,
   },
   // Fischer Random uses normal pieces, so normal Stockfish thinks for the bots and they
   // keep their personalities. `rules` is the ffish variant, `chess960` turns on its
@@ -105,6 +143,34 @@ export const FAIRY_VARIANTS = {
     pockets: true,
     intro:
       'Pieces you capture switch sides and go into your pocket. Instead of moving, you may drop a pocket piece onto any empty square (pawns not on the first or last rank). Tap the piece in your pocket, then the square.',
+  },
+  // Master tier variants.
+  // `duck`: every move also moves the duck, so the game asks where to put it.
+  duckchess: {
+    title: 'Duck Chess',
+    icon: '🦆',
+    noPersonality: true,
+    duck: true,
+    intro:
+      'After every move, you also move the duck to any empty square. Nobody can pass through it or capture it. There is no check: capture the king to win!',
+    winText: {
+      win: 'You captured the king!',
+      loss: 'Your king was captured.',
+    },
+  },
+  // Racing Kings is built into Fairy-Stockfish. Both armies race up the board, so the
+  // board is always shown from White's side (`whiteView`).
+  racingkings: {
+    title: 'Racing Kings',
+    icon: '🏎️',
+    noPersonality: true,
+    whiteView: true,
+    intro:
+      'Both kings race to the top row: the first king to reach the 8th rank wins. Nobody may give check. If White gets there first, Black still gets one move to reach it too, and then it is a draw.',
+    winText: {
+      win: 'Your king reached the finish line!',
+      loss: "Your opponent's king reached the finish line.",
+    },
   },
   // King of the Hill is built into Fairy-Stockfish, so it needs no entry in variants.ini.
   kingofthehill: {

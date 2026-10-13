@@ -1467,3 +1467,35 @@ button.pocket-piece:hover {
   line-height: 16px;
   text-align: center;
 }
+
+/* The fairy piece guide beside the board: each fairy piece in the game and how it moves. */
+ul.fairy-legend {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+ul.fairy-legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.fairy-legend-piece {
+  flex: none;
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+}
+
+.fairy-legend-piece svg {
+  width: 100%;
+  height: 100%;
+}
+
+.peek-button {
+  margin-top: 10px;
+}

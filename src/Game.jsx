@@ -5,7 +5,7 @@ import { pickLine } from './bots.js'
 import { chooseBotMove, thinkTimeMs } from './botBrain.js'
 import { visibleSquares } from './fogChess.js'
 import { chooseFogMove, createFogMemory } from './fogBot.js'
-import { FairyGame, boardFen } from './fairy/FairyGame.js'
+import { FairyGame, boardFen, withoutDuck } from './fairy/FairyGame.js'
 import { fairyEngineFor } from './fairy/fairyEngine.js'
 import { simpleFairyMove } from './fairy/simpleFairyBot.js'
 import { allPieces } from './fairy/fairyPieces.js'
@@ -56,8 +56,14 @@ function createGame(variant) {
   return game
 }
 
-// A FEN the board drawing understands: without a Crazyhouse pocket or promoted-piece marks.
-const drawableFen = (fen) => [boardFen(fen), ...fen.split(' ').slice(1)].join(' ')
+// A FEN the board drawing understands: without a Crazyhouse pocket or promoted-piece marks,
+// and with Duck Chess's duck ("*") written as "X", which is drawn as a duck.
+const drawableFen = (fen) => [boardFen(fen).replace('*', 'X'), ...fen.split(' ').slice(1)].join(' ')
+// Blindfold: an empty board.
+const EMPTY_BOARD = '8/8/8/8/8/8/8/8 w - - 0 1'
+// Blindfold: how many times you may peek at the pieces, and for how long.
+const PEEKS = 3
+const PEEK_MS = 3000
 
 // What a hidden square looks like in Fog of War.
 const FOG_STYLE = { background: '#4a4844', boxShadow: 'inset 0 0 0 1px rgba(0, 0, 0, 0.15)' }
@@ -99,7 +105,9 @@ export default function Game({
   const fog = variant === 'fog'
   // Chaos Chess and Dice Chess both roll a rule each turn (see chaos/).
   const chaos = variant === 'chaos' || variant === 'dice'
+  const blind = variant === 'blindfold'
   const fairy = isFairyVariant(variant) ? FAIRY_VARIANTS[variant] : null
+  const duck = Boolean(fairy?.duck)
   // In Fog of War, the bot's memory of where it last saw the player's pieces.
   const fogMemoryRef = useRef(null)
   const [fen, setFen] = useState(game.fen())
@@ -114,6 +122,11 @@ export default function Game({
   const [viewPly, setViewPly] = useState(null)
   // A pawn move to the last rank waiting for you to pick a piece, like { from: 'e7', to: 'e8' }.
   const [pendingPromotion, setPendingPromotion] = useState(null)
+  // Duck Chess: a piece move waiting for the duck to be placed, like { from, to, promotion }.
+  const [pendingDuck, setPendingDuck] = useState(null)
+  // Blindfold: whether the pieces are shown right now, and how many peeks are left.
+  const [peeking, setPeeking] = useState(false)
+  const [peeksLeft, setPeeksLeft] = useState(PEEKS)
   const [resigned, setResigned] = useState(false)
   // Set by the developer-only Auto-win button.
   const [autoWon, setAutoWon] = useState(false)
@@ -171,6 +184,8 @@ export default function Game({
   const incrementMs = increment * 1000
   // Fog of War: the player is told when they are in check, but not by what.
   const playerInCheck = fog && !gameOver && turn === playerColor && game.inCheck()
+  // Racing Kings is always shown from White's side; otherwise from the player's side.
+  const orientation = fairy?.whiteView || playerColor === 'w' ? 'white' : 'black'
 
   // Stepping back through the game. While viewing an earlier position the board is
   // locked: you can look, but not move.
@@ -185,7 +200,16 @@ export default function Game({
   const fogActive = fog && !gameOver
   const visible = fogActive ? visibleSquares(shownFen, playerColor) : null
   // (Fog of War gives the board a list of the pieces to show instead of a FEN.)
-  const boardPosition = fogActive ? fogPosition(shownFen, playerColor, visible) : drawableFen(shownFen)
+  // Blindfold hides every piece while the game is on (unless you are peeking). In Duck
+  // Chess, while you choose where the duck goes, the board shows your move without it.
+  const pendingDuckMove = pendingDuck && duckMoves(game, pendingDuck)[0]
+  const boardPosition = fogActive
+    ? fogPosition(shownFen, playerColor, visible)
+    : blind && !gameOver && !peeking
+      ? EMPTY_BOARD
+      : pendingDuckMove
+        ? drawableFen(withoutDuck(pendingDuckMove.after))
+        : drawableFen(shownFen)
 
   const captured = variant === 'atomic' ? missingPieces(game, game.startFen) : capturedPieces(game)
   const score = materialScore(game) // positive: White is ahead
@@ -230,6 +254,13 @@ export default function Game({
     }, 900)
     return () => clearTimeout(timer)
   }, [replyPending, step, game])
+
+  // Blindfold: a peek shows the pieces for a few seconds.
+  useEffect(() => {
+    if (!peeking) return
+    const timer = setTimeout(() => setPeeking(false), PEEK_MS)
+    return () => clearTimeout(timer)
+  }, [peeking])
 
   // Whenever the position changes and it's the bot's turn, let the bot move.
   // (Not during a lesson: then the coach's moves come from the script.)
@@ -321,7 +352,26 @@ export default function Game({
       setPendingPromotion({ from, to })
       return true
     }
-    const move = game.move({ from, to, promotion })
+    // Duck Chess: the move is only finished once the duck has been placed.
+    if (duck) {
+      setPendingDuck({ from, to, promotion })
+      return true
+    }
+    finishPlayerMove(game.move({ from, to, promotion }))
+    return true
+  }
+
+  // Duck Chess: places the duck for the waiting move. Returns false if it can't go there.
+  function placeDuck(square) {
+    if (!duckMoves(game, pendingDuck).some((m) => m.duckSquare === square)) return false
+    const move = game.move({ ...pendingDuck, duck: square })
+    setPendingDuck(null)
+    finishPlayerMove(move)
+    return true
+  }
+
+  // After the player's move: press the clock, let the bot react, redraw.
+  function finishPlayerMove(move) {
     setClock((c) => pressClock(c, playerColor, incrementMs))
     const line = reactionLine(bot, move, playerColor)
     if (line) setSpeech(line)
@@ -330,7 +380,6 @@ export default function Game({
       setReplyPending(true)
     }
     setFen(game.fen())
-    return true
   }
 
   function continueLesson() {
@@ -340,7 +389,8 @@ export default function Game({
 
   // Queues a premove while the bot is thinking. Returns true if it was accepted.
   function tryPremove(from, to) {
-    if (!premoveTargets(game, from).includes(to)) return false
+    // No premoves in Duck Chess: a move there isn't complete without its duck square.
+    if (duck || !premoveTargets(game, from).includes(to)) return false
     setPremove({ from, to })
     setSelected(null)
     return true
@@ -375,6 +425,11 @@ export default function Game({
   // Tapping anywhere else cancels the selection and any premove.
   function onSquareClick({ piece, square }) {
     if (viewing) return
+    // Duck Chess: the next tap places the duck (tapping anywhere else takes the move back).
+    if (pendingDuck) {
+      if (!placeDuck(square)) setPendingDuck(null)
+      return
+    }
     // Tapping the selected piece again puts it down, so you can pick another one.
     if (square === selected) {
       setSelected(null)
@@ -382,7 +437,8 @@ export default function Game({
     }
     if (selected && moveIntent(selected, square)) return
     setPremove(null)
-    const isOwnPiece = piece && piece.pieceType[0] === playerColor
+    // In Blindfold no pieces are drawn, so ask the game what stands on the square.
+    const isOwnPiece = blind ? game.get(square)?.color === playerColor : piece && piece.pieceType[0] === playerColor
     setSelected(isOwnPiece && !gameOver ? square : null)
   }
 
@@ -426,6 +482,9 @@ export default function Game({
     setPremove(null)
     setViewPly(null)
     setPendingPromotion(null)
+    setPendingDuck(null)
+    setPeeking(false)
+    setPeeksLeft(PEEKS)
     setResigned(false)
     setAutoWon(false)
     setConfirming(null)
@@ -471,7 +530,7 @@ export default function Game({
           <Chessboard
             options={{
               position: fen,
-              boardOrientation: playerColor === 'w' ? 'white' : 'black',
+              boardOrientation: orientation,
               onPieceDrop,
               onSquareClick,
               onSquareRightClick: () => setPremove(null),
@@ -546,10 +605,17 @@ export default function Game({
             {fairy.icon} {fairy.title}
           </div>
           <p className="lesson-text">{fairy.intro}</p>
-          {fairy.piece && (
-            <p className="fairy-legend">
-              The piece with a small knight badge is the {FAIRY_PIECES[fairy.piece].name}.
-            </p>
+          {fairy.pieces && (
+            <ul className="fairy-legend">
+              {fairy.pieces.map((letter) => (
+                <li key={letter}>
+                  <span className="fairy-legend-piece">{allPieces[playerColor + letter.toUpperCase()]()}</span>
+                  <span>
+                    <strong>{FAIRY_PIECES[letter].name}</strong> moves {FAIRY_PIECES[letter].moves}.
+                  </span>
+                </li>
+              ))}
+            </ul>
           )}
         </section>
       )}
@@ -562,6 +628,26 @@ export default function Game({
           hasPowers={game.moves({ verbose: true }).some((m) => m.special)}
           dice={variant === 'dice'}
         />
+      )}
+
+      {blind && !gameOver && (
+        <section className="lesson-panel fairy-note">
+          <div className="opponent-name">🙈 Blindfold</div>
+          <p className="lesson-text">
+            The pieces are invisible. Play from memory and the move list: tap the square of one of your
+            pieces, then where it should go.
+          </p>
+          <button
+            className="peek-button secondary"
+            onClick={() => {
+              setPeeksLeft((n) => n - 1)
+              setPeeking(true)
+            }}
+            disabled={peeking || peeksLeft === 0}
+          >
+            {peeking ? '👁 Peeking…' : `👁 Peek for 3 seconds (${peeksLeft} left)`}
+          </button>
+        </section>
       )}
 
       {inLesson && (
@@ -581,15 +667,17 @@ export default function Game({
           options={{
             position: boardPosition,
             pieces: allPieces,
-            boardOrientation: playerColor === 'w' ? 'white' : 'black',
+            boardOrientation: orientation,
             onPieceDrop,
             onSquareClick,
             onSquareRightClick: () => setPremove(null),
-            canDragPiece: ({ piece }) => !gameOver && !viewing && piece.pieceType[0] === playerColor,
+            canDragPiece: ({ piece }) => !gameOver && !viewing && !pendingDuck && piece.pieceType[0] === playerColor,
             squareStyles: withFog(
               viewing
                 ? reviewStyles(history[viewPly - 1])
-                : { ...hillStyles, ...squareStyles(game, selected, premove, isPlayersTurn), ...lessonHighlights },
+                : pendingDuck
+                  ? duckStyles(game, pendingDuck)
+                  : { ...hillStyles, ...squareStyles(game, selected, premove, isPlayersTurn, !blind), ...lessonHighlights },
               visible,
             ),
             arrows: viewing ? [] : lessonArrows,
@@ -612,7 +700,9 @@ export default function Game({
               ? viewingText(history, viewPly)
               : inLesson
                 ? `Lesson with ${bot.name}`
-                : playerInCheck
+                : pendingDuck
+                  ? '🦆 Now tap an empty square for the duck'
+                  : playerInCheck
                   ? '⚠️ Your king is in check!'
                   : statusText(game, result, playerColor, bot)}
           </p>
@@ -715,7 +805,8 @@ function endLine(bot, result, game) {
 
 // Colours for highlighted squares: last move, selected piece, where it can go,
 // a queued premove, and a king in check.
-function squareStyles(game, selected, premove, isPlayersTurn) {
+// `showTargets` is false in Blindfold, where only the selected square is marked.
+function squareStyles(game, selected, premove, isPlayersTurn, showTargets = true) {
   const styles = {}
   const lastMove = game.history({ verbose: true }).at(-1)
   if (lastMove) {
@@ -724,7 +815,9 @@ function squareStyles(game, selected, premove, isPlayersTurn) {
   }
   if (selected) {
     styles[selected] = { background: 'rgba(100, 181, 246, 0.6)' }
-    if (isPlayersTurn) {
+    if (!showTargets) {
+      // Blindfold: no hints about where the piece can go.
+    } else if (isPlayersTurn) {
       for (const move of game.moves({ square: selected, verbose: true })) {
         // A ring around pieces you can take (or swap with, in Chaos Chess), or the rook you
         // can castle with (Fischer Random). Chaos Chess special moves are purple.
@@ -820,4 +913,25 @@ function withFog(styles, visible) {
     }
   }
   return fogged
+}
+
+// Duck Chess: the legal moves for a piece move waiting for its duck ({ from, to,
+// promotion }), one per square the duck may go to.
+function duckMoves(game, pending) {
+  return game
+    .moves({ square: pending.from, verbose: true })
+    .filter((m) => m.to === pending.to && (!m.promotion || m.promotion === (pending.promotion ?? 'q')))
+}
+
+// Duck Chess: while the duck is being placed, the move is marked and every square the duck
+// may go to gets a dot.
+function duckStyles(game, pending) {
+  const styles = {
+    [pending.from]: { background: 'rgba(255, 213, 79, 0.45)' },
+    [pending.to]: { background: 'rgba(255, 213, 79, 0.45)' },
+  }
+  for (const move of duckMoves(game, pending)) {
+    styles[move.duckSquare] = { background: 'radial-gradient(circle, rgba(230, 160, 30, 0.75) 20%, transparent 22%)' }
+  }
+  return styles
 }

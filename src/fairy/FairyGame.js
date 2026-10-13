@@ -55,6 +55,11 @@ export class FairyGame {
       .sort((a, b) => order.indexOf(a) - order.indexOf(b))
   }
 
+  // Duck Chess: the square the duck stands on, or null before it has been placed.
+  duckSquare() {
+    return duckSquareIn(this.fen())
+  }
+
   findPiece({ type, color }) {
     const pieces = readPlacement(this.fen())
     return Object.keys(pieces).filter((sq) => pieces[sq].type === type && pieces[sq].color === color)
@@ -84,6 +89,12 @@ export class FairyGame {
         matching = ucis.filter((u) => u.startsWith(input.from) && this.describe(u).castleTo === input.to)
       }
       uci = matching.length === 1 ? matching[0] : matching.find((u) => u[4] === (input.promotion ?? 'q'))
+    }
+    // Duck Chess: each move also says where the duck goes (`duck`), like "e2e4,e4e5".
+    if (input.duck) {
+      uci = ucis.find(
+        (u) => u.slice(0, 4) === input.from + input.to && u.slice(-2) === input.duck && (!u.split(',')[0][4] || u.split(',')[0][4] === (input.promotion ?? 'q')),
+      )
     }
     if (!uci) throw new Error(`Invalid move: ${JSON.stringify(input)}`)
     const move = this.describe(uci)
@@ -159,9 +170,12 @@ export class FairyGame {
       return { from: uci.slice(0, 2), to: uci.slice(2, 4), piece, color: this.turn(), flags: 'n', drop: true, san, lan: uci, before, after }
     }
     const pieces = readPlacement(before)
-    const from = uci.slice(0, 2)
-    const to = uci.slice(2, 4)
-    const promotion = uci[4]
+    // Duck Chess moves end with where the duck goes: "e2e4,e4e5" puts it on e5.
+    const [main, duckPart] = uci.split(',')
+    const duckSquare = duckPart?.slice(-2)
+    const from = main.slice(0, 2)
+    const to = main.slice(2, 4)
+    const promotion = main[4]
     const mover = pieces[from]
     const ontoOwnRook = pieces[to]?.color === mover.color
     let captured = ontoOwnRook ? undefined : pieces[to]?.type
@@ -182,7 +196,7 @@ export class FairyGame {
     this.chessBoard.push(uci)
     const after = this.fen()
     this.chessBoard.pop()
-    return { from, to, piece: mover.type, color: mover.color, captured, promotion, flags, castleTo, san, lan: uci, before, after }
+    return { from, to, piece: mover.type, color: mover.color, captured, promotion, flags, castleTo, duckSquare, san, lan: uci, before, after }
   }
 }
 
@@ -197,6 +211,8 @@ export function readPlacement(fen) {
       for (const char of row) {
         if (/\d/.test(char)) {
           file += Number(char)
+        } else if (char === '*') {
+          file++ // the duck (Duck Chess): a wall, not a piece
         } else if (/[a-z]/i.test(char)) {
           pieces[FILES[file] + (8 - i)] = { type: char.toLowerCase(), color: char === char.toUpperCase() ? 'w' : 'b' }
           file++
@@ -210,4 +226,30 @@ export function readPlacement(fen) {
 // Crazyhouse pocket ("[Pn]") or promoted-piece marks ("Q~").
 export function boardFen(fen) {
   return fen.split(' ')[0].replace(/\[[^\]]*\]/, '').replace(/~/g, '')
+}
+
+// Duck Chess: where the duck ("*") stands in a FEN, or null.
+export function duckSquareIn(fen) {
+  const rows = boardFen(fen).split('/')
+  for (let i = 0; i < rows.length; i++) {
+    let file = 0
+    for (const char of rows[i]) {
+      if (char === '*') return FILES[file] + (8 - i)
+      file += /\d/.test(char) ? Number(char) : 1
+    }
+  }
+  return null
+}
+
+// Duck Chess: the same FEN with the duck taken off the board (used to show a move while
+// the player is still choosing where the duck goes).
+export function withoutDuck(fen) {
+  const [placement, ...rest] = fen.split(' ')
+  const rows = placement.split('/').map((row) =>
+    row
+      .replace(/\d/g, (n) => '1'.repeat(Number(n)))
+      .replace('*', '1')
+      .replace(/1+/g, (ones) => String(ones.length)),
+  )
+  return [rows.join('/'), ...rest].join(' ')
 }
