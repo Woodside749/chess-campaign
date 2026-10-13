@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from 'react'
 import { BOTS } from './bots.js'
 import { EVENTS, isUnlocked, leaguesWon } from './career.js'
 import { roundsWon } from './progress.js'
@@ -6,6 +7,11 @@ import { PLAYER, playerTitle, titleById } from './player.js'
 import Avatar from './Avatar.jsx'
 import TitleBadge from './TitleBadge.jsx'
 import Silhouette from './Silhouette.jsx'
+
+// Where the home screen was scrolled to when the player left it (to open a bracket or a
+// game), so coming back lands in the same place instead of at the start of the road.
+// On a computer the road scrolls sideways; on a phone the page scrolls down.
+const savedScroll = { left: 0, top: 0 }
 
 // The player's home screen: a horizontal career road, scrolled from left to right.
 // First the title, then the Chess School events (played in order, side by side),
@@ -27,6 +33,18 @@ export default function Home({ progress, onOpenEvent, onOpenAchievements, onOpen
   const title = playerTitle(progress)
   const achievements = achievementsFor(progress)
 
+  // Go back to where the player was, and remember the spot when they leave.
+  const roadRef = useRef(null)
+  useLayoutEffect(() => {
+    const road = roadRef.current
+    road.scrollLeft = savedScroll.left
+    window.scrollTo(0, savedScroll.top)
+    return () => {
+      savedScroll.left = road.scrollLeft
+      savedScroll.top = window.scrollY
+    }
+  }, [])
+
   // A normal mouse wheel scrolls up and down; here it scrolls the road sideways instead.
   function scrollSideways(event) {
     const road = event.currentTarget
@@ -36,7 +54,7 @@ export default function Home({ progress, onOpenEvent, onOpenAchievements, onOpen
   }
 
   return (
-    <main className="home" onWheel={scrollSideways}>
+    <main className="home" ref={roadRef} onWheel={scrollSideways}>
       <section className="home-intro">
         <h1>Chess Career</h1>
         <p>
