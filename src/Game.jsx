@@ -22,6 +22,7 @@ import { capturedPieces, materialScore, missingPieces } from './material.js'
 import { premoveTargets } from './premove.js'
 import { boardResult, reactionTo, timeoutResult } from './rules.js'
 import Avatar from './Avatar.jsx'
+import Icon from './Icon.jsx'
 import TitleBadge from './TitleBadge.jsx'
 import { PLAYER, titleById } from './player.js'
 import CapturedPieces from './CapturedPieces.jsx'
@@ -602,7 +603,7 @@ export default function Game({
       {fairy && !inLesson && (
         <section className="lesson-panel fairy-note">
           <div className="opponent-name">
-            {fairy.icon} {fairy.title}
+            <Icon icon={fairy.icon} /> {fairy.title}
           </div>
           <p className="lesson-text">{fairy.intro}</p>
           {fairy.pieces && (
@@ -701,7 +702,11 @@ export default function Game({
               : inLesson
                 ? `Lesson with ${bot.name}`
                 : pendingDuck
-                  ? '🦆 Now tap an empty square for the duck'
+                  ? (
+                      <>
+                        <Icon icon="rubber-duck" /> Now tap an empty square for the duck
+                      </>
+                    )
                   : playerInCheck
                   ? '⚠️ Your king is in check!'
                   : statusText(game, result, playerColor, bot)}

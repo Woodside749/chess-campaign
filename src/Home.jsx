@@ -5,6 +5,7 @@ import { roundsWon } from './progress.js'
 import { achievementsFor } from './achievements.js'
 import { PLAYER, playerTitle, titleById } from './player.js'
 import Avatar from './Avatar.jsx'
+import Icon from './Icon.jsx'
 import TitleBadge from './TitleBadge.jsx'
 import Silhouette from './Silhouette.jsx'
 
@@ -250,7 +251,7 @@ function LeagueCard({ event, locked, won, onOpen }) {
     <article className={`league-card${playable ? '' : ' unavailable'}`}>
       <div className="league-heading">
         <span className="league-icon" aria-hidden="true">
-          {event.icon}
+          <Icon icon={event.icon} />
         </span>
         <h3>{event.title}</h3>
       </div>

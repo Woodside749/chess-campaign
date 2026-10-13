@@ -148,7 +148,7 @@ export const FAIRY_VARIANTS = {
   // `duck`: every move also moves the duck, so the game asks where to put it.
   duckchess: {
     title: 'Duck Chess',
-    icon: '🦆',
+    icon: 'rubber-duck',
     noPersonality: true,
     duck: true,
     intro:

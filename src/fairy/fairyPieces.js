@@ -31,7 +31,7 @@ export const fairyPieces = Object.fromEntries(
 
 // The duck in Duck Chess: a yellow rubber duck. In the board's FEN it is written "X"
 // (see Game.jsx).
-const duck = (props) =>
+export const duck = (props) =>
   h(
     'svg',
     { viewBox: '0 0 100 100', width: '100%', height: '100%', style: props?.svgStyle },

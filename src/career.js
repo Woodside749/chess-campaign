@@ -741,7 +741,7 @@ export const EVENTS = [
     section: 'master',
     type: 'tournament',
     variant: 'duckchess',
-    icon: '🦆',
+    icon: 'rubber-duck',
     title: 'Duck Chess',
     place: 'Master League',
     description: 'After every move you also move the duck, a wall nobody can pass. No check: capture the king to win.',
