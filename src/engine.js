@@ -49,7 +49,8 @@ export class Engine {
   // `variant` (Fairy-Stockfish only) names a chess variant from variants.ini.
   // `chess960` turns on Fischer Random castling rules. It is set on every analysis,
   // because the engine is shared and the previous game may have used another setting.
-  analyse(fen, { depth = 8, multiPv = 5, variant, chess960 = false } = {}) {
+  // `searchMoves` (a list of UCI moves) makes Stockfish only consider those moves.
+  analyse(fen, { depth = 8, multiPv = 5, variant, chess960 = false, searchMoves } = {}) {
     const search = this.queue.then(async () => {
       const lines = new Map() // multipv number -> latest result for that line
       const collect = (line) => {
@@ -62,7 +63,8 @@ export class Engine {
       this.send('setoption name Skill Level value 20')
       this.send(`setoption name MultiPV value ${multiPv}`)
       this.send(`position fen ${fen}`)
-      await this.request(`go depth ${depth}`, (l) => l.startsWith('bestmove'))
+      const only = searchMoves ? ` searchmoves ${searchMoves.join(' ')}` : ''
+      await this.request(`go depth ${depth}${only}`, (l) => l.startsWith('bestmove'))
       this.listeners.delete(collect)
       return [...lines.values()].sort((x, y) => x.rank - y.rank).map(({ uci, score }) => ({ uci, score }))
     })

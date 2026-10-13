@@ -394,12 +394,29 @@ export const EVENTS = [
   {
     id: 'chaos-chess',
     section: 'advanced',
-    comingSoon: true,
-    icon: '🎲',
+    type: 'tournament',
+    variant: 'chaos',
+    icon: '🌪️',
     title: 'Chaos Chess',
     place: 'Advanced League',
     description: 'Every turn brings a random new rule, for you and for the bot.',
     requires: { event: 'amateur-super' },
+    timed: true,
+    minutes: 10,
+    championText: 'You mastered the chaos!',
+    bracket: [
+      ['ivan', 'carlos'],
+      ['erik', 'jake'],
+      ['you', 'zofia'],
+      ['meilin', 'lucia'],
+    ],
+    rounds: [
+      { name: 'Round 1', opponent: 'zofia', color: 'w' },
+      { name: 'Semi-final', opponent: 'meilin', color: 'b' },
+      { name: 'Final', opponent: 'ivan', color: 'w' },
+    ],
+    ranking: ['ivan', 'meilin', 'erik', 'lucia', 'jake', 'carlos', 'zofia'],
+    classmates: {},
   },
 ]
 

@@ -1254,3 +1254,41 @@
 .simul-board-footer .clock {
   margin-left: 0;
 }
+
+/* Chaos Chess: the rule banner beside the board. */
+
+.chaos-panel {
+  border-color: var(--border);
+}
+
+.chaos-panel.yours {
+  border-color: #8e44ad;
+  box-shadow: 0 0 0 1px #8e44ad inset;
+}
+
+.chaos-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.chaos-rule {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 6px 0 2px;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.chaos-icon {
+  font-size: 28px;
+}
+
+.chaos-hint {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: #b37fd0;
+}

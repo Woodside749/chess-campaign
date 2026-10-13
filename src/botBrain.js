@@ -37,7 +37,7 @@ export function thinkTimeMs(game, bot, timeLeftMs, clockMs = STANDARD_CLOCK_MS) 
 
 // 0 when relaxed, rising to 1 as the clock runs out. The pressure starts at a tenth of
 // the clock: after 9 of 10 minutes, or after 54 seconds of a 1-minute game.
-function timePressure(timeLeftMs, clockMs = STANDARD_CLOCK_MS) {
+export function timePressure(timeLeftMs, clockMs = STANDARD_CLOCK_MS) {
   const startsAt = TIME_PRESSURE_MS * (clockMs / STANDARD_CLOCK_MS)
   return Math.max(0, 1 - timeLeftMs / startsAt)
 }

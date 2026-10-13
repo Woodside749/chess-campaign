@@ -12,6 +12,9 @@ import { allPieces } from './fairy/fairyPieces.js'
 import { fairyRules } from './fairy/loadFairy.js'
 import { FAIRY_PIECES, FAIRY_VARIANTS, isFairyVariant } from './fairy/variants.js'
 import { randomChess960Fen } from './fairy/chess960.js'
+import { ChaosGame } from './chaos/ChaosGame.js'
+import { chooseChaosMove } from './chaos/chaosBot.js'
+import ChaosPanel from './chaos/ChaosPanel.jsx'
 import { getEngine } from './engine.js'
 import { capturedPieces, materialScore, missingPieces } from './material.js'
 import { premoveTargets } from './premove.js'
@@ -33,10 +36,12 @@ const freshClock = (minutes) => {
   return { w: ms, b: ms, turnStart: Date.now() }
 }
 
-// A new game: normal chess (which Fog of War also uses), or a variant that runs on the
-// rules library (it must already be loaded, see loadFairy.js): fairy chess, or Fischer
-// Random with a new random starting position every game.
+// A new game: normal chess (which Fog of War also uses), Chaos Chess (our own rules on
+// top of chess.js), or a variant that runs on the rules library (it must already be
+// loaded, see loadFairy.js): fairy chess, or Fischer Random with a new random starting
+// position every game.
 function createGame(variant) {
+  if (variant === 'chaos') return new ChaosGame()
   if (!isFairyVariant(variant)) return new Chess()
   const info = FAIRY_VARIANTS[variant]
   const game = info.chess960
@@ -82,6 +87,7 @@ export default function Game({
   // the screen re-draws after every move.
   const [game, setGame] = useState(() => createGame(variant))
   const fog = variant === 'fog'
+  const chaos = variant === 'chaos'
   const fairy = isFairyVariant(variant) ? FAIRY_VARIANTS[variant] : null
   // In Fog of War, the bot's memory of where it last saw the player's pieces.
   const fogMemoryRef = useRef(null)
@@ -226,6 +232,9 @@ export default function Game({
       if (fog) {
         fogMemoryRef.current ??= createFogMemory(game, botColor)
         choice = await chooseFogMove(game, bot, botTimeLeft, fogMemoryRef.current)
+      } else if (chaos) {
+        // Chaos Chess: the bot plays by this turn's rule (see chaos/chaosBot.js).
+        choice = await chooseChaosMove(game, bot, botTimeLeft, clockMs)
       } else if (fairy?.chess960) {
         // Fischer Random: normal Stockfish in its Chess960 mode. The bot keeps its
         // personality, but opening books make no sense with a shuffled start.
@@ -276,7 +285,7 @@ export default function Game({
     return () => {
       cancelled = true
     }
-  }, [fen, playerColor, botColor, botTimeLeft, clockMs, incrementMs, game, gameOver, inLesson, bot, fog, fairy, variant])
+  }, [fen, playerColor, botColor, botTimeLeft, clockMs, incrementMs, game, gameOver, inLesson, bot, fog, chaos, fairy, variant])
 
   // Tries to play the player's move. Returns true if it was legal.
   // A pawn reaching the last rank first opens the promotion picker, unless
@@ -517,6 +526,15 @@ export default function Game({
         </section>
       )}
 
+      {chaos && !gameOver && (
+        <ChaosPanel
+          rule={game.currentRule()}
+          yourTurn={turn === playerColor}
+          botName={bot.name.split(' ')[0]}
+          hasPowers={game.moves({ verbose: true }).some((m) => m.special)}
+        />
+      )}
+
       {inLesson && (
         <LessonPanel
           bot={bot}
@@ -666,11 +684,13 @@ function squareStyles(game, selected, premove, isPlayersTurn) {
     styles[selected] = { background: 'rgba(100, 181, 246, 0.6)' }
     if (isPlayersTurn) {
       for (const move of game.moves({ square: selected, verbose: true })) {
-        // A ring around pieces you can take, or the rook you can castle with (Fischer Random).
+        // A ring around pieces you can take (or swap with, in Chaos Chess), or the rook you
+        // can castle with (Fischer Random). Chaos Chess special moves are purple.
+        const shade = move.special ? 'rgba(142, 68, 173, 0.7)' : 'rgba(0, 0, 0, 0.25)'
         styles[move.to] = {
-          background: move.captured || (move.castleTo && move.castleTo !== move.to)
-            ? 'radial-gradient(circle, transparent 58%, rgba(0, 0, 0, 0.25) 60%)'
-            : 'radial-gradient(circle, rgba(0, 0, 0, 0.25) 22%, transparent 24%)',
+          background: move.captured || move.swap || (move.castleTo && move.castleTo !== move.to)
+            ? `radial-gradient(circle, transparent 58%, ${shade} 60%)`
+            : `radial-gradient(circle, ${shade} 22%, transparent 24%)`,
         }
       }
     } else {
