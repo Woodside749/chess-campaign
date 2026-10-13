@@ -14,6 +14,8 @@
 //   of moves. The traits are described in moveTraits.js.
 // - speed: multiplies thinking time. 0.5 thinks half as long, 1.5 takes 50% longer.
 // - endgameBoost: (optional) extra strength in endgames, added to `strength`.
+// - chessTitle: (optional) a chess title shown as a badge before the name, like 'master'
+//   (see TITLES in player.js).
 //
 // flag and color: shown on the bot's avatar.
 // lines: what the bot says. Each situation has a few options and one is picked at random.
@@ -835,6 +837,7 @@ export const BOTS = {
     color: '#4f6fb5',
     rating: 1500,
     group: 'expert',
+    chessTitle: 'master',
     bio: 'Hypermodern: fianchettoes her bishops and controls the centre from a distance.',
     strength: 0.68,
     speed: 1,
@@ -873,6 +876,7 @@ export const BOTS = {
     color: '#d9822b',
     rating: 1600,
     group: 'expert',
+    chessTitle: 'master',
     bio: 'Fortress builder: locks the pawns, closes the position and waits for you to overpress.',
     strength: 0.722,
     speed: 1.2,
@@ -896,6 +900,7 @@ export const BOTS = {
     color: '#c0392b',
     rating: 1700,
     group: 'expert',
+    chessTitle: 'master',
     bio: 'Blitz king who moves fast and sets traps. Dangerous when the clock is ticking.',
     strength: 0.75,
     speed: 0.55,
@@ -919,6 +924,7 @@ export const BOTS = {
     color: '#2f8f83',
     rating: 1750,
     group: 'expert',
+    chessTitle: 'master',
     bio: 'The calculator: careful and precise, almost never leaves a piece hanging.',
     strength: 0.765,
     speed: 1.3,
@@ -942,6 +948,7 @@ export const BOTS = {
     color: '#a83f6e',
     rating: 1800,
     group: 'expert',
+    chessTitle: 'master',
     bio: 'Queen hunter: brings her queen out early and hunts your pieces all over the board.',
     strength: 0.771,
     speed: 0.9,
@@ -965,6 +972,7 @@ export const BOTS = {
     color: '#8a6b3d',
     rating: 1900,
     group: 'expert',
+    chessTitle: 'master',
     bio: 'Endgame artist who trades pieces when ahead and squeezes wins out of tiny advantages (stronger in endgames).',
     strength: 0.792,
     // In endgames he plays about 100 rating points stronger (see botStrength.js).
@@ -990,6 +998,7 @@ export const BOTS = {
     color: '#d6b13a',
     rating: 2000,
     group: 'expert',
+    chessTitle: 'master',
     bio: 'Razor-sharp: always the Sicilian Dragon with Black, and opens with 1.e4 as White.',
     strength: 0.823,
     speed: 0.9,
@@ -1028,6 +1037,7 @@ export const BOTS = {
     color: '#3d7a4a',
     rating: 2100,
     group: 'expert',
+    chessTitle: 'master',
     bio: 'Expert champion. Classical and deep: the Ruy Lopez with White and the Berlin Defence with Black.',
     strength: 0.862,
     speed: 1.1,

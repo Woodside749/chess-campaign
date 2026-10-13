@@ -1,5 +1,7 @@
 import { BOTS } from './bots.js'
+import { titleById } from './player.js'
 import Avatar from './Avatar.jsx'
+import TitleBadge from './TitleBadge.jsx'
 import Bracket from './Bracket.jsx'
 import Silhouette from './Silhouette.jsx'
 import { FAIRY_VARIANTS } from './fairy/variants.js'
@@ -44,7 +46,7 @@ export default function Tournament({ event, roundsWon, playerTitle, onPlayRound,
                         'Opponent not decided yet'
                       ) : (
                         <>
-                          {bot.name} <span className="rating">({bot.rating})</span>
+                          <TitleBadge title={titleById(bot.chessTitle)} /> {bot.name} <span className="rating">({bot.rating})</span>
                         </>
                       )}
                     </div>

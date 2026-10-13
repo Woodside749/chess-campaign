@@ -23,7 +23,7 @@ import { premoveTargets } from './premove.js'
 import { boardResult, reactionTo, timeoutResult } from './rules.js'
 import Avatar from './Avatar.jsx'
 import TitleBadge from './TitleBadge.jsx'
-import { PLAYER } from './player.js'
+import { PLAYER, titleById } from './player.js'
 import CapturedPieces from './CapturedPieces.jsx'
 import Clock from './Clock.jsx'
 import ConfirmDialog from './ConfirmDialog.jsx'
@@ -461,7 +461,7 @@ export default function Game({
           <Avatar bot={bot} size={36} />
           <div className="player-info">
             <div className="opponent-name">
-              {bot.name} <span className="rating">({bot.rating})</span>
+              <TitleBadge title={titleById(bot.chessTitle)} /> {bot.name} <span className="rating">({bot.rating})</span>
             </div>
             <div className="speech">“{botLine}”</div>
           </div>
@@ -527,7 +527,7 @@ export default function Game({
         <Avatar bot={bot} />
         <div className="player-info">
           <div className="opponent-name">
-            {bot.name} <span className="rating">({bot.rating})</span>
+            <TitleBadge title={titleById(bot.chessTitle)} /> {bot.name} <span className="rating">({bot.rating})</span>
             {botThinking && <span className="thinking"> thinking…</span>}
           </div>
           {!inLesson && <div className="speech">“{botLine}”</div>}

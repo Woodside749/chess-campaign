@@ -1,6 +1,8 @@
 import { BOTS } from './bots.js'
+import { titleById } from './player.js'
 import { useState } from 'react'
 import Avatar from './Avatar.jsx'
+import TitleBadge from './TitleBadge.jsx'
 
 const GROUPS = [
   { id: 'school', title: 'Chess School' },
@@ -62,7 +64,7 @@ function BotList({ bots, onPlay }) {
             <Avatar bot={bot} size={56} />
             <div className="bot-card-text">
               <div className="opponent-name">
-                {bot.name} <span className="rating">({bot.rating})</span>
+                <TitleBadge title={titleById(bot.chessTitle)} /> {bot.name} <span className="rating">({bot.rating})</span>
               </div>
               <div className="bot-bio">
                 {bot.country} · {bot.bio}

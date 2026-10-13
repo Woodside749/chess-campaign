@@ -15,6 +15,11 @@ export const TITLES = [
   { id: 'master', short: 'M', name: 'Master', earnedBy: 'master-championship' },
 ]
 
+// A title by its id, like titleById('master'), or null. Bots use this for `chessTitle`.
+export function titleById(id) {
+  return TITLES.find((title) => title.id === id) ?? null
+}
+
 // The player's highest title, like { short: 'IM', ... }, or null if they have none yet.
 export function playerTitle(progress) {
   const wonIn = (eventId) => roundsWon(progress, eventId)

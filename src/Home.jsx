@@ -2,7 +2,7 @@ import { BOTS } from './bots.js'
 import { EVENTS, isUnlocked, leaguesWon } from './career.js'
 import { roundsWon } from './progress.js'
 import { achievementsFor } from './achievements.js'
-import { PLAYER, playerTitle } from './player.js'
+import { PLAYER, playerTitle, titleById } from './player.js'
 import Avatar from './Avatar.jsx'
 import TitleBadge from './TitleBadge.jsx'
 import Silhouette from './Silhouette.jsx'
@@ -238,7 +238,9 @@ function Opponent({ bot }) {
     <div className="event-opponent">
       <Avatar bot={bot} size={48} />
       <div>
-        <div className="opponent-name">{bot.name}</div>
+        <div className="opponent-name">
+          <TitleBadge title={titleById(bot.chessTitle)} /> {bot.name}
+        </div>
         <div className="bot-bio">{bot.country}</div>
       </div>
     </div>

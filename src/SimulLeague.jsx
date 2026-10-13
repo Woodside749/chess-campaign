@@ -1,5 +1,7 @@
 import { BOTS } from './bots.js'
 import Avatar from './Avatar.jsx'
+import TitleBadge from './TitleBadge.jsx'
+import { titleById } from './player.js'
 
 // The Simul league: three simuls of rising difficulty. Like a tournament, a round
 // unlocks when the one before it is passed, and passed rounds can be played again.
@@ -44,7 +46,7 @@ export default function SimulLeague({ event, roundsWon, onPlayRound, onBack }) {
                   {round.opponents.map((id) => (
                     <span key={id} className="simul-opponent">
                       <Avatar bot={BOTS[id]} size={28} />
-                      {BOTS[id].name.split(' ')[0]} ({BOTS[id].rating})
+                      <TitleBadge title={titleById(BOTS[id].chessTitle)} /> {BOTS[id].name.split(' ')[0]} ({BOTS[id].rating})
                     </span>
                   ))}
                 </div>

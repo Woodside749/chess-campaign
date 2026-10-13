@@ -1,5 +1,6 @@
 import { BOTS } from './bots.js'
 import { buildBracket } from './bracket.js'
+import { titleById } from './player.js'
 
 // Sizes of the drawing, in SVG units. The drawing scales to fit its container.
 const BOX_W = 150
@@ -16,11 +17,13 @@ const columnTitles = (roundCount) => [
 
 // A knockout bracket drawn as an SVG: one column per round, and a champion box at the end.
 // `playerTitle` (optional) is the player's title, like { short: 'M' }, shown before "You".
+// Bots with a `chessTitle` get the same badge.
 export default function Bracket({ event, roundsWon, playerTitle }) {
   const { rounds, champion } = buildBracket(event, roundsWon)
   const person = (id) => {
     if (id === 'you') return { name: 'You', color: 'var(--accent)', flag: '', title: playerTitle }
-    return BOTS[id] ?? event.classmates[id]
+    const bot = BOTS[id]
+    return bot ? { ...bot, title: titleById(bot.chessTitle) } : event.classmates[id]
   }
 
   // The vertical centre of every box. First-round boxes are spaced evenly (with a gap
