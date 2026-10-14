@@ -1,4 +1,4 @@
-import { BOTS } from './bots.js'
+import { BOTS, shownRating } from './bots.js'
 import { titleById } from './player.js'
 import { useState } from 'react'
 import Avatar from './Avatar.jsx'
@@ -67,7 +67,7 @@ function BotList({ bots, onPlay }) {
             <Avatar bot={bot} size={56} />
             <div className="bot-card-text">
               <div className="opponent-name">
-                <TitleBadge title={titleById(bot.chessTitle)} /> {bot.name} <span className="rating">({bot.rating})</span>
+                <TitleBadge title={titleById(bot.chessTitle)} /> {bot.name} <span className="rating">({shownRating(bot)})</span>
               </div>
               <div className="bot-bio">
                 {bot.country} · {bot.bio}

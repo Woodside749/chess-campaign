@@ -19,6 +19,7 @@ import { Chess } from 'chess.js'
 import { BOTS } from '../src/bots.js'
 import { Engine } from '../src/engine.js'
 import { chooseBotMove } from '../src/botBrain.js'
+import { fitRatings } from './elo.js'
 
 // Reference opponents: Stockfish with its built-in strength limit (UCI_Elo).
 // That setting only goes down to 1320, so the weaker bots are linked to the
@@ -141,38 +142,6 @@ function report(ladder, results, fixedBots) {
     )
   }
   console.log('\nAnchors: ' + ANCHORS.map((elo) => `sf${elo} ${record[`sf${elo}`]?.w ?? 0}-${record[`sf${elo}`]?.d ?? 0}-${record[`sf${elo}`]?.l ?? 0}`).join(', '))
-}
-
-// Finds the ratings that best explain the results, with the anchors held fixed.
-// Uses the standard Elo formula: expected score = 1 / (1 + 10^((opponent - you) / 400)).
-function fitRatings(results, fixed) {
-  const players = new Set(results.flatMap((r) => [r.white, r.black]))
-  const rating = Object.fromEntries([...players].map((p) => [p, fixed[p] ?? 1000]))
-  // One imaginary draw per game pair keeps 100% scores from giving infinite ratings.
-  const games = [...results, ...results.map((r) => ({ ...r, score: 0.5, weight: 0.05 }))]
-  const expected = (a, b) => 1 / (1 + 10 ** ((rating[b] - rating[a]) / 400))
-  const info = {}
-  for (let step = 0; step < 500; step++) {
-    const gradient = {}
-    for (const p of players) {
-      gradient[p] = 0
-      info[p] = 0
-    }
-    for (const { white, black, score, weight = 1 } of games) {
-      const e = expected(white, black)
-      gradient[white] += weight * (score - e)
-      gradient[black] -= weight * (score - e)
-      info[white] += weight * e * (1 - e)
-      info[black] += weight * e * (1 - e)
-    }
-    for (const p of players) {
-      if (p in fixed) continue
-      rating[p] += Math.max(-100, Math.min(100, (gradient[p] / info[p]) * (400 / Math.LN10)))
-    }
-  }
-  return Object.fromEntries(
-    [...players].map((p) => [p, { rating: rating[p], error: (400 / Math.LN10) / Math.sqrt(info[p]) }]),
-  )
 }
 
 // ---------- Worker process: play the given games and print each result ----------

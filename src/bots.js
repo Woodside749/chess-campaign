@@ -17,6 +17,8 @@
 // - endgameBoost: (optional) extra strength in endgames, added to `strength`.
 // - flawless: (optional) never makes time-pressure mistakes (the final bosses).
 // - depth, candidates, tolerance, noise: (optional) set directly instead of from `strength`.
+// - ratingLabel: (optional) shown instead of the rating number, like '????' for a mystery.
+//   The number stays in `rating` (for ordering and calibration).
 // - chessTitle: (optional) a chess title shown as a badge before the name, like 'master'
 //   (see TITLES in player.js).
 //
@@ -1607,6 +1609,8 @@ export const BOTS = {
     flag: '😇',
     color: '#d8b850',
     rating: 3200,
+    // Shown instead of the number: nobody knows how strong she really is.
+    ratingLabel: '????',
     group: 'boss',
     bio: 'The Angel: near-perfect play, and the most defensive player imaginable. Breaking through her is a miracle.',
     strength: 1.5,
@@ -1635,6 +1639,8 @@ export const BOTS = {
     flag: '😈',
     color: '#8a1f1f',
     rating: 3000,
+    // Shown instead of the number: nobody knows how strong he really is.
+    ratingLabel: '????',
     group: 'boss',
     bio: 'The Demon: near-perfect play, and pure aggression. Every move hunts your king.',
     strength: 1.5,
@@ -1656,6 +1662,11 @@ export const BOTS = {
       draw: ['A draw? I will be back.', 'You escaped. This time.'],
     },
   },
+}
+
+// The rating as shown to the player: the number, or the bot's `ratingLabel` if it has one.
+export function shownRating(bot) {
+  return bot.ratingLabel ?? bot.rating
 }
 
 export function pickLine(bot, situation) {

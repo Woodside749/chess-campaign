@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Chess } from 'chess.js'
 import { Chessboard } from 'react-chessboard'
-import { pickLine } from './bots.js'
+import { pickLine, shownRating } from './bots.js'
 import { chooseBotMove, thinkTimeMs } from './botBrain.js'
 import { visibleSquares } from './fogChess.js'
 import { chooseFogMove, createFogMemory } from './fogBot.js'
@@ -531,7 +531,7 @@ export default function Game({
           <Avatar bot={bot} size={36} />
           <div className="player-info">
             <div className="opponent-name">
-              <TitleBadge title={titleById(bot.chessTitle)} /> {bot.name} <span className="rating">({bot.rating})</span>
+              <TitleBadge title={titleById(bot.chessTitle)} /> {bot.name} <span className="rating">({shownRating(bot)})</span>
             </div>
             <div className="speech">“{botLine}”</div>
           </div>
@@ -597,7 +597,7 @@ export default function Game({
         <Avatar bot={bot} />
         <div className="player-info">
           <div className="opponent-name">
-            <TitleBadge title={titleById(bot.chessTitle)} /> {bot.name} <span className="rating">({bot.rating})</span>
+            <TitleBadge title={titleById(bot.chessTitle)} /> {bot.name} <span className="rating">({shownRating(bot)})</span>
             {botThinking && <span className="thinking"> thinking…</span>}
           </div>
           {!inLesson && <div className="speech">“{botLine}”</div>}

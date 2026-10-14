@@ -1,4 +1,4 @@
-import { BOTS } from './bots.js'
+import { BOTS, shownRating } from './bots.js'
 import { titleById } from './player.js'
 import Avatar from './Avatar.jsx'
 import TitleBadge from './TitleBadge.jsx'
@@ -46,7 +46,7 @@ export default function Tournament({ event, roundsWon, playerTitle, onPlayRound,
                         'Opponent not decided yet'
                       ) : (
                         <>
-                          <TitleBadge title={titleById(bot.chessTitle)} /> {bot.name} <span className="rating">({bot.rating})</span>
+                          <TitleBadge title={titleById(bot.chessTitle)} /> {bot.name} <span className="rating">({shownRating(bot)})</span>
                         </>
                       )}
                     </div>

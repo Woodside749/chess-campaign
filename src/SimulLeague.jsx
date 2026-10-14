@@ -1,4 +1,4 @@
-import { BOTS } from './bots.js'
+import { BOTS, shownRating } from './bots.js'
 import Avatar from './Avatar.jsx'
 import TitleBadge from './TitleBadge.jsx'
 import { titleById } from './player.js'
@@ -46,7 +46,7 @@ export default function SimulLeague({ event, roundsWon, onPlayRound, onBack }) {
                   {round.opponents.map((id) => (
                     <span key={id} className="simul-opponent">
                       <Avatar bot={BOTS[id]} size={28} />
-                      <TitleBadge title={titleById(BOTS[id].chessTitle)} /> {BOTS[id].name.split(' ')[0]} ({BOTS[id].rating})
+                      <TitleBadge title={titleById(BOTS[id].chessTitle)} /> {BOTS[id].name.split(' ')[0]} ({shownRating(BOTS[id])})
                     </span>
                   ))}
                 </div>

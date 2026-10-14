@@ -10,6 +10,10 @@
 // `hill` for squares to highlight; `winText` for a special way to win;
 // `pockets` for Crazyhouse, where captured pieces can be dropped back on the board;
 // `duck` for Duck Chess; `whiteView` to always show the board from White's side.
+// `strengthCurve`: measured with `npm run calibrate-fairy` (pairs of [strength, rating] in
+// this variant). Bots then get the strength that plays at their rating label here.
+// Near the top, runs against different anchors disagree by up to a few hundred points,
+// so points measured more than once use the average.
 //
 // Each fairy piece is drawn as its base piece (`looksLike`) with a badge in the corner:
 // a small knight for the knight hybrids, or an emoji (`badge`) for the others.
@@ -40,6 +44,7 @@ export const FAIRY_VARIANTS = {
     title: 'Archbishop chess',
     icon: '🧚',
     noPersonality: true,
+    strengthCurve: [[0.1, 512], [0.3, 863], [0.5, 1130], [0.7, 1511], [0.85, 1909], [1, 2223]],
     pieces: ['a'],
     intro: 'Both your knights have become Archbishops.',
   },
@@ -47,6 +52,7 @@ export const FAIRY_VARIANTS = {
     title: 'Chancellor chess',
     icon: '🧚',
     noPersonality: true,
+    strengthCurve: [[0.1, 465], [0.3, 776], [0.5, 1081], [0.7, 1284], [0.85, 1843], [1, 2255]],
     pieces: ['c'],
     intro: 'Both your rooks have become Chancellors. They still castle like rooks.',
   },
@@ -54,6 +60,7 @@ export const FAIRY_VARIANTS = {
     title: 'Amazon & Centaurs',
     icon: '🧚',
     noPersonality: true,
+    strengthCurve: [[0.1, 458], [0.3, 757], [0.5, 1070], [0.7, 1475], [0.85, 1805], [1, 2212]],
     pieces: ['z', 'e'],
     intro: 'Your queen has become an Amazon, the strongest piece in the game, and your knights have become Centaurs.',
   },
@@ -62,6 +69,7 @@ export const FAIRY_VARIANTS = {
     title: 'Leapers',
     icon: '🧚',
     noPersonality: true,
+    strengthCurve: [[0.1, 623], [0.3, 841], [0.5, 1085], [0.7, 1510], [0.75, 1557], [0.8, 1774], [0.85, 1912], [0.9, 1996], [0.95, 2323]],
     pieces: ['i', 'l'],
     intro: `${FAIRY_INTRO} Knights have become Nightriders and bishops have become Camels.`,
   },
@@ -69,6 +77,7 @@ export const FAIRY_VARIANTS = {
     title: 'Eastern army',
     icon: '🧚',
     noPersonality: true,
+    strengthCurve: [[0.1, 513], [0.3, 779], [0.5, 1042], [0.7, 1592], [0.75, 1716], [0.8, 1897], [0.85, 1941], [0.9, 2106], [0.95, 2348]],
     pieces: ['o', 'h'],
     intro: `${FAIRY_INTRO} Rooks have become Cannons (from Chinese chess) and bishops Dragon Horses (from Japanese chess). Cannons still castle like rooks.`,
   },
@@ -76,6 +85,7 @@ export const FAIRY_VARIANTS = {
     title: 'Royal court',
     icon: '🧚',
     noPersonality: true,
+    strengthCurve: [[0.1, 526], [0.3, 817], [0.5, 1051], [0.7, 1473], [0.75, 1598], [0.8, 1724], [0.85, 1776], [0.9, 1812], [0.95, 2214], [1, 2278], [1.05, 2560], [1.1, 2650]],
     pieces: ['c', 'a'],
     intro: `${FAIRY_INTRO} Rooks have become Chancellors and bishops Archbishops: four big hybrid pieces each.`,
   },
