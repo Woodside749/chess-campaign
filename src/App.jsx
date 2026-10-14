@@ -13,16 +13,19 @@ import PuzzleLeague from './puzzles/PuzzleLeague.jsx'
 import SimulLeague from './SimulLeague.jsx'
 import Simul from './Simul.jsx'
 import Achievements from './Achievements.jsx'
+import MainMenu from './MainMenu.jsx'
 import { playerTitle, tierStars } from './player.js'
 import './App.css'
 
 // The puzzle screen (with its puzzle collection) is only downloaded when first opened.
 const PuzzleTrial = lazy(() => import('./puzzles/PuzzleTrial.jsx'))
 
-// The top of the app. It decides which screen to show: the home screen, the developer
+// The top of the app. It decides which screen to show: the main menu, the campaign's home
+// screen, the developer
 // menu (every bot), a tournament's bracket, a puzzle trial, a simul, or a game. It also keeps the career progress.
 export default function App() {
-  const [screen, setScreen] = useState('home') // 'home', 'dev', 'achievements', or an event id
+  // 'menu' (the main menu), 'home' (the chess campaign), 'dev', 'achievements', or an event id
+  const [screen, setScreen] = useState('menu')
   const [colorChoice, setColorChoice] = useState('w') // developer menu: 'w', 'b' or 'random'
   const [match, setMatch] = useState(null) // the game being played, or null
   const [puzzleRun, setPuzzleRun] = useState(null) // the puzzle trial being played: { event, round }
@@ -138,6 +141,7 @@ export default function App() {
       />
     )
   }
+  if (screen === 'menu') return <MainMenu progress={progress} onOpenCampaign={() => setScreen('home')} />
   if (screen === 'achievements') return <Achievements progress={progress} onBack={() => setScreen('home')} />
   const opened = EVENTS.find((event) => event.id === screen)
   if (opened?.type === 'trials') {
@@ -176,6 +180,7 @@ export default function App() {
       progress={progress}
       onOpenEvent={openEvent}
       onOpenAchievements={() => setScreen('achievements')}
+      onBackToMenu={() => setScreen('menu')}
       onOpenDevMenu={() => setScreen('dev')}
     />
   )

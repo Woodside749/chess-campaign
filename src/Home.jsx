@@ -38,7 +38,7 @@ function saveScroll(road) {
 // The player's home screen: a horizontal career road, scrolled from left to right.
 // First the title, then the Chess School events (played in order, side by side),
 // then the Amateur Leagues as a grid that can be played in any order.
-export default function Home({ progress, onOpenEvent, onOpenAchievements, onOpenDevMenu }) {
+export default function Home({ progress, onOpenEvent, onOpenAchievements, onBackToMenu, onOpenDevMenu }) {
   const wonIn = (eventId) => roundsWon(progress, eventId)
   const school = EVENTS.filter((event) => event.section === 'school')
   const leagues = EVENTS.filter((event) => event.section === 'leagues')
@@ -86,8 +86,11 @@ export default function Home({ progress, onOpenEvent, onOpenAchievements, onOpen
   }
 
   return (
-    <main className="home" ref={roadRef} onWheel={scrollSideways}>
+    <main className="home campaign-theme" ref={roadRef} onWheel={scrollSideways}>
       <section className="home-intro">
+        <button className="back" onClick={onBackToMenu}>
+          ← Main menu
+        </button>
         <h1>Chess Campaign</h1>
         <p>
           Travel a world tour of chess clubs, tournaments and rivals. Every opponent has their own
