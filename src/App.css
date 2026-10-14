@@ -2493,9 +2493,15 @@ ul.fairy-legend li {
   padding: 13px 24px;
 }
 
-/* Local Fog of War: the cover hides the board completely while the device is passed over. */
+/* Local Fog of War: the cover hides the board completely while the device is passed over.
+   It appears at once: the usual fade-in would show the board for a moment. */
 .overlay.local-cover {
   background: var(--bg);
+  animation: none;
+}
+
+.overlay.local-cover .dialog {
+  animation: none;
 }
 
 @media (max-width: 500px) {
