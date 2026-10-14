@@ -58,6 +58,9 @@ export default function MainMenu({ progress, account, onOpenCampaign, onOpenGame
           <p className="chat-empty">Coming soon, for everyone with an account.</p>
         </div>
         <input className="chat-input" placeholder="Create an account to chat (coming soon)" disabled />
+        <p className="menu-links">
+          <a href="/privacy.html">Privacy</a> · <a href="/credits.html">Credits</a>
+        </p>
       </aside>
     </main>
   )

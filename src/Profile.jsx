@@ -105,11 +105,64 @@ export default function Profile({ progress, account, onBack }) {
       <section className="profile-section">
         <h2>Account</h2>
         <p className="profile-sub">{user.email}</p>
-        <button className="profile-logout" onClick={() => supabase.auth.signOut()}>
-          Log out
-        </button>
+        <div className="profile-account-buttons">
+          <button className="profile-logout" onClick={() => supabase.auth.signOut()}>
+            Log out
+          </button>
+          <DeleteAccountButton />
+        </div>
+        <p className="profile-links">
+          <a href="/privacy.html">Privacy policy</a> · <a href="/credits.html">Credits</a>
+        </p>
       </section>
     </main>
+  )
+}
+
+// Deletes the account and everything saved with it, after asking first.
+function DeleteAccountButton() {
+  const [asking, setAsking] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [problem, setProblem] = useState(null)
+
+  async function deleteAccount() {
+    setBusy(true)
+    const { error } = await supabase.rpc('delete_my_account')
+    if (error) {
+      setBusy(false)
+      setProblem(error.message)
+      return
+    }
+    // The account is gone; log out on this device too (the game then forgets the progress).
+    await supabase.auth.signOut({ scope: 'local' })
+  }
+
+  return (
+    <>
+      <button className="profile-delete" onClick={() => setAsking(true)}>
+        Delete my account
+      </button>
+      {asking && (
+        <div className="overlay" onClick={() => !busy && setAsking(false)}>
+          <div className="dialog account" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <h2>Delete your account?</h2>
+            <p className="account-message">
+              Your account, username, profile and all your saved progress are deleted for good. This can't be
+              undone.
+            </p>
+            {problem && <p className="account-message error">{problem}</p>}
+            <div className="dialog-buttons">
+              <button className="danger" onClick={deleteAccount} disabled={busy}>
+                {busy ? 'Deleting…' : 'Yes, delete everything'}
+              </button>
+              <button className="secondary" onClick={() => setAsking(false)} disabled={busy} autoFocus>
+                Keep my account
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
 

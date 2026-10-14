@@ -42,6 +42,7 @@ function AccountDialog({ account, onClose }) {
   const [password, setPassword] = useState('')
   const [message, setMessage] = useState(null) // { text, error }
   const [busy, setBusy] = useState(false)
+  const [oldEnough, setOldEnough] = useState(false) // the age tick box at sign-up
   const [done, setDone] = useState(false) // after the new password is saved
 
   function goTo(next) {
@@ -84,7 +85,11 @@ function AccountDialog({ account, onClose }) {
         return
       }
       const ok = await run(() =>
-        supabase.auth.signUp({ email, password, options: { emailRedirectTo: back, data: { username } } }),
+        supabase.auth.signUp({
+          email,
+          password,
+          options: { emailRedirectTo: back, data: { username, age_confirmed: oldEnough } },
+        }),
       )
       if (ok) setMessage({ text: `Almost done! We sent an email to ${email}. Open the link in it to confirm your account.` })
     } else if (page === 'forgot') {
@@ -147,7 +152,22 @@ function AccountDialog({ account, onClose }) {
               />
             </label>
           )}
-          {page === 'signup' && <p className="account-hint">At least {MIN_PASSWORD} characters.</p>}
+          {page === 'signup' && (
+            <>
+              <p className="account-hint">At least {MIN_PASSWORD} characters.</p>
+              {/* Denmark (and the EU rules) let players agree to this themselves from 13. */}
+              <label className="account-check">
+                <input type="checkbox" required checked={oldEnough} onChange={(e) => setOldEnough(e.target.checked)} />
+                <span>
+                  I am at least 13 years old and have read the{' '}
+                  <a href="/privacy.html" target="_blank" rel="noreferrer">
+                    privacy policy
+                  </a>
+                  .
+                </span>
+              </label>
+            </>
+          )}
 
           {message && <p className={message.error ? 'account-message error' : 'account-message'}>{message.text}</p>}
 
