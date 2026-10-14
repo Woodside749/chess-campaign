@@ -66,6 +66,9 @@ export async function chooseBotMove(game, bot, timeLeftMs, engine = getEngine(),
   if (Math.random() < blunderChanceNow(bot, timeLeftMs, game, clockMs)) return pickRandom(legalMoves).san
 
   const settings = botSettings(bot, game)
+  // The final bosses search very deep (several seconds a move in the browser), so when
+  // their clock runs low they search a little less deep rather than lose on time.
+  if (bot.flawless) settings.depth = Math.min(settings.depth, timeLeftMs > 180_000 ? 18 : timeLeftMs > 60_000 ? 16 : 12)
   const candidates = await engine.analyse(game.fen(), { depth: settings.depth, multiPv: settings.candidates })
   // Safety net: if Stockfish has no suggestions, play any legal move rather than get stuck.
   if (candidates.length === 0) return pickRandom(legalMoves).san
