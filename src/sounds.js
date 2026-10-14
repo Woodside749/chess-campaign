@@ -125,7 +125,10 @@ function knock(ctx, { at = 0, pitch = 1400, thump = 160, volume = 0.5, length = 
   filter.Q.value = 1.5
   const gain = ctx.createGain()
   gain.gain.value = volume
-  source.connect(filter).connect(gain).connect(ctx.destination)
+  // (Connected one at a time: some Safari versions don't support chaining connect calls.)
+  source.connect(filter)
+  filter.connect(gain)
+  gain.connect(ctx.destination)
   source.start(start)
   tone(ctx, { at, frequency: thump, volume: volume * 0.6, length: length * 1.2, type: 'sine' })
 }
@@ -139,7 +142,8 @@ function tone(ctx, { at = 0, frequency = 880, volume = 0.2, length = 0.15, type 
   const gain = ctx.createGain()
   gain.gain.setValueAtTime(volume, start)
   gain.gain.exponentialRampToValueAtTime(0.0001, start + length)
-  osc.connect(gain).connect(ctx.destination)
+  osc.connect(gain)
+  gain.connect(ctx.destination)
   osc.start(start)
   osc.stop(start + length + 0.02)
 }
