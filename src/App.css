@@ -1521,3 +1521,9 @@ ul.fairy-legend li {
 .bracket-title-badge.title-wc {
   fill: #e0b040;
 }
+
+/* Three-check: how many checks each side has given. */
+.check-counter {
+  margin: 8px 0 0;
+  font-size: 15px;
+}

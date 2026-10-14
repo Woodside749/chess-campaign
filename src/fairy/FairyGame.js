@@ -55,6 +55,15 @@ export class FairyGame {
       .sort((a, b) => order.indexOf(a) - order.indexOf(b))
   }
 
+  // Three-check: how many more checks each side needs, like { w: 2, b: 3 }, or null in
+  // other variants. (The FEN has a field like "2+3" for this.)
+  checksLeft() {
+    const field = this.fen().split(' ').find((part) => /^\d\+\d$/.test(part))
+    if (!field) return null
+    const [w, b] = field.split('+').map(Number)
+    return { w, b }
+  }
+
   // Duck Chess: the square the duck stands on, or null before it has been placed.
   duckSquare() {
     return duckSquareIn(this.fen())
@@ -123,7 +132,13 @@ export class FairyGame {
   // A win by the variant's own rule instead of checkmate, like a king reaching the centre
   // in King of the Hill: 'w' or 'b' for the winner, or null.
   specialWinner() {
-    if (!this.chessBoard.isGameOver(true) || this.isCheckmate()) return null
+    if (!this.chessBoard.isGameOver(true)) return null
+    // Three-check: a side that has given its last check has won, even though the position
+    // also looks like checkmate (the game is over, so there are no moves left).
+    const checks = this.checksLeft()
+    if (checks?.w === 0) return 'w'
+    if (checks?.b === 0) return 'b'
+    if (this.isCheckmate()) return null
     const result = this.chessBoard.result(true)
     return result === '1-0' ? 'w' : result === '0-1' ? 'b' : null
   }
@@ -181,8 +196,10 @@ export class FairyGame {
     let captured = ontoOwnRook ? undefined : pieces[to]?.type
     let flags = captured ? 'c' : 'n'
     let castleTo
-    if (mover.type === 'p' && from[0] !== to[0] && !captured) {
-      captured = 'p' // en passant
+    // En passant: a pawn landing on the en passant square the position records. (Not just
+    // "a pawn moving sideways", because in Berolina pawns move diagonally all the time.)
+    if (mover.type === 'p' && !captured && to === before.split(' ')[3]) {
+      captured = 'p'
       flags = 'e'
     }
     if (mover.type === 'p' && Math.abs(Number(to[1]) - Number(from[1])) === 2) flags = 'b'

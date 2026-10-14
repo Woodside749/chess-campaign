@@ -9,7 +9,8 @@
 // Fischer Random; `pieces` for the fairy pieces in the game (letters from FAIRY_PIECES);
 // `hill` for squares to highlight; `winText` for a special way to win;
 // `pockets` for Crazyhouse, where captured pieces can be dropped back on the board;
-// `duck` for Duck Chess; `whiteView` to always show the board from White's side.
+// `duck` for Duck Chess; `whiteView` to always show the board from White's side;
+// `checkCounter` for Three-check.
 // `strengthCurve`: measured with `npm run calibrate-fairy` (pairs of [strength, rating] in
 // this variant). Bots then get the strength that plays at their rating label here.
 // Near the top, runs against different anchors disagree by up to a few hundred points,
@@ -173,6 +174,25 @@ export const FAIRY_VARIANTS = {
       win: 'Your king reached the finish line!',
       loss: "Your opponent's king reached the finish line.",
     },
+  },
+  // Legend tier variants (built into Fairy-Stockfish).
+  // `checkCounter`: the game shows how many checks each side has given.
+  threecheck: {
+    title: 'Three-check',
+    icon: '✔️',
+    rules: '3check',
+    checkCounter: true,
+    intro: 'Win by checkmate, or by giving check three times. Every check counts, so keep your king safe!',
+    winText: {
+      win: 'You gave the third check!',
+      loss: 'Your opponent gave the third check.',
+    },
+  },
+  berolina: {
+    title: 'Berolina',
+    icon: '↗️',
+    intro:
+      'The pawns are turned around: they move diagonally forward (two squares diagonally on their first move) and capture straight ahead. Everything else is normal chess.',
   },
   // King of the Hill is built into Fairy-Stockfish, so it needs no entry in variants.ini.
   kingofthehill: {

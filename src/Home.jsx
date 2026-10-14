@@ -52,6 +52,8 @@ export default function Home({ progress, onOpenEvent, onOpenAchievements, onOpen
   const master = EVENTS.filter((event) => event.section === 'master')
   const masterOpen = master.some((event) => isUnlocked(event, wonIn))
   const masterChampionship = EVENTS.filter((event) => event.section === 'master-championship')
+  const legend = EVENTS.filter((event) => event.section === 'legend')
+  const legendOpen = legend.some((event) => isUnlocked(event, wonIn))
   const title = playerTitle(progress)
   const achievements = achievementsFor(progress)
 
@@ -242,6 +244,24 @@ export default function Home({ progress, onOpenEvent, onOpenAchievements, onOpen
             onOpen={() => onOpenEvent(event)}
           />
         ))}
+      </section>
+
+      <section className="stage" aria-labelledby="legend-title">
+        <h2 id="legend-title" className="section-title">
+          Legend Leagues
+          {!legendOpen && <span className="section-lock"> · 🔒 Win the Grandmaster Title Championship to unlock</span>}
+        </h2>
+        <div className="league-grid">
+          {legend.map((event) => (
+            <LeagueCard
+              key={event.id}
+              event={event}
+              locked={!isUnlocked(event, wonIn)}
+              won={wonIn(event.id)}
+              onOpen={() => onOpenEvent(event)}
+            />
+          ))}
+        </div>
       </section>
     </main>
   )

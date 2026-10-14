@@ -15,7 +15,7 @@ export function moveTraits(game, move) {
   const me = move.color
   const them = me === 'w' ? 'b' : 'w'
   const moveNumber = game.moveNumber()
-  const after = game.variantName ? new VariantPosition(move.after) : chessPosition(move.after)
+  const after = game.variantName ? new VariantPosition(move.after, game.variantName) : chessPosition(move.after)
   // Some variants can have no enemy king (Antichess, Atomic, the Horde's pawns).
   const enemyKing = game.findPiece({ type: 'k', color: them })[0]
   // Crazyhouse: a piece dropped from the pocket has no square it came from.

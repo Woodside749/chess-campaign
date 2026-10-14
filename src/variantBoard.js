@@ -38,7 +38,9 @@ const PATTERNS = {
 }
 
 export class VariantPosition {
-  constructor(fen) {
+  // `variant` matters for pawns: in Berolina they capture straight ahead.
+  constructor(fen, variant) {
+    this.berolina = variant === 'berolina'
     this.pieces = readPlacement(fen) // { e4: { type, color }, ... }
     this.duck = duckSquareIn(fen) // Duck Chess: a wall on this square, or null
   }
@@ -70,7 +72,8 @@ export class VariantPosition {
     const [f, r] = coords(from)
     if (piece.type === 'p') {
       const step = piece.color === 'w' ? 1 : -1
-      return [[1, step], [-1, step]].map(([df, dr]) => [f + df, r + dr]).filter((t) => onBoard(...t)).map((t) => square(...t))
+      const captures = this.berolina ? [[0, step]] : [[1, step], [-1, step]]
+      return captures.map(([df, dr]) => [f + df, r + dr]).filter((t) => onBoard(...t)).map((t) => square(...t))
     }
     const targets = []
     for (const pattern of PATTERNS[piece.type] ?? []) {

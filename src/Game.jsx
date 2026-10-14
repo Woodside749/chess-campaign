@@ -616,6 +616,12 @@ export default function Game({
             <Icon icon={fairy.icon} /> {fairy.title}
           </div>
           <p className="lesson-text">{fairy.intro}</p>
+          {fairy.checkCounter && game.checksLeft() && (
+            <p className="check-counter">
+              Checks given: <strong>You {3 - game.checksLeft()[playerColor]}/3</strong> · {bot.name.split(' ')[0]}{' '}
+              {3 - game.checksLeft()[botColor]}/3
+            </p>
+          )}
           {fairy.pieces && (
             <ul className="fairy-legend">
               {fairy.pieces.map((letter) => (
