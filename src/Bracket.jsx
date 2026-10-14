@@ -1,6 +1,7 @@
 import { BOTS } from './bots.js'
 import { buildBracket } from './bracket.js'
 import { titleById } from './player.js'
+import { portraitFor } from './portraits.js'
 
 // Sizes of the drawing, in SVG units. The drawing scales to fit its container.
 const BOX_W = 150
@@ -88,7 +89,8 @@ export default function Bracket({ event, roundsWon, playerTitle }) {
   )
 }
 
-// One player's box: a coloured initial, the name and the flag. Empty (a "?") if not known yet.
+// One player's box: their portrait (or a coloured initial, for the player), the name and the
+// flag. Empty (a "?") if not known yet.
 function PlayerBox({ x, y, person, isYou, won, lost, trophy }) {
   const top = y - BOX_H / 2
   if (!person) {
@@ -102,13 +104,20 @@ function PlayerBox({ x, y, person, isYou, won, lost, trophy }) {
     )
   }
   const classes = ['bracket-box', isYou && 'you', won && 'won'].filter(Boolean).join(' ')
+  const portrait = portraitFor(person.id)
   return (
     <g opacity={lost ? 0.4 : 1}>
       <rect className={classes} x={x} y={top} width={BOX_W} height={BOX_H} rx={6} />
       <circle cx={x + 15} cy={y} r={10} style={{ fill: person.color }} />
-      <text className="bracket-initial" x={x + 15} y={y + 4} textAnchor="middle">
-        {person.name[0]}
-      </text>
+      {portrait ? (
+        <svg x={x + 5} y={y - 10} width={20} height={20}>
+          {portrait}
+        </svg>
+      ) : (
+        <text className="bracket-initial" x={x + 15} y={y + 4} textAnchor="middle">
+          {person.name[0]}
+        </text>
+      )}
       <text className={won ? 'bracket-name won' : 'bracket-name'} x={x + 31} y={y + 4}>
         {trophy && '🏆 '}
         {person.title && <tspan className={`bracket-title-badge title-${person.title.id}`}>{person.title.short} </tspan>}
