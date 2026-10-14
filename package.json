@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "predev": "node scripts/copy-stockfish.js",
     "prebuild": "node scripts/copy-stockfish.js",
-    "calibrate": "node scripts/calibrate.js"
+    "calibrate": "node scripts/calibrate.js",
+    "calibrate-fairy": "node scripts/calibrate-fairy.js"
   },
   "dependencies": {
     "chess.js": "^1.4.0",

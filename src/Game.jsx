@@ -19,6 +19,7 @@ import { chooseChaosMove } from './chaos/chaosBot.js'
 import ChaosPanel from './chaos/ChaosPanel.jsx'
 import { getEngine } from './engine.js'
 import { capturedPieces, materialScore, missingPieces } from './material.js'
+import { strengthForRating } from './botStrength.js'
 import { premoveTargets } from './premove.js'
 import { boardResult, reactionTo, timeoutResult } from './rules.js'
 import Avatar from './Avatar.jsx'
@@ -295,7 +296,14 @@ export default function Game({
           console.warn(`${error.message}; using the simple fairy bot instead.`)
           return null
         })
-        const variantBot = { ...bot, openings: null, ...(fairy.noPersonality ? { style: {} } : {}) }
+        // Variants with a measured strength curve (calibrate-fairy) set the bot's strength
+        // from its rating label, so it plays at that rating in this variant too.
+        const variantBot = {
+          ...bot,
+          openings: null,
+          ...(fairy.noPersonality ? { style: {} } : {}),
+          ...(fairy.strengthCurve ? { strength: strengthForRating(fairy.strengthCurve, bot.rating) } : {}),
+        }
         choice = engine ? await chooseBotMove(game, variantBot, botTimeLeft, engine, clockMs) : simpleFairyMove(game, bot)
       } else {
         choice = await chooseBotMove(game, bot, botTimeLeft, undefined, clockMs)

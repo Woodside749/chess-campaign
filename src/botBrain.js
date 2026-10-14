@@ -43,8 +43,10 @@ export function timePressure(timeLeftMs, clockMs = STANDARD_CLOCK_MS) {
 }
 
 // The bot's chance of a random move, which rises when its clock is low.
+// A `flawless` bot (the final bosses) never makes time-pressure mistakes.
 export function blunderChanceNow(bot, timeLeftMs, game, clockMs) {
-  return botSettings(bot, game).blunderChance + timePressure(timeLeftMs, clockMs) * MAX_EXTRA_BLUNDER
+  const pressure = bot.flawless ? 0 : timePressure(timeLeftMs, clockMs)
+  return botSettings(bot, game).blunderChance + pressure * MAX_EXTRA_BLUNDER
 }
 
 // Picks the bot's move, in this order:
@@ -69,7 +71,7 @@ export async function chooseBotMove(game, bot, timeLeftMs, engine = getEngine(),
   if (candidates.length === 0) return pickRandom(legalMoves).san
   const bestScore = candidates[0].score
   // Under time pressure the bot also accepts worse moves.
-  const tolerance = settings.tolerance * (1 + timePressure(timeLeftMs, clockMs))
+  const tolerance = settings.tolerance * (1 + (bot.flawless ? 0 : timePressure(timeLeftMs, clockMs)))
 
   let choice = null
   let choiceTotal = -Infinity

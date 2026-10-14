@@ -7,10 +7,12 @@ import { roundsWon } from './progress.js'
 // Looks like a bot to the Avatar component (a coloured circle with an initial).
 export const PLAYER = { id: 'you', name: 'You', color: '#6f8f4e', flag: '', country: '' }
 
-// Chess titles, like in real life (Master, International Master, Grandmaster). Shown as a small
+// Chess titles, like in real life (Master, International Master, Grandmaster), and on top
+// World Champion, which the Legend tier's World Championship will give. Shown as a small
 // badge next to the name. Listed from highest to lowest: the player shows the highest
 // title they have earned.
 export const TITLES = [
+  { id: 'wc', short: 'WC', name: 'World Champion', earnedBy: 'world-championship' },
   { id: 'gm', short: 'GM', name: 'Grandmaster', earnedBy: 'gm-championship' },
   { id: 'im', short: 'IM', name: 'International Master', earnedBy: 'im-championship' },
   { id: 'master', short: 'M', name: 'Master', earnedBy: 'master-championship' },

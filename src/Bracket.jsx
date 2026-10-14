@@ -111,7 +111,7 @@ function PlayerBox({ x, y, person, isYou, won, lost, trophy }) {
       </text>
       <text className={won ? 'bracket-name won' : 'bracket-name'} x={x + 31} y={y + 4}>
         {trophy && '🏆 '}
-        {person.title && <tspan className="bracket-title-badge">{person.title.short} </tspan>}
+        {person.title && <tspan className={`bracket-title-badge title-${person.title.id}`}>{person.title.short} </tspan>}
         {person.name}
       </text>
       <text className="bracket-flag" x={x + BOX_W - 8} y={y + 5} textAnchor="end">

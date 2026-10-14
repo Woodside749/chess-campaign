@@ -10,6 +10,8 @@ const GROUPS = [
   { id: 'advanced', title: 'Advanced' },
   { id: 'expert', title: 'Expert' },
   { id: 'master', title: 'Master' },
+  { id: 'legend', title: 'Legend' },
+  { id: 'boss', title: 'Final bosses' },
 ]
 
 const COLOR_CHOICES = [
