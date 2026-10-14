@@ -1366,7 +1366,8 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  width: 280px;
+  width: 320px;
+  max-width: 100%;
   margin-bottom: 20px;
   padding: 12px;
   border: 1px solid var(--border);
@@ -1382,6 +1383,10 @@
 .player-card-name {
   font-size: 18px;
   font-weight: 700;
+  /* Long usernames end in "…" instead of running into the achievements button. */
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .player-card-title {
