@@ -1,17 +1,19 @@
 // The player's career progress, saved in the browser (localStorage), so it survives
 // closing the page. It only lives in this browser on this device for now.
 //
-// Shape: { tournaments: { [eventId]: { roundsWon: 0 } } }
+// Shape: { tournaments: { [eventId]: { roundsWon: 0 } },
+//          modeWins: { [gameModeId]: [botId, ...] } }   (bots beaten in the game modes menu)
 
 // The key keeps the game's first working name ("Chess Career"): changing it would make
 // every browser forget its saved career.
 const STORAGE_KEY = 'chess-career-progress-v1'
 
-const EMPTY = { tournaments: {} }
+const EMPTY = { tournaments: {}, modeWins: {} }
 
 export function loadProgress() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY))
+    // (Older saves have no modeWins yet, so the empty one fills in.)
     return saved && typeof saved === 'object' ? { ...EMPTY, ...saved } : EMPTY
   } catch {
     // Storage can be blocked (for example in private browsing). Start fresh then.
@@ -41,6 +43,18 @@ export function withRoundWon(progress, eventId, round) {
     ...progress,
     tournaments: { ...progress.tournaments, [eventId]: { roundsWon: round + 1 } },
   }
+}
+
+// The bots beaten in a game mode (from the game modes menu), as a set of bot ids.
+export function modeWins(progress, modeId) {
+  return new Set(progress.modeWins?.[modeId] ?? [])
+}
+
+// The progress after beating `botId` in game mode `modeId`.
+export function withModeWin(progress, modeId, botId) {
+  const wins = modeWins(progress, modeId)
+  if (wins.has(botId)) return progress
+  return { ...progress, modeWins: { ...progress.modeWins, [modeId]: [...wins, botId] } }
 }
 
 // Clears all saved progress (used by the developer menu).

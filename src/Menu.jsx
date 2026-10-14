@@ -1,24 +1,6 @@
-import { BOTS, shownRating } from './bots.js'
-import { titleById } from './player.js'
 import { useState } from 'react'
-import Avatar from './Avatar.jsx'
-import TitleBadge from './TitleBadge.jsx'
-
-const GROUPS = [
-  { id: 'school', title: 'Chess School' },
-  { id: 'circuit', title: 'Amateur circuit' },
-  { id: 'advanced', title: 'Advanced' },
-  { id: 'expert', title: 'Expert' },
-  { id: 'master', title: 'Master' },
-  { id: 'legend', title: 'Legend' },
-  { id: 'boss', title: 'Final bosses' },
-]
-
-const COLOR_CHOICES = [
-  { value: 'w', label: 'White' },
-  { value: 'b', label: 'Black' },
-  { value: 'random', label: 'Random' },
-]
+import { BOT_GROUPS, botsInGroup } from './bots.js'
+import { BotList, ColorChoice } from './BotPicker.jsx'
 
 // The developer menu: play any bot, for testing. Pick a colour, then tap an opponent.
 export default function Menu({ colorChoice, onColorChoice, onPlay, onBack, onResetProgress }) {
@@ -30,56 +12,18 @@ export default function Menu({ colorChoice, onColorChoice, onPlay, onBack, onRes
       <h1>Developer menu</h1>
       <p className="subtitle">Amateur tier · play any bot with a 10-minute clock</p>
 
-      <div className="color-choice" role="radiogroup" aria-label="Play as">
-        <span>Play as</span>
-        {COLOR_CHOICES.map((choice) => (
-          <button
-            key={choice.value}
-            role="radio"
-            aria-checked={colorChoice === choice.value}
-            className={colorChoice === choice.value ? 'selected' : ''}
-            onClick={() => onColorChoice(choice.value)}
-          >
-            {choice.label}
-          </button>
-        ))}
-      </div>
+      <ColorChoice value={colorChoice} onChange={onColorChoice} />
 
-      {GROUPS.map((group) => (
+      {BOT_GROUPS.map((group) => (
         <section key={group.id}>
           <h2 className="group-title">{group.title}</h2>
-          <BotList bots={Object.values(BOTS).filter((bot) => bot.group === group.id)} onPlay={onPlay} />
+          <BotList bots={botsInGroup(group.id)} onPick={onPlay} />
         </section>
       ))}
 
       <h2 className="group-title">Testing</h2>
       <ResetProgressButton onReset={onResetProgress} />
     </main>
-  )
-}
-
-function BotList({ bots, onPlay }) {
-  return (
-    <ul className="bot-list">
-      {bots.map((bot) => (
-        <li key={bot.id}>
-          <button className="bot-card" onClick={() => onPlay(bot)}>
-            <Avatar bot={bot} size={56} />
-            <div className="bot-card-text">
-              <div className="opponent-name">
-                <TitleBadge title={titleById(bot.chessTitle)} /> {bot.name} <span className="rating">({shownRating(bot)})</span>
-              </div>
-              <div className="bot-bio">
-                {bot.country} · {bot.bio}
-              </div>
-            </div>
-            <span className="play-arrow" aria-hidden="true">
-              ▶
-            </span>
-          </button>
-        </li>
-      ))}
-    </ul>
   )
 }
 

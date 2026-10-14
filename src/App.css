@@ -1847,3 +1847,202 @@ ul.fairy-legend li {
 .campaign-theme .round-play:not(.secondary) {
   color: #0e2f45;
 }
+
+/* ---------- Game modes menu ---------- */
+/* The mode list on the left (it stays in place while the bots scroll), the chosen mode
+   with its bots on the right. Red accent, like the Game modes tile on the main menu. */
+
+.game-modes {
+  --accent: #d64545;
+  display: grid;
+  grid-template-columns: 260px minmax(0, 640px);
+  gap: 32px;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 24px 32px;
+}
+
+.mode-list-panel {
+  position: sticky;
+  top: 16px;
+  align-self: start;
+  max-height: calc(100vh - 32px);
+  display: flex;
+  flex-direction: column;
+}
+
+.mode-list-panel .back {
+  align-self: flex-start;
+}
+
+.mode-list-panel h1 {
+  margin: 8px 0 14px;
+  font-size: 30px;
+}
+
+.mode-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 4px 0 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* A line between the time controls (top four) and the variants. */
+.mode-list li.first-variant {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.mode-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: left;
+  color: var(--text);
+  background: none;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.mode-item:hover {
+  background: var(--surface);
+}
+
+.mode-item.selected {
+  color: white;
+  background: var(--accent);
+}
+
+.mode-icon {
+  width: 22px;
+  display: inline-grid;
+  place-items: center;
+}
+
+.mode-wins {
+  margin-left: auto;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.mode-detail h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 44px 0 4px;
+  font-size: 26px;
+}
+
+.mode-text {
+  margin: 0 0 16px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* Fairy chess: which of the six setups. */
+.setup-choice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.setup-choice button {
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 15px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.setup-choice button.selected {
+  color: white;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.bot-card .beaten {
+  margin-left: 6px;
+}
+
+/* The simul: three slots for the chosen bots, and the start button. */
+.simul-slots {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.simul-slot {
+  min-width: 120px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 12px;
+  font: inherit;
+  font-size: 15px;
+  color: var(--muted);
+  background: none;
+  border: 2px dashed var(--border);
+  border-radius: 10px;
+}
+
+.simul-slot.filled {
+  justify-content: flex-start;
+  color: var(--text);
+  background: var(--surface);
+  border-style: solid;
+  cursor: pointer;
+}
+
+.simul-slot.filled:hover {
+  border-color: var(--accent);
+}
+
+.simul-slots .event-play {
+  margin: 0;
+  padding: 13px 20px;
+}
+
+.simul-slots .event-play:disabled {
+  opacity: 0.4;
+  cursor: default;
+  filter: none;
+}
+
+/* Phones: the mode list on top (scrolls on its own), the bots below. */
+@media (max-width: 800px) {
+  .game-modes {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    padding: 16px;
+  }
+
+  .mode-list-panel {
+    position: static;
+    max-height: none;
+  }
+
+  .mode-list {
+    max-height: 38vh;
+  }
+
+  .mode-detail h2 {
+    margin-top: 12px;
+  }
+}

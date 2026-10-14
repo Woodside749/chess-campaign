@@ -1664,6 +1664,19 @@ export const BOTS = {
   },
 }
 
+// The bot groups, in order, as listed in the developer menu and the game modes screen.
+export const BOT_GROUPS = [
+  { id: 'school', title: 'Chess School' },
+  { id: 'circuit', title: 'Amateur circuit' },
+  { id: 'advanced', title: 'Advanced' },
+  { id: 'expert', title: 'Expert' },
+  { id: 'master', title: 'Master' },
+  { id: 'legend', title: 'Legend' },
+  { id: 'boss', title: 'Final bosses' },
+]
+
+export const botsInGroup = (groupId) => Object.values(BOTS).filter((bot) => bot.group === groupId)
+
 // The rating as shown to the player: the number, or the bot's `ratingLabel` if it has one.
 export function shownRating(bot) {
   return bot.ratingLabel ?? bot.rating

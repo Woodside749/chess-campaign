@@ -4,7 +4,7 @@ import { EVENTS } from './career.js'
 import { LESSONS } from './lessons.js'
 import { loadFairy } from './fairy/loadFairy.js'
 import { isFairyVariant } from './fairy/variants.js'
-import { clearProgress, loadProgress, roundsWon, saveProgress, withRoundWon } from './progress.js'
+import { clearProgress, loadProgress, roundsWon, saveProgress, withModeWin, withRoundWon } from './progress.js'
 import Home from './Home.jsx'
 import Menu from './Menu.jsx'
 import Tournament from './Tournament.jsx'
@@ -14,6 +14,7 @@ import SimulLeague from './SimulLeague.jsx'
 import Simul from './Simul.jsx'
 import Achievements from './Achievements.jsx'
 import MainMenu from './MainMenu.jsx'
+import GameModes from './GameModes.jsx'
 import { playerTitle, tierStars } from './player.js'
 import './App.css'
 
@@ -29,7 +30,11 @@ export default function App() {
   const [colorChoice, setColorChoice] = useState('w') // developer menu: 'w', 'b' or 'random'
   const [match, setMatch] = useState(null) // the game being played, or null
   const [puzzleRun, setPuzzleRun] = useState(null) // the puzzle trial being played: { event, round }
-  const [simulRun, setSimulRun] = useState(null) // the simul being played: { event, round }
+  // The simul being played: { event, round } in the campaign, or { round, minutes, gameMode }
+  // (round = { title, opponents, needed }) from the game modes menu.
+  const [simulRun, setSimulRun] = useState(null)
+  // What is picked in the game modes menu (kept here, so it is still there after a game).
+  const [modesChoice, setModesChoice] = useState({ modeId: 'unlimited', color: 'w', setup: 'archchess', simulBots: [] })
   const [progress, setProgress] = useState(loadProgress)
 
   // A game from the developer menu: any bot, with clocks.
@@ -83,6 +88,35 @@ export default function App() {
   function handleResult(result) {
     const tournament = match?.tournament
     if (tournament && result.outcome === 'win') saveRoundWon(tournament.event, tournament.round)
+    if (match?.gameMode && result.outcome === 'win') saveModeWin(match.gameMode, match.bot.id)
+  }
+
+  // Saves that `botId` was beaten in game mode `modeId` (the 🏆 in the game modes menu).
+  function saveModeWin(modeId, botId) {
+    setProgress((current) => {
+      const next = withModeWin(current, modeId, botId)
+      saveProgress(next)
+      return next
+    })
+  }
+
+  // A game from the game modes menu: any bot, in any mode.
+  async function playGameMode(mode, bot) {
+    const pick = modesChoice.color
+    const color = pick === 'random' ? (Math.random() < 0.5 ? 'w' : 'b') : pick
+    const variant = mode.setups ? modesChoice.setup : (mode.variant ?? null)
+    // Fairy chess and the other engine variants need their rules library loaded first.
+    if (isFairyVariant(variant)) await loadFairy()
+    setMatch({
+      bot,
+      color,
+      timed: mode.timed ?? true,
+      minutes: mode.minutes ?? 10,
+      increment: mode.increment,
+      variant,
+      lesson: null,
+      gameMode: mode.id,
+    })
   }
 
   if (puzzleRun) {
@@ -95,6 +129,19 @@ export default function App() {
           onExit={() => setPuzzleRun(null)}
         />
       </Suspense>
+    )
+  }
+
+  if (simulRun?.gameMode) {
+    // A simul from the game modes menu: every board won is a 🏆 against that bot.
+    return (
+      <Simul
+        round={simulRun.round}
+        minutes={simulRun.minutes}
+        onFinish={() => {}}
+        onGameResult={(botId, outcome) => outcome === 'win' && saveModeWin(simulRun.gameMode, botId)}
+        onExit={() => setSimulRun(null)}
+      />
     )
   }
 
@@ -125,7 +172,7 @@ export default function App() {
         playerTitle={playerTitle(progress)}
         playerStars={tierStars(progress)}
         onResult={handleResult}
-        exitLabel={match.tournament ? 'Back to bracket' : 'Back to menu'}
+        exitLabel={match.tournament ? 'Back to bracket' : match.gameMode ? 'Back to game modes' : 'Back to menu'}
         onExit={() => setMatch(null)}
       />
     )
@@ -141,7 +188,21 @@ export default function App() {
       />
     )
   }
-  if (screen === 'menu') return <MainMenu progress={progress} onOpenCampaign={() => setScreen('home')} />
+  if (screen === 'menu') {
+    return <MainMenu progress={progress} onOpenCampaign={() => setScreen('home')} onOpenGameModes={() => setScreen('modes')} />
+  }
+  if (screen === 'modes') {
+    return (
+      <GameModes
+        progress={progress}
+        choice={modesChoice}
+        onChoice={setModesChoice}
+        onPlay={playGameMode}
+        onPlaySimul={(mode, opponents) => setSimulRun({ round: { title: 'Simul', opponents, needed: 2 }, minutes: 10, gameMode: mode.id })}
+        onBack={() => setScreen('menu')}
+      />
+    )
+  }
   if (screen === 'achievements') return <Achievements progress={progress} onBack={() => setScreen('home')} />
   const opened = EVENTS.find((event) => event.id === screen)
   if (opened?.type === 'trials') {

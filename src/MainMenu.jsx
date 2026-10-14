@@ -2,10 +2,10 @@ import { STAR_TIERS, starsWon } from './career.js'
 import { playerTitle } from './player.js'
 import { roundsWon } from './progress.js'
 
-// The main menu, the first screen of the game: big tiles on the left (only the chess
-// campaign works so far, the rest are coming soon) and the global chat on the right
+// The main menu, the first screen of the game: big tiles on the left (the chess campaign
+// and the game modes work so far, the rest are coming soon) and the global chat on the right
 // (coming soon: it needs accounts and a server).
-export default function MainMenu({ progress, onOpenCampaign }) {
+export default function MainMenu({ progress, onOpenCampaign, onOpenGameModes }) {
   const wonIn = (eventId) => roundsWon(progress, eventId)
   const started = Object.keys(progress.tournaments).length > 0
   const stars = STAR_TIERS.reduce((sum, tier) => sum + starsWon(wonIn, tier.section), 0)
@@ -30,7 +30,13 @@ export default function MainMenu({ progress, onOpenCampaign }) {
             }
             onClick={onOpenCampaign}
           />
-          <MenuTile color="red" icon="🎲" title="Game modes" text="Chaos, fog, ducks and more, whenever you like." soon />
+          <MenuTile
+            color="red"
+            icon="🎲"
+            title="Game modes"
+            text="Every mode against any bot: blitz, fog, ducks, chaos and more."
+            onClick={onOpenGameModes}
+          />
           <MenuTile color="purple" icon="👾" title="Start your chess monster campaign" soon />
         </div>
       </section>

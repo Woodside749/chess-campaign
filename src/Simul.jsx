@@ -10,9 +10,11 @@ const showPoints = (points) => String(points).replace('.5', '½').replace(/^0½/
 // One simul round: the player against three bots on three boards at the same time.
 // The bots think on their own, so while one is thinking you can move on another board.
 // `round` is { title, opponents, needed } from career.js, and `minutes` the clock on each
-// board. `onFinish(passed)` is called once, when all three games are over.
-export default function Simul({ round, minutes, onFinish, onExit }) {
-  const [results, setResults] = useState({}) // bot id → 'win', 'loss' or 'draw'
+// board. `onFinish(passed)` is called once, when all three games are over, and
+// `onGameResult(botId, outcome)` (optional) after each board's game.
+// The same bot may play on more than one board.
+export default function Simul({ round, minutes, onFinish, onGameResult, onExit }) {
+  const [results, setResults] = useState({}) // board number → 'win', 'loss' or 'draw'
   const [attempt, setAttempt] = useState(0) // a new number starts three fresh games
   const [confirmingLeave, setConfirmingLeave] = useState(false)
 
@@ -53,15 +55,18 @@ export default function Simul({ round, minutes, onFinish, onExit }) {
       </header>
 
       <div className="simul-boards">
-        {round.opponents.map((id) => (
+        {round.opponents.map((id, board) => (
           <Game
-            key={`${id}-${attempt}`}
+            key={`${board}-${id}-${attempt}`}
             compact
             bot={BOTS[id]}
             startColor="w"
             timed
             minutes={minutes}
-            onResult={(result) => setResults((r) => ({ ...r, [id]: result.outcome }))}
+            onResult={(result) => {
+              setResults((r) => ({ ...r, [board]: result.outcome }))
+              onGameResult?.(id, result.outcome)
+            }}
             onExit={onExit}
           />
         ))}
