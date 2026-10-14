@@ -109,11 +109,11 @@ function LocalStart({ names, onNames, onStart }) {
       <div className="local-names">
         <label className="account-field">
           ♔ White
-          <input value={names.w} placeholder="White" maxLength={20} onChange={(e) => onNames({ ...names, w: e.target.value })} />
+          <input value={names.w} placeholder="Write a name" maxLength={20} onChange={(e) => onNames({ ...names, w: e.target.value })} />
         </label>
         <label className="account-field">
           ♚ Black
-          <input value={names.b} placeholder="Black" maxLength={20} onChange={(e) => onNames({ ...names, b: e.target.value })} />
+          <input value={names.b} placeholder="Write a name" maxLength={20} onChange={(e) => onNames({ ...names, b: e.target.value })} />
         </label>
       </div>
       <button className="event-play" onClick={onStart}>
