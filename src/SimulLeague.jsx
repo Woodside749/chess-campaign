@@ -9,7 +9,7 @@ import { titleById } from './player.js'
 export default function SimulLeague({ event, roundsWon, onPlayRound, onBack }) {
   const allPassed = roundsWon >= event.rounds.length
   return (
-    <main className="tournament-screen">
+    <main className="tournament-screen campaign-theme">
       <section className="puzzle-intro">
         <div className="puzzle-intro-icon" aria-hidden="true">
           🎭
@@ -25,7 +25,7 @@ export default function SimulLeague({ event, roundsWon, onPlayRound, onBack }) {
 
       <aside className="tournament-panel">
         <button className="back" onClick={onBack}>
-          ← Home
+          ← Campaign
         </button>
         <div className="event-place">{event.place}</div>
         <h1>{event.title}</h1>

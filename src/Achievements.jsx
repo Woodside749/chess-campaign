@@ -13,7 +13,7 @@ export default function Achievements({ progress, onBack }) {
   return (
     <main className="achievements-screen">
       <button className="back" onClick={onBack}>
-        ← Home
+        ← Campaign
       </button>
       <header className="achievements-header">
         <div className="avatar-with-stars">

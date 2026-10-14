@@ -1835,3 +1835,15 @@ ul.fairy-legend li {
     background: #161b21;
   }
 }
+
+/* On every campaign screen (home, brackets, trials, simuls) the accent colour is the
+   campaign's light blue instead of green: buttons, labels and bracket lines. Buttons
+   filled with it get dark blue text, like the campaign tile on the main menu. */
+.campaign-theme {
+  --accent: #7cc6ec;
+}
+
+.campaign-theme .event-play,
+.campaign-theme .round-play:not(.secondary) {
+  color: #0e2f45;
+}

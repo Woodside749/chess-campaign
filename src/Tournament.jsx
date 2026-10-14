@@ -12,14 +12,14 @@ import { FAIRY_VARIANTS } from './fairy/variants.js'
 export default function Tournament({ event, roundsWon, playerTitle, onPlayRound, onBack }) {
   const champion = roundsWon >= event.rounds.length
   return (
-    <main className="tournament-screen">
+    <main className="tournament-screen campaign-theme">
       <div className="bracket-area">
         <Bracket event={event} roundsWon={roundsWon} playerTitle={playerTitle} />
       </div>
 
       <aside className="tournament-panel">
         <button className="back" onClick={onBack}>
-          ← Home
+          ← Campaign
         </button>
         <div className="event-place">{event.place}</div>
         <h1>{event.title}</h1>

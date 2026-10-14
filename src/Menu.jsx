@@ -25,7 +25,7 @@ export default function Menu({ colorChoice, onColorChoice, onPlay, onBack, onRes
   return (
     <main className="app menu">
       <button className="back" onClick={onBack}>
-        ← Home
+        ← Campaign
       </button>
       <h1>Developer menu</h1>
       <p className="subtitle">Amateur tier · play any bot with a 10-minute clock</p>
