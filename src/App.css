@@ -2218,3 +2218,9 @@ ul.fairy-legend li {
   color: var(--text);
   text-decoration: underline;
 }
+
+/* Space between "Save username" and the Log out / Done buttons. */
+.dialog.account form + .dialog-buttons,
+.dialog.account form + .account-message {
+  margin-top: 16px;
+}

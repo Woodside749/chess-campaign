@@ -2,13 +2,29 @@ import { useState } from 'react'
 import { supabase } from './supabase.js'
 
 const MIN_PASSWORD = 8
+const USERNAME = /^[A-Za-z0-9_-]{3,20}$/
+const USERNAME_RULE = '3 to 20 letters or digits (and _ or -), no spaces.'
+
+// The name shown for a logged-in player: their username, or (for an account made before
+// usernames existed) the start of their email.
+function displayName(user) {
+  return user.user_metadata?.username ?? user.email.split('@')[0]
+}
+
+// Checks a username; returns an error message, or null when it is fine and free.
+async function usernameProblem(username) {
+  if (!USERNAME.test(username)) return `The username needs ${USERNAME_RULE.toLowerCase()}`
+  const { data: taken, error } = await supabase.rpc('username_taken', { name: username })
+  if (error) return error.message
+  return taken ? `${username} is already taken. Try another one.` : null
+}
 
 // The 👤 button on the main menu: "Log in" when nobody is logged in, otherwise the
 // player's name. It opens the account window. `account` comes from useAccount().
 export default function AccountButton({ account }) {
   const [open, setOpen] = useState(false)
   const { user, recovering } = account
-  const name = user?.email.split('@')[0]
+  const name = user && displayName(user)
 
   return (
     <>
@@ -30,11 +46,13 @@ export default function AccountButton({ account }) {
 }
 
 // The account window. Its pages: 'login', 'signup', 'forgot' (send a reset link),
-// 'newPassword' (after opening that link) and 'account' (logged in: log out).
+// 'newPassword' (after opening that link) and 'account' (logged in: log out, and choose a
+// username if the account has none yet).
 function AccountDialog({ account, onClose }) {
   const { user, recovering } = account
   const [page, setPage] = useState(recovering ? 'newPassword' : user ? 'account' : 'login')
   const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [message, setMessage] = useState(null) // { text, error }
   const [busy, setBusy] = useState(false)
@@ -51,7 +69,12 @@ function AccountDialog({ account, onClose }) {
     setMessage(null)
     const { error } = await call()
     setBusy(false)
-    if (error) setMessage({ text: error.message, error: true })
+    // Someone took the same username a moment before us.
+    if (error?.message === 'Database error saving new user') {
+      setMessage({ text: `${username} was just taken. Try another one.`, error: true })
+    } else if (error) {
+      setMessage({ text: error.message, error: true })
+    }
     return !error
   }
 
@@ -66,7 +89,16 @@ function AccountDialog({ account, onClose }) {
     if (page === 'login') {
       if (await run(() => supabase.auth.signInWithPassword({ email, password }))) onClose()
     } else if (page === 'signup') {
-      const ok = await run(() => supabase.auth.signUp({ email, password, options: { emailRedirectTo: back } }))
+      setBusy(true)
+      const problem = await usernameProblem(username)
+      setBusy(false)
+      if (problem) {
+        setMessage({ text: problem, error: true })
+        return
+      }
+      const ok = await run(() =>
+        supabase.auth.signUp({ email, password, options: { emailRedirectTo: back, data: { username } } }),
+      )
       if (ok) setMessage({ text: `Almost done! We sent an email to ${email}. Open the link in it to confirm your account.` })
     } else if (page === 'forgot') {
       const ok = await run(() => supabase.auth.resetPasswordForEmail(email, { redirectTo: back }))
@@ -77,6 +109,22 @@ function AccountDialog({ account, onClose }) {
         setMessage({ text: 'Your new password is saved.' })
         setPage('account')
       }
+    }
+  }
+
+  // For an account without a username (made before usernames existed).
+  async function saveUsername(e) {
+    e.preventDefault()
+    setBusy(true)
+    const problem = await usernameProblem(username)
+    setBusy(false)
+    if (problem) {
+      setMessage({ text: problem, error: true })
+      return
+    }
+    const saved = await run(() => supabase.from('profiles').upsert({ id: user.id, username }))
+    if (saved && (await run(() => supabase.auth.updateUser({ data: { username } })))) {
+      setMessage({ text: `Your username is now ${username}.` })
     }
   }
 
@@ -100,8 +148,24 @@ function AccountDialog({ account, onClose }) {
         {page === 'account' ? (
           <>
             <p className="account-email">
-              Logged in as <strong>{user?.email}</strong>
+              Logged in as <strong>{user && displayName(user)}</strong>
+              <br />
+              <span className="account-hint">{user?.email}</span>
             </p>
+            {!user?.user_metadata?.username && (
+              <form onSubmit={saveUsername}>
+                <label className="account-field">
+                  Choose your username
+                  <input required autoComplete="username" value={username} onChange={(e) => setUsername(e.target.value.trim())} />
+                </label>
+                <p className="account-hint">{USERNAME_RULE}</p>
+                <div className="dialog-buttons">
+                  <button className="primary" type="submit" disabled={busy}>
+                    Save username
+                  </button>
+                </div>
+              </form>
+            )}
             {message && <p className={message.error ? 'account-message error' : 'account-message'}>{message.text}</p>}
             <div className="dialog-buttons">
               <button className="secondary" onClick={logOut} disabled={busy}>
@@ -114,10 +178,32 @@ function AccountDialog({ account, onClose }) {
           </>
         ) : (
           <form onSubmit={submit}>
+            {page === 'signup' && (
+              <>
+                <label className="account-field">
+                  Username
+                  <input
+                    required
+                    autoComplete="username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value.trim())}
+                    autoFocus
+                  />
+                </label>
+                <p className="account-hint">{USERNAME_RULE} Other players will see it.</p>
+              </>
+            )}
             {page !== 'newPassword' && (
               <label className="account-field">
                 Email
-                <input type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} autoFocus />
+                <input
+                  type="email"
+                  required
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoFocus={page !== 'signup'}
+                />
               </label>
             )}
             {page !== 'forgot' && (
