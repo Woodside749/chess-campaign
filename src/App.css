@@ -616,9 +616,33 @@
   flex: none;
 }
 
+/* Every card on the home road has a fixed size, so all sections line up (also in Safari,
+   which measures text slightly differently). Two league cards and their gap are exactly
+   as tall as one championship or school card. */
+.home {
+  --league-card-height: 180px;
+  --league-gap: 14px;
+}
+
+/* The championship sections have no heading, so they leave the same room at the top as
+   a heading takes (17px plus its 12px margin). */
+.championship-stage {
+  padding-top: 29px;
+}
+
+/* The button (or the lock text) always sits at the bottom of the card. */
+.event-card > .event-play,
+.event-card > .league-status {
+  margin-top: auto;
+}
+
 .section-title {
+  /* A fixed line height, so every section's heading takes exactly the same space. */
+  height: 17px;
   margin: 0 0 12px;
   font-size: 14px;
+  line-height: 17px;
+  white-space: nowrap;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -642,7 +666,9 @@
    Safari doesn't size the section as if the card text were on one long line. */
 .event-card {
   flex: none;
-  width: 280px;
+  width: 300px;
+  /* Exactly as tall as two league cards stacked, with the gap between them. */
+  height: calc(2 * var(--league-card-height) + var(--league-gap));
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -705,10 +731,13 @@
 .league-grid {
   display: grid;
   grid-template-columns: repeat(3, 250px);
-  gap: 14px;
+  grid-auto-rows: var(--league-card-height);
+  gap: var(--league-gap);
 }
 
 .league-card {
+  height: var(--league-card-height);
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -788,6 +817,25 @@
 
   .event-card {
     width: auto;
+    height: auto;
+  }
+
+  .league-card {
+    height: auto;
+    min-height: var(--league-card-height);
+  }
+
+  .league-grid {
+    grid-auto-rows: auto;
+  }
+
+  .championship-stage {
+    padding-top: 0;
+  }
+
+  .section-title {
+    height: auto;
+    white-space: normal;
   }
 
   .league-grid {

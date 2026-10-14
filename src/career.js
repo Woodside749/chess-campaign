@@ -136,7 +136,7 @@ export const EVENTS = [
     icon: '🧚',
     title: 'Fairy Chess Cup',
     place: 'Amateur League',
-    description: 'Every round brings new fairy pieces: two Archbishops, then two Chancellors, then an Amazon with two Centaurs.',
+    description: 'New fairy pieces every round: two Archbishops, then two Chancellors, then an Amazon and two Centaurs.',
     requires: { event: 'school-tournament' },
     timed: true,
     minutes: 10,
