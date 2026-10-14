@@ -18,28 +18,31 @@ const SOUND_FILES = {
   // lowTime: '/sounds/low-time.mp3',
 }
 
-// Overall volume of all sounds, from 0 (silent) to 1 (full). Lower it to make every
-// sound quieter at once.
-const MASTER_VOLUME = 0.5
+// The volume of all sounds, from 0 (silent) to 1 (full), set with the slider in Settings
+// and saved in the browser. New players start at DEFAULT_VOLUME.
+const DEFAULT_VOLUME = 0.5
+const VOLUME_KEY = 'chess-campaign-volume'
+const OLD_MUTE_KEY = 'chess-campaign-muted' // from the old mute button: muted means volume 0
 
-const MUTE_KEY = 'chess-campaign-muted'
-
-let muted = (() => {
+let volume = (() => {
   try {
-    return localStorage.getItem(MUTE_KEY) === 'true'
+    const saved = localStorage.getItem(VOLUME_KEY)
+    if (saved !== null && !Number.isNaN(Number(saved))) return Number(saved)
+    return localStorage.getItem(OLD_MUTE_KEY) === 'true' ? 0 : DEFAULT_VOLUME
   } catch {
-    return false
+    return DEFAULT_VOLUME
   }
 })()
 
-export function isMuted() {
-  return muted
+export function getVolume() {
+  return volume
 }
 
-export function setMuted(value) {
-  muted = value
+export function setVolume(value) {
+  volume = Math.min(1, Math.max(0, value))
+  if (master) master.gain.value = volume
   try {
-    localStorage.setItem(MUTE_KEY, String(value))
+    localStorage.setItem(VOLUME_KEY, String(volume))
   } catch {
     // Storage can be blocked; then the setting just lasts until the page is closed.
   }
@@ -48,11 +51,11 @@ export function setMuted(value) {
 // Plays a sound by name: 'move', 'capture', 'check', 'castle', 'promote', 'start', 'win',
 // 'loss', 'draw' or 'lowTime'. Never throws: a sound that can't play is simply skipped.
 export function playSound(name) {
-  if (muted) return
+  if (volume === 0) return
   try {
     if (SOUND_FILES[name]) {
       const file = new Audio(SOUND_FILES[name])
-      file.volume = MASTER_VOLUME
+      file.volume = volume
       file.play().catch(() => {})
       return
     }
@@ -74,12 +77,12 @@ export function moveSound(move) {
 // ---------- The made-in-code sounds ----------
 
 let context = null
-let master = null // every made-in-code sound goes through this, at MASTER_VOLUME
+let master = null // every made-in-code sound goes through this, at the chosen volume
 function audio() {
   if (!context) {
     context = new (window.AudioContext || window.webkitAudioContext)()
     master = context.createGain()
-    master.gain.value = MASTER_VOLUME
+    master.gain.value = volume
     master.connect(context.destination)
   }
   // Safari pauses sound now and then: 'suspended' until a click, and 'interrupted' after

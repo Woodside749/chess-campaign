@@ -15,7 +15,8 @@ import { randomChess960Fen } from './fairy/chess960.js'
 import { ChaosGame } from './chaos/ChaosGame.js'
 import { rollPiece } from './chaos/diceRules.js'
 import Pocket from './Pocket.jsx'
-import { isMuted, moveSound, playSound, setMuted } from './sounds.js'
+import { moveSound, playSound } from './sounds.js'
+import SettingsButton from './Settings.jsx'
 import { chooseChaosMove } from './chaos/chaosBot.js'
 import ChaosPanel from './chaos/ChaosPanel.jsx'
 import { getEngine } from './engine.js'
@@ -233,7 +234,6 @@ export default function Game({
   }, [result, onResult])
 
   // Sounds: a chime when a game starts, and a sound for every move (yours and the bot's).
-  const [muted, setMutedState] = useState(isMuted)
   useEffect(() => playSound('start'), [game])
   const soundedPlyRef = useRef(0)
   useEffect(() => {
@@ -795,19 +795,7 @@ export default function Game({
         <button className="resign" onClick={() => setConfirming('resign')} disabled={gameOver || inLesson}>
           Resign
         </button>
-        <button
-          className="sound-toggle"
-          aria-label={muted ? 'Turn sound on' : 'Turn sound off'}
-          title={muted ? 'Turn sound on' : 'Turn sound off'}
-          onClick={() => {
-            setMuted(!muted)
-            setMutedState(!muted)
-            // A test sound when turning sound on, so you know what to listen for.
-            if (muted) playSound('move')
-          }}
-        >
-          {muted ? '🔇' : '🔊'}
-        </button>
+        <SettingsButton />
       </div>
 
       {/* Only shown while developing (npm run dev), never in the published game. */}

@@ -234,6 +234,7 @@
 .overlay {
   position: fixed;
   inset: 0;
+  z-index: 100;
   display: grid;
   place-items: center;
   padding: 16px;
@@ -2033,4 +2034,73 @@ ul.fairy-legend li {
   .mode-detail h2 {
     margin-top: 12px;
   }
+}
+
+/* ---------- Settings ---------- */
+
+.settings-button {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.settings-button:hover {
+  border-color: var(--accent);
+}
+
+/* In a game the button sits at the end of the row of move buttons. */
+.review-nav .settings-button {
+  flex: none;
+  width: 44px;
+  height: auto;
+  font-size: 18px;
+}
+
+.menu-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.menu-title-row .menu-title {
+  margin: 0;
+}
+
+.dialog.settings h2 {
+  margin-bottom: 20px;
+  font-size: 26px;
+}
+
+.volume-setting {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.volume-label {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+}
+
+.volume-value {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.volume-setting input {
+  width: 100%;
+  accent-color: var(--accent);
 }

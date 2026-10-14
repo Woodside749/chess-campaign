@@ -1,6 +1,7 @@
 import { STAR_TIERS, starsWon } from './career.js'
 import { playerTitle } from './player.js'
 import { roundsWon } from './progress.js'
+import SettingsButton from './Settings.jsx'
 
 // The main menu, the first screen of the game: big tiles on the left (the chess campaign
 // and the game modes work so far, the rest are coming soon) and the global chat on the right
@@ -14,7 +15,10 @@ export default function MainMenu({ progress, onOpenCampaign, onOpenGameModes }) 
   return (
     <main className="main-menu">
       <section className="menu-left">
-        <h1 className="menu-title">Chess Campaign</h1>
+        <div className="menu-title-row">
+          <h1 className="menu-title">Chess Campaign</h1>
+          <SettingsButton />
+        </div>
         <div className="menu-grid">
           <MenuTile color="dark-green" size="small" icon="👥" title="Play with friends" soon />
           <MenuTile color="dark-green" size="small" icon="🤝" title="Play local" soon />
