@@ -13,7 +13,9 @@ Then open http://localhost:5173.
 
 ## Licences
 
-The bots use [Stockfish](https://stockfishchess.org/) via [stockfish.js](https://github.com/nmrugg/stockfish.js), and for fairy chess [Fairy-Stockfish](https://github.com/fairy-stockfish/Fairy-Stockfish) via [fairy-stockfish.wasm](https://github.com/fairy-stockfish/fairy-stockfish.wasm) and [ffish.js](https://www.npmjs.com/package/ffish-es6). All are GPL licensed, so their source must be made available when the site is published.
+Chess Campaign is free software under the GNU General Public License, version 3 or later (see `LICENSE`), like the chess engines it is built on. Anyone may read, change and share the code under the same licence.
+
+The bots use [Stockfish](https://stockfishchess.org/) via [stockfish.js](https://github.com/nmrugg/stockfish.js), and for fairy chess [Fairy-Stockfish](https://github.com/fairy-stockfish/Fairy-Stockfish) via [fairy-stockfish.wasm](https://github.com/fairy-stockfish/fairy-stockfish.wasm) and [ffish.js](https://www.npmjs.com/package/ffish-es6). All are GPL licensed; their source code is at those links.
 
 The puzzles in Puzzle Trials come from the [Lichess puzzle database](https://database.lichess.org/#puzzles) (public domain, CC0). `scripts/pick-puzzles.py` explains how they were picked and how to pick new ones.
 
