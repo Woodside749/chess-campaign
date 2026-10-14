@@ -1,3 +1,5 @@
+import RoundStars from '../RoundStars.jsx'
+
 // The Puzzle Trials league: three trials of rising difficulty. Like a tournament, a trial
 // unlocks when the one before it is passed, and passed trials can be played again.
 export default function PuzzleLeague({ event, roundsWon, onPlayTrial, onBack }) {
@@ -44,6 +46,7 @@ export default function PuzzleLeague({ event, roundsWon, onPlayTrial, onBack }) 
               <li key={trial.title} className={`round-item${locked ? ' locked' : ''}`}>
                 <div className="round-name">
                   {trial.title}
+                  <RoundStars event={event} round={i} won={passed} />
                   {passed && <span className="round-won"> ✓ Passed</span>}
                 </div>
                 <div className="bot-bio">

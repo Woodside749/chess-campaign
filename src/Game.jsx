@@ -26,6 +26,7 @@ import { boardResult, reactionTo, timeoutResult } from './rules.js'
 import Avatar from './Avatar.jsx'
 import Icon from './Icon.jsx'
 import TitleBadge from './TitleBadge.jsx'
+import StarBadges from './StarBadges.jsx'
 import { PLAYER, titleById } from './player.js'
 import CapturedPieces from './CapturedPieces.jsx'
 import Clock from './Clock.jsx'
@@ -87,7 +88,8 @@ function pressClock(clock, color, incrementMs = 0) {
 // `peeks` (Blindfold only) is how many times the player may look at the pieces for a moment.
 // `compact` draws a small board for the Simul screen, which shows three at once: no back
 // button, move list, review buttons or game-over pop-up (the result shows under the board).
-// `playerTitle` is the player's title (like Master), shown as a badge by their name.
+// `playerTitle` is the player's title (like Master), shown as a badge by their name, and
+// `playerStars` the tier stars they have earned, shown small next to their avatar.
 export default function Game({
   bot,
   startColor,
@@ -101,6 +103,7 @@ export default function Game({
   onExit,
   compact = false,
   playerTitle = null,
+  playerStars = [],
   peeks = 0,
 }) {
   // chess.js holds the real game (rules, history), also in Fog of War, which only hides
@@ -735,7 +738,10 @@ export default function Game({
       </div>
 
       <div className="player-bar you-bar">
-        <Avatar bot={PLAYER} />
+        <div className="avatar-with-stars">
+          <Avatar bot={PLAYER} />
+          <StarBadges stars={playerStars} />
+        </div>
         <div className="player-info">
           <div className="opponent-name">
             <TitleBadge title={playerTitle} /> You

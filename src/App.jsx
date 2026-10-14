@@ -13,7 +13,7 @@ import PuzzleLeague from './puzzles/PuzzleLeague.jsx'
 import SimulLeague from './SimulLeague.jsx'
 import Simul from './Simul.jsx'
 import Achievements from './Achievements.jsx'
-import { playerTitle } from './player.js'
+import { playerTitle, tierStars } from './player.js'
 import './App.css'
 
 // The puzzle screen (with its puzzle collection) is only downloaded when first opened.
@@ -120,6 +120,7 @@ export default function App() {
         variant={match.variant}
         lesson={match.lesson}
         playerTitle={playerTitle(progress)}
+        playerStars={tierStars(progress)}
         onResult={handleResult}
         exitLabel={match.tournament ? 'Back to bracket' : 'Back to menu'}
         onExit={() => setMatch(null)}

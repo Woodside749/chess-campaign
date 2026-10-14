@@ -1,5 +1,6 @@
 import { BOTS, shownRating } from './bots.js'
 import Avatar from './Avatar.jsx'
+import RoundStars from './RoundStars.jsx'
 import TitleBadge from './TitleBadge.jsx'
 import { titleById } from './player.js'
 
@@ -40,6 +41,7 @@ export default function SimulLeague({ event, roundsWon, onPlayRound, onBack }) {
               <li key={round.title} className={`round-item${locked ? ' locked' : ''}`}>
                 <div className="round-name">
                   {round.title}
+                  <RoundStars event={event} round={i} won={passed} />
                   {passed && <span className="round-won"> ✓ Passed</span>}
                 </div>
                 <div className="simul-opponents">

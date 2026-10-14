@@ -1,7 +1,9 @@
 import { achievementsFor } from './achievements.js'
-import { PLAYER, playerTitle } from './player.js'
+import { PLAYER, playerTitle, tierStars } from './player.js'
 import Avatar from './Avatar.jsx'
 import TitleBadge from './TitleBadge.jsx'
+import StarBadges from './StarBadges.jsx'
+import StarIcon from './StarIcon.jsx'
 
 // The player's achievements: earned ones in colour, the rest greyed out with what to do.
 export default function Achievements({ progress, onBack }) {
@@ -14,7 +16,10 @@ export default function Achievements({ progress, onBack }) {
         ← Home
       </button>
       <header className="achievements-header">
-        <Avatar bot={PLAYER} size={64} />
+        <div className="avatar-with-stars">
+          <Avatar bot={PLAYER} size={64} />
+          <StarBadges stars={tierStars(progress)} size={18} />
+        </div>
         <div>
           <h1>
             <TitleBadge title={title} /> You
@@ -29,7 +34,7 @@ export default function Achievements({ progress, onBack }) {
         {achievements.map((achievement) => (
           <li key={achievement.id} className={`achievement${achievement.got ? ' got' : ''}`}>
             <span className="achievement-icon" aria-hidden="true">
-              {achievement.got ? achievement.icon : '🔒'}
+              {!achievement.got ? '🔒' : achievement.star ? <StarIcon color={achievement.star} size={30} /> : achievement.icon}
             </span>
             <div>
               <div className="achievement-name">{achievement.name}</div>

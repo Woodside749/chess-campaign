@@ -1,7 +1,7 @@
 // The player: how they look in the game, and the title they have earned.
 // There are no accounts yet, so the player is simply "You", and the title comes from
 // the career progress saved in this browser.
-import { wonEvent } from './career.js'
+import { STAR_TIERS, maxStars, starsWon, wonEvent } from './career.js'
 import { roundsWon } from './progress.js'
 
 // Looks like a bot to the Avatar component (a coloured circle with an initial).
@@ -27,4 +27,12 @@ export function titleById(id) {
 export function playerTitle(progress) {
   const wonIn = (eventId) => roundsWon(progress, eventId)
   return TITLES.find((title) => wonEvent(wonIn, title.earnedBy)) ?? null
+}
+
+// The tiers in which the player has won all the stars (36), like
+// [{ section: 'leagues', name: 'Amateur', color: '#9e9e9e' }]. Each shows as a small
+// coloured star next to the player's avatar.
+export function tierStars(progress) {
+  const wonIn = (eventId) => roundsWon(progress, eventId)
+  return STAR_TIERS.filter((tier) => starsWon(wonIn, tier.section) >= maxStars(tier.section))
 }

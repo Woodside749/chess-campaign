@@ -11,8 +11,8 @@
 //   'advanced', 'advanced-championship', 'expert', 'expert-championship', 'master',
 //   'master-championship', 'legend' or 'legend-championship').
 // - requires: (optional) what must be won first: a whole event, like
-//   { event: 'school-tournament' }, or a number of leagues, like { leagues: 4 } (Amateur)
-//   or { leagues: 4, section: 'advanced' } (or 'expert', 'master' or 'legend').
+//   { event: 'school-tournament' }, or a number of stars in a tier's leagues, like
+//   { stars: 10, section: 'advanced' } (see "Stars" below).
 // - comingSoon: (optional) a placeholder for an event that isn't built yet.
 // - variant: (optional) a chess variant, like 'fog' for Fog of War.
 //
@@ -237,7 +237,7 @@ export const EVENTS = [
     title: 'Amateur Super Tournament',
     place: 'Amateur Championship',
     description: 'A 16-player knockout with the best amateurs. Win four matches, and the final is against the champion, Viktor.',
-    requires: { leagues: 4 },
+    requires: { stars: 5, section: 'leagues' },
     timed: true,
     minutes: 10,
     championText: 'You are the Amateur Super Champion! The Advanced tier is open.',
@@ -429,7 +429,7 @@ export const EVENTS = [
     title: 'Master Title Championship',
     place: 'Advanced Championship',
     description: 'A 16-player knockout for the Master title. Win four matches; the final is against the Advanced champion, Amina.',
-    requires: { leagues: 4, section: 'advanced' },
+    requires: { stars: 10, section: 'advanced' },
     timed: true,
     minutes: 10,
     championText: 'You are a Chess Master! The Master title is yours.',
@@ -629,7 +629,7 @@ export const EVENTS = [
     title: 'International Master Title Championship',
     place: 'Expert Championship',
     description: 'A 16-player knockout for the International Master title. Win four matches; the final is against the Expert champion, András.',
-    requires: { leagues: 4, section: 'expert' },
+    requires: { stars: 15, section: 'expert' },
     timed: true,
     minutes: 10,
     championText: 'You are an International Master! The IM title is yours.',
@@ -827,7 +827,7 @@ export const EVENTS = [
     title: 'Grandmaster Title Championship',
     place: 'Master Championship',
     description: 'A 16-player knockout for the Grandmaster title, the highest title in chess. Win four matches; the final is against the Master champion, Thea.',
-    requires: { leagues: 4, section: 'master' },
+    requires: { stars: 15, section: 'master' },
     timed: true,
     minutes: 10,
     championText: 'You are a Grandmaster! The highest title in chess is yours.',
@@ -1014,7 +1014,7 @@ export const EVENTS = [
     title: 'World Championship',
     place: 'Legend Championship',
     description: 'The final tournament of the campaign: a 16-player knockout for the world title. Win four matches; the final is against the World Champion, Noor.',
-    requires: { leagues: 4, section: 'legend' },
+    requires: { stars: 15, section: 'legend' },
     timed: true,
     minutes: 10,
     championText: 'You are the World Champion! The crown is yours.',
@@ -1051,15 +1051,46 @@ export function isUnlocked(event, roundsWonIn) {
   const needs = event.requires
   if (!needs) return true
   const wonWhole = (other) => other.rounds && roundsWonIn(other.id) >= other.rounds.length
-  if (needs.leagues) return leaguesWon(roundsWonIn, needs.section) >= needs.leagues
+  if (needs.stars) return starsWon(roundsWonIn, needs.section) >= needs.stars
   return wonWhole(EVENTS.find((other) => other.id === needs.event))
 }
 
-// How many leagues in a section the player has won completely: the Amateur Leagues
-// ('leagues', the default), or the Advanced, Expert, Master or Legend Leagues ('advanced',
-// 'expert', 'master', 'legend').
-export function leaguesWon(roundsWonIn, section = 'leagues') {
-  return EVENTS.filter((event) => event.section === section && event.rounds && roundsWonIn(event.id) >= event.rounds.length).length
+// ---------- Stars ----------
+// Every league match (not championships) gives stars: the first round of a league 1, the
+// second 2 and the third 3, so 6 per league and 36 per tier. Stars count only in their own
+// tier, and they open that tier's championship (see `requires: { stars, section }`).
+
+// The sections whose events give stars: the Amateur Leagues ('leagues') and the leagues of
+// each later tier, with the name and achievement star colour of each.
+export const STAR_TIERS = [
+  { section: 'leagues', name: 'Amateur', color: '#9e9e9e' },
+  { section: 'advanced', name: 'Advanced', color: '#4caf50' },
+  { section: 'expert', name: 'Expert', color: '#4fc3f7' },
+  { section: 'master', name: 'Master', color: '#e53935' },
+  { section: 'legend', name: 'Legend', color: '#141414' },
+]
+
+export const givesStars = (event) => Boolean(event.rounds) && STAR_TIERS.some((tier) => tier.section === event.section)
+
+// The stars round `round` (0 = first) of an event is worth: 1, 2, 3...
+export const roundStars = (round) => round + 1
+
+// Stars won in one event, from the number of rounds won (rounds are won in order).
+export function eventStars(event, roundsWon) {
+  if (!givesStars(event)) return 0
+  const won = Math.min(roundsWon, event.rounds.length)
+  return (won * (won + 1)) / 2
+}
+
+// The most stars an event can give (6 for a three-round league).
+export const eventMaxStars = (event) => eventStars(event, event.rounds?.length ?? 0)
+
+// Stars won in a tier's leagues, and the most there are to win (36).
+export function starsWon(roundsWonIn, section) {
+  return EVENTS.filter((event) => event.section === section).reduce((sum, event) => sum + eventStars(event, roundsWonIn(event.id)), 0)
+}
+export function maxStars(section) {
+  return EVENTS.filter((event) => event.section === section).reduce((sum, event) => sum + eventMaxStars(event), 0)
 }
 
 // Whether the player has won every round of an event.

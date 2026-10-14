@@ -1575,3 +1575,39 @@ ul.fairy-legend li {
   margin: 8px 0 0;
   font-size: 15px;
 }
+
+/* Stars: the tier stars beside the player's avatar (two small rows, like the league grid),
+   the stars of each league round, and the stars beside the section headings. */
+.avatar-with-stars {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.star-badges {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  gap: 2px;
+  line-height: 0;
+}
+
+.round-stars {
+  margin-left: 6px;
+  font-size: 12px;
+  letter-spacing: 1px;
+  opacity: 0.35;
+}
+
+.round-stars.won {
+  opacity: 1;
+}
+
+.section-stars {
+  color: var(--text);
+  letter-spacing: normal;
+}
+
+.league-stars {
+  white-space: nowrap;
+}

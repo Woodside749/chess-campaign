@@ -1,12 +1,13 @@
 import { useLayoutEffect, useRef } from 'react'
 import { BOTS } from './bots.js'
-import { EVENTS, isUnlocked, leaguesWon } from './career.js'
+import { EVENTS, eventMaxStars, eventStars, givesStars, isUnlocked, maxStars, starsWon } from './career.js'
 import { roundsWon } from './progress.js'
 import { achievementsFor } from './achievements.js'
-import { PLAYER, playerTitle, titleById } from './player.js'
+import { PLAYER, playerTitle, tierStars, titleById } from './player.js'
 import Avatar from './Avatar.jsx'
 import Icon from './Icon.jsx'
 import TitleBadge from './TitleBadge.jsx'
+import StarBadges from './StarBadges.jsx'
 import Silhouette from './Silhouette.jsx'
 
 // Where the home screen is scrolled to, so coming back from a bracket or a game lands in
@@ -93,7 +94,10 @@ export default function Home({ progress, onOpenEvent, onOpenAchievements, onOpen
           style, and every event moves your campaign forward.
         </p>
         <div className="player-card">
-          <Avatar bot={PLAYER} size={48} />
+          <div className="avatar-with-stars">
+            <Avatar bot={PLAYER} size={48} />
+            <StarBadges stars={tierStars(progress)} />
+          </div>
           <div className="player-card-info">
             <div className="player-card-name">
               <TitleBadge title={title} /> You
@@ -126,6 +130,7 @@ export default function Home({ progress, onOpenEvent, onOpenAchievements, onOpen
       <section className="stage" aria-labelledby="leagues-title">
         <h2 id="leagues-title" className="section-title">
           Amateur Leagues
+          {leaguesOpen && <SectionStars section="leagues" wonIn={wonIn} />}
           {!leaguesOpen && <span className="section-lock"> · 🔒 Win the School Tournament to unlock</span>}
         </h2>
         <div className="league-grid">
@@ -160,6 +165,7 @@ export default function Home({ progress, onOpenEvent, onOpenAchievements, onOpen
       <section className="stage" aria-labelledby="advanced-title">
         <h2 id="advanced-title" className="section-title">
           Advanced Leagues
+          {advancedOpen && <SectionStars section="advanced" wonIn={wonIn} />}
           {!advancedOpen && <span className="section-lock"> · 🔒 Win the Amateur Super Tournament to unlock</span>}
         </h2>
         <div className="league-grid">
@@ -190,6 +196,7 @@ export default function Home({ progress, onOpenEvent, onOpenAchievements, onOpen
       <section className="stage" aria-labelledby="expert-title">
         <h2 id="expert-title" className="section-title">
           Expert Leagues
+          {expertOpen && <SectionStars section="expert" wonIn={wonIn} />}
           {!expertOpen && <span className="section-lock"> · 🔒 Win the Master Title Championship to unlock</span>}
         </h2>
         <div className="league-grid">
@@ -220,6 +227,7 @@ export default function Home({ progress, onOpenEvent, onOpenAchievements, onOpen
       <section className="stage" aria-labelledby="master-title">
         <h2 id="master-title" className="section-title">
           Master Leagues
+          {masterOpen && <SectionStars section="master" wonIn={wonIn} />}
           {!masterOpen && <span className="section-lock"> · 🔒 Win the International Master Title Championship to unlock</span>}
         </h2>
         <div className="league-grid">
@@ -250,6 +258,7 @@ export default function Home({ progress, onOpenEvent, onOpenAchievements, onOpen
       <section className="stage" aria-labelledby="legend-title">
         <h2 id="legend-title" className="section-title">
           Legend Leagues
+          {legendOpen && <SectionStars section="legend" wonIn={wonIn} />}
           {!legendOpen && <span className="section-lock"> · 🔒 Win the Grandmaster Title Championship to unlock</span>}
         </h2>
         <div className="league-grid">
@@ -282,9 +291,18 @@ export default function Home({ progress, onOpenEvent, onOpenAchievements, onOpen
 
 // What a locked championship asks for, like "Win 4 Amateur Leagues to unlock (1 of 4 won)".
 function lockText(event, wonIn) {
-  const { leagues, section } = event.requires
+  const { stars, section } = event.requires
   const name = { advanced: 'Advanced', expert: 'Expert', master: 'Master', legend: 'Legend' }[section] ?? 'Amateur'
-  return `🔒 Win ${leagues} ${name} Leagues to unlock (${leaguesWon(wonIn, section)} of ${leagues} won)`
+  return `🔒 Win ${stars} ⭐ in the ${name} Leagues to unlock (${Math.min(starsWon(wonIn, section), stars)} of ${stars})`
+}
+
+// The stars won in a tier's leagues, shown next to its heading, like "⭐ 12/36".
+function SectionStars({ section, wonIn }) {
+  return (
+    <span className="section-stars">
+      {' · '}⭐ {starsWon(wonIn, section)}/{maxStars(section)}
+    </span>
+  )
 }
 
 // A big card for the Chess School events and the championship. `lockedText`, if given,
@@ -322,7 +340,7 @@ function LeagueCard({ event, locked, won, onOpen }) {
       <div className="league-footer">
         {playable ? (
           <>
-            {event.rounds ? <TournamentProgress event={event} won={won} /> : <span />}
+            {givesStars(event) ? <LeagueStars event={event} won={won} /> : event.rounds ? <TournamentProgress event={event} won={won} /> : <span />}
             <button className="event-play" onClick={onOpen}>
               Open
             </button>
@@ -364,6 +382,17 @@ function TournamentSummary({ event, won }) {
         )}
       </div>
       <TournamentProgress event={event} won={won} />
+    </div>
+  )
+}
+
+// A league card's stars, like "⭐ 3/6" (with a trophy once the league is won).
+function LeagueStars({ event, won }) {
+  const max = eventMaxStars(event)
+  const stars = eventStars(event, won)
+  return (
+    <div className="bot-bio league-stars">
+      {stars >= max && '🏆 '}⭐ {stars}/{max}
     </div>
   )
 }

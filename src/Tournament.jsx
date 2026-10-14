@@ -3,6 +3,7 @@ import { titleById } from './player.js'
 import Avatar from './Avatar.jsx'
 import TitleBadge from './TitleBadge.jsx'
 import Bracket from './Bracket.jsx'
+import RoundStars from './RoundStars.jsx'
 import Silhouette from './Silhouette.jsx'
 import { FAIRY_VARIANTS } from './fairy/variants.js'
 
@@ -35,6 +36,7 @@ export default function Tournament({ event, roundsWon, playerTitle, onPlayRound,
               <li key={round.name} className={`round-item${locked ? ' locked' : ''}`}>
                 <div className="round-name">
                   {round.name}
+                  <RoundStars event={event} round={i} won={won} />
                   {won && <span className="round-won"> ✓ Won</span>}
                 </div>
                 <div className="round-opponent">
