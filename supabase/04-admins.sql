@@ -5,6 +5,7 @@
 -- 01-profiles.sql and 03-profile-look.sql (username, avatar colour, country).
 alter table public.profiles add column is_admin boolean not null default false;
 
--- Tobias is an admin. (To add another admin later, run this line with their email.)
+-- To make someone an admin, put their account's email in place of admin@example.com
+-- and run these two lines. (Tobias is already an admin; his email is kept out of the code.)
 update public.profiles set is_admin = true
   where id = (select id from auth.users where email = 'admin@example.com');
