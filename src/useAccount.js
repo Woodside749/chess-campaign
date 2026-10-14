@@ -42,8 +42,14 @@ export function useAccount() {
   // Saves changes to the player's profile, like { avatar_color: '#d64545' }. Returns an
   // error message, or null when it worked.
   async function updateProfile(changes) {
-    const { error } = await supabase.from('profiles').upsert({ id: userId, ...changes })
+    // Change the profile row (every account gets one when it is created). Only an account
+    // from before profiles existed has none; then the row is added instead.
+    const { data: changed, error } = await supabase.from('profiles').update(changes).eq('id', userId).select('id')
     if (error) return error.message
+    if (changed.length === 0) {
+      const { error: insertError } = await supabase.from('profiles').insert({ id: userId, ...changes })
+      if (insertError) return insertError.message
+    }
     // The username is also kept with the login, so it shows straight away on every device.
     if (changes.username) {
       const { error: metaError } = await supabase.auth.updateUser({ data: { username: changes.username } })
