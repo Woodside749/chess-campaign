@@ -18,6 +18,10 @@ const SOUND_FILES = {
   // lowTime: '/sounds/low-time.mp3',
 }
 
+// Overall volume of all sounds, from 0 (silent) to 1 (full). Lower it to make every
+// sound quieter at once.
+const MASTER_VOLUME = 0.7
+
 const MUTE_KEY = 'chess-campaign-muted'
 
 let muted = (() => {
@@ -55,7 +59,9 @@ export function playSound(name) {
   if (muted) return
   try {
     if (SOUND_FILES[name]) {
-      new Audio(SOUND_FILES[name]).play().catch((error) => (status.error = String(error)))
+      const file = new Audio(SOUND_FILES[name])
+      file.volume = MASTER_VOLUME
+      file.play().catch((error) => (status.error = String(error)))
       return
     }
     SYNTHS[name]?.(audio())
@@ -78,8 +84,14 @@ export function moveSound(move) {
 // ---------- The made-in-code sounds ----------
 
 let context = null
+let master = null // every made-in-code sound goes through this, at MASTER_VOLUME
 function audio() {
-  context ??= new (window.AudioContext || window.webkitAudioContext)()
+  if (!context) {
+    context = new (window.AudioContext || window.webkitAudioContext)()
+    master = context.createGain()
+    master.gain.value = MASTER_VOLUME
+    master.connect(context.destination)
+  }
   // Safari pauses sound now and then: 'suspended' until a click, and 'interrupted' after
   // switching tabs or when another app plays sound. Wake it up from either.
   if (context.state !== 'running') context.resume().catch((error) => (status.error = String(error)))
@@ -128,7 +140,7 @@ function knock(ctx, { at = 0, pitch = 1400, thump = 160, volume = 0.5, length = 
   // (Connected one at a time: some Safari versions don't support chaining connect calls.)
   source.connect(filter)
   filter.connect(gain)
-  gain.connect(ctx.destination)
+  gain.connect(master)
   source.start(start)
   tone(ctx, { at, frequency: thump, volume: volume * 0.6, length: length * 1.2, type: 'sine' })
 }
@@ -143,7 +155,7 @@ function tone(ctx, { at = 0, frequency = 880, volume = 0.2, length = 0.15, type 
   gain.gain.setValueAtTime(volume, start)
   gain.gain.exponentialRampToValueAtTime(0.0001, start + length)
   osc.connect(gain)
-  gain.connect(ctx.destination)
+  gain.connect(master)
   osc.start(start)
   osc.stop(start + length + 0.02)
 }
