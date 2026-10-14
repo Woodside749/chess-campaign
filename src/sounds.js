@@ -74,6 +74,31 @@ function audio() {
   return context
 }
 
+// Safari only lets a page start sound *during* a click, tap or key press, and the game's
+// sounds play a moment later (after the move has been made). So on every click, tap or
+// key press we wake the sound system up, and the first time we also play a silent sound,
+// which is what unlocks it in Safari (on the Mac and on iPhones).
+let unlocked = false
+function unlockAudio() {
+  try {
+    const ctx = audio()
+    if (!unlocked) {
+      const silence = ctx.createBufferSource()
+      silence.buffer = ctx.createBuffer(1, 1, 22050)
+      silence.connect(ctx.destination)
+      silence.start(0)
+      unlocked = true
+    }
+  } catch {
+    // No sound support: nothing to unlock.
+  }
+}
+if (typeof window !== 'undefined') {
+  for (const type of ['pointerdown', 'touchstart', 'keydown']) {
+    window.addEventListener(type, unlockAudio, { capture: true, passive: true })
+  }
+}
+
 // A short knock: a burst of filtered noise plus a low thump, fading out fast.
 function knock(ctx, { at = 0, pitch = 1400, thump = 160, volume = 0.5, length = 0.08 } = {}) {
   const start = ctx.currentTime + at
