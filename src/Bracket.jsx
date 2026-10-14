@@ -104,7 +104,7 @@ function PlayerBox({ x, y, person, isYou, won, lost, trophy }) {
     )
   }
   const classes = ['bracket-box', isYou && 'you', won && 'won'].filter(Boolean).join(' ')
-  const portrait = portraitFor(person.id)
+  const portrait = portraitFor(person.id, person.color)
   return (
     <g opacity={lost ? 0.4 : 1}>
       <rect className={classes} x={x} y={top} width={BOX_W} height={BOX_H} rx={6} />

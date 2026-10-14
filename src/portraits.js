@@ -511,14 +511,40 @@ const LOOKS = {
 
 const SPECIAL = { robot, angel, demon }
 
+// Clothing colours to switch to when someone's clothes are too close to their background.
+const CLOTHES_COLORS = ['#26324a', '#f1ede4', '#2f5d45', '#7d2a36', '#d9a441', '#55595f', '#3a74b3', '#a9572f', '#5e4687', '#1e1e1e']
+
+// How different two colours look (0 = the same; about 440 = black against white).
+function colorDistance(a, b) {
+  const n = (hex) => parseInt(hex.slice(1), 16)
+  const [x, y] = [n(a), n(b)]
+  const dr = (x >> 16) - (y >> 16)
+  const dg = ((x >> 8) & 255) - ((y >> 8) & 255)
+  const db = (x & 255) - (y & 255)
+  return Math.sqrt(dr * dr + dg * dg + db * db)
+}
+
+// `color`, unless it is too close to the background: then one of CLOTHES_COLORS that stands
+// out against it (picked by the person's id, so different people get different colours).
+function standOut(color, background, id) {
+  if (!color || !background || colorDistance(color, background) >= 120) return color
+  const options = CLOTHES_COLORS.filter((option) => colorDistance(option, background) >= 130)
+  const seed = [...id].reduce((hash, letter) => (hash * 31 + letter.charCodeAt(0)) % 9973, 7)
+  return options[seed % options.length]
+}
+
 // The portrait for a bot, as an <svg>, or null if it has none (like the player).
-// People are shown a little closer up than they are drawn, so their faces fill the circle.
-export function portraitFor(id) {
+// `background` is the colour of the circle behind it: clothes (and headscarves) are never
+// drawn in a colour too close to it. People are shown a little closer up than they are
+// drawn, so their faces fill the circle.
+export function portraitFor(id, background) {
   let parts = null
   if (SPECIAL[id]) {
     parts = SPECIAL[id]()
   } else if (LOOKS[id]) {
-    const zoomed = person(LOOKS[id]).map((part, i) => cloneElement(part, { key: i }))
+    const look = LOOKS[id]
+    const contrasted = { ...look, shirt: standOut(look.shirt, background, id), scarf: standOut(look.scarf, background, id) }
+    const zoomed = person(contrasted).map((part, i) => cloneElement(part, { key: i }))
     parts = [h('g', { transform: 'translate(50 60) scale(1.2) translate(-50 -60)' }, ...zoomed)]
   }
   if (!parts) return null
