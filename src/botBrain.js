@@ -17,22 +17,33 @@ const MAX_EXTRA_BLUNDER = 0.3
 const randomBetween = (min, max) => min + Math.random() * (max - min)
 const pickRandom = (list) => list[Math.floor(Math.random() * list.length)]
 
+// After the opening, a bot never moves faster than this, even when short of time (like a
+// human, who needs a moment to see the board and move the piece). So a bot that lets its
+// clock run down can lose on time.
+const MIN_THINK_MS = 1000
+// About one move in ten, the bot thinks two to three times longer, like a human in a
+// tricky position. These long thinks are what make bots run short of time in fast games.
+const LONG_THINK_CHANCE = 0.1
+
 // How long the bot should take for its next move, in milliseconds.
-// `clockMs` is how long each side's clock started with.
-export function thinkTimeMs(game, bot, timeLeftMs, clockMs = STANDARD_CLOCK_MS) {
+// `clockMs` is how long each side's clock started with, `incrementMs` the time added
+// after every move.
+export function thinkTimeMs(game, bot, timeLeftMs, clockMs = STANDARD_CLOCK_MS, incrementMs = 0) {
   // Quick moves get quicker in fast games (but no less than a fifth as long).
   const pace = Math.min(1, Math.max(0.2, clockMs / STANDARD_CLOCK_MS))
-  const think = (() => {
-    // Only one legal move: play it almost straight away.
-    if (game.moves().length === 1) return randomBetween(300, 800) * pace
-    // The first few moves are quick, like a human playing a familiar opening.
-    if (game.history().length < 8) return randomBetween(600, 2000) * pace
-    // Otherwise a share of the remaining time, made random between 0.4x and 1.6x.
-    return (timeLeftMs / TIME_DIVISOR) * randomBetween(0.4, 1.6)
-  })()
-  // Fast players (speed below 1) move quicker, slow players take longer.
-  // Never use more than a third of the time that is left.
-  return Math.max(200, Math.min(think * bot.speed, timeLeftMs / 3))
+  // Only one legal move: play it almost straight away.
+  if (game.moves().length === 1) return randomBetween(300, 800) * pace
+  // The first few moves are quick, like a human playing a familiar opening.
+  if (game.history().length < 8) return randomBetween(600, 2000) * pace
+  // Otherwise a share of the remaining time plus the increment (as humans use it), made
+  // random between 0.4x and 1.6x. Fast players (speed below 1) move quicker, slow players
+  // take longer. A normal move never takes more than half the time that is left.
+  const think = (timeLeftMs / TIME_DIVISOR + incrementMs) * randomBetween(0.4, 1.6) * bot.speed
+  let ms = Math.min(think, timeLeftMs / 2)
+  // Now and then a long think, which isn't held back by the clock: a bot that is already
+  // very short of time can freeze and lose on time, like a human.
+  if (Math.random() < LONG_THINK_CHANCE) ms = think * randomBetween(2, 3)
+  return Math.max(MIN_THINK_MS, ms)
 }
 
 // 0 when relaxed, rising to 1 as the clock runs out. The pressure starts at a tenth of

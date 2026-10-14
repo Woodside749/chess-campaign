@@ -274,7 +274,7 @@ export default function Game({
 
     async function playBotMove() {
       const started = Date.now()
-      const thinkMs = thinkTimeMs(game, bot, botTimeLeft, clockMs)
+      const thinkMs = thinkTimeMs(game, bot, botTimeLeft, clockMs, incrementMs)
       let choice
       if (fog) {
         fogMemoryRef.current ??= createFogMemory(game, botColor)
