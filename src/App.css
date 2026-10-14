@@ -1822,30 +1822,16 @@ ul.fairy-legend li {
   }
 }
 
-/* ---------- The chess campaign's colours ---------- */
-/* A cream background with dark blue text, and blue cards with white text, in both light
-   and dark mode. (An earlier look was a dark background with a hint of blue: #161b21,
-   keeping the normal card colours.) Change the colours here to recolour the screen. */
+/* ---------- The chess campaign's background ---------- */
+/* The normal background with just a hint of blue, the campaign's colour. (Also tried: a
+   cream background with blue cards. To be figured out later.) */
 
 .home.campaign-theme {
-  --bg: #f6efdf;
-  --surface: #2f6fa8;
-  --text: #10293b;
-  --muted: #3d5a6e;
-  --border: #255d90;
-  background: var(--bg);
-  color: var(--text);
+  background: #eaf1f7;
 }
 
-/* Inside the blue cards the text is white. */
-.campaign-theme .event-card,
-.campaign-theme .league-card,
-.campaign-theme .player-card {
-  --text: #ffffff;
-  --muted: #d3e5f4;
-  color: var(--text);
-}
-
-.campaign-theme .event-place {
-  color: #bfe0ff;
+@media (prefers-color-scheme: dark) {
+  .home.campaign-theme {
+    background: #161b21;
+  }
 }
