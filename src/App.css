@@ -2104,3 +2104,117 @@ ul.fairy-legend li {
   width: 100%;
   accent-color: var(--accent);
 }
+
+/* ---------- Account (log in, sign up) ---------- */
+
+.menu-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.account-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 220px;
+  height: 44px;
+  padding: 0 14px;
+  overflow: hidden;
+  font: inherit;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.account-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.account-button:hover {
+  border-color: var(--accent);
+}
+
+.dialog.account {
+  width: min(380px, 100%);
+}
+
+.dialog.account h2 {
+  margin-bottom: 18px;
+  font-size: 24px;
+}
+
+.account-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.account-field input {
+  width: 100%;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 16px; /* 16px stops iPhones from zooming in on the field */
+  font-weight: 400;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.account-field input:focus {
+  outline: 2px solid var(--accent);
+  border-color: transparent;
+}
+
+.account-hint {
+  margin: -6px 0 14px;
+  font-size: 14px;
+  color: var(--muted);
+  text-align: left;
+}
+
+.account-message {
+  margin: 0 0 14px;
+  line-height: 1.45;
+  text-align: left;
+}
+
+.account-message.error {
+  color: #e05252;
+}
+
+.account-email {
+  margin: 0 0 18px;
+  overflow-wrap: anywhere;
+}
+
+.account-links {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 14px;
+}
+
+.account-links button {
+  padding: 4px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.account-links button:hover {
+  color: var(--text);
+  text-decoration: underline;
+}

@@ -16,6 +16,7 @@ import Achievements from './Achievements.jsx'
 import MainMenu from './MainMenu.jsx'
 import GameModes from './GameModes.jsx'
 import { playerTitle, tierStars } from './player.js'
+import { useAccount } from './useAccount.js'
 import './App.css'
 
 // The puzzle screen (with its puzzle collection) is only downloaded when first opened.
@@ -36,6 +37,7 @@ export default function App() {
   // What is picked in the game modes menu (kept here, so it is still there after a game).
   const [modesChoice, setModesChoice] = useState({ modeId: 'unlimited', color: 'w', setup: 'archchess', simulBots: [] })
   const [progress, setProgress] = useState(loadProgress)
+  const account = useAccount() // who is logged in (null when nobody)
 
   // A game from the developer menu: any bot, with clocks.
   function playBot(bot) {
@@ -189,7 +191,7 @@ export default function App() {
     )
   }
   if (screen === 'menu') {
-    return <MainMenu progress={progress} onOpenCampaign={() => setScreen('home')} onOpenGameModes={() => setScreen('modes')} />
+    return <MainMenu progress={progress} account={account} onOpenCampaign={() => setScreen('home')} onOpenGameModes={() => setScreen('modes')} />
   }
   if (screen === 'modes') {
     return (

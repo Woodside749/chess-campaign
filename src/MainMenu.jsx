@@ -2,11 +2,12 @@ import { STAR_TIERS, starsWon } from './career.js'
 import { playerTitle } from './player.js'
 import { roundsWon } from './progress.js'
 import SettingsButton from './Settings.jsx'
+import AccountButton from './Account.jsx'
 
 // The main menu, the first screen of the game: big tiles on the left (the chess campaign
 // and the game modes work so far, the rest are coming soon) and the global chat on the right
 // (coming soon: it needs accounts and a server).
-export default function MainMenu({ progress, onOpenCampaign, onOpenGameModes }) {
+export default function MainMenu({ progress, account, onOpenCampaign, onOpenGameModes }) {
   const wonIn = (eventId) => roundsWon(progress, eventId)
   const started = Object.keys(progress.tournaments).length > 0
   const stars = STAR_TIERS.reduce((sum, tier) => sum + starsWon(wonIn, tier.section), 0)
@@ -17,7 +18,10 @@ export default function MainMenu({ progress, onOpenCampaign, onOpenGameModes }) 
       <section className="menu-left">
         <div className="menu-title-row">
           <h1 className="menu-title">Chess Campaign</h1>
-          <SettingsButton />
+          <div className="menu-buttons">
+            <AccountButton account={account} />
+            <SettingsButton />
+          </div>
         </div>
         <div className="menu-grid">
           <MenuTile color="dark-green" size="small" icon="👥" title="Play with friends" soon />
