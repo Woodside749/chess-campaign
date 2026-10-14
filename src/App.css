@@ -1576,19 +1576,19 @@ ul.fairy-legend li {
   font-size: 15px;
 }
 
-/* Stars: the tier stars beside the player's avatar (two small rows, like the league grid),
-   the stars of each league round, and the stars beside the section headings. */
+/* Stars: the tier stars in one row below the player's avatar, the stars of each league
+   round, and the stars beside the section headings. */
 .avatar-with-stars {
   flex: none;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
 
 .star-badges {
-  display: grid;
-  grid-template-columns: repeat(3, auto);
-  gap: 2px;
+  display: flex;
+  gap: 1px;
   line-height: 0;
 }
 
