@@ -15,6 +15,7 @@ import { randomChess960Fen } from './fairy/chess960.js'
 import { ChaosGame } from './chaos/ChaosGame.js'
 import { rollPiece } from './chaos/diceRules.js'
 import Pocket from './Pocket.jsx'
+import { isMuted, moveSound, playSound, setMuted } from './sounds.js'
 import { chooseChaosMove } from './chaos/chaosBot.js'
 import ChaosPanel from './chaos/ChaosPanel.jsx'
 import { getEngine } from './engine.js'
@@ -224,8 +225,32 @@ export default function Game({
   useEffect(() => {
     if (!result || reportedRef.current) return
     reportedRef.current = true
+    playSound(result.outcome) // 'win', 'loss' or 'draw'
     onResult?.(result)
   }, [result, onResult])
+
+  // Sounds: a chime when a game starts, and a sound for every move (yours and the bot's).
+  const [muted, setMutedState] = useState(isMuted)
+  useEffect(() => playSound('start'), [game])
+  const soundedPlyRef = useRef(0)
+  useEffect(() => {
+    if (plyCount > soundedPlyRef.current) playSound(moveSound(history[plyCount - 1]))
+    soundedPlyRef.current = plyCount
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only a new move should make a sound
+  }, [plyCount])
+
+  // A warning sound, once per game, when your clock gets low: under a tenth of the
+  // starting time, but at least 10 seconds (10 s in bullet, 18 s in 3-minute blitz).
+  const lowTimeWarnedRef = useRef(false)
+  const lowTimeMs = Math.max(10_000, clockMs * 0.1)
+  const playerTimeLeft = timeLeft[playerColor]
+  useEffect(() => {
+    if (!timed || gameOver || lowTimeWarnedRef.current) return
+    if (playerTimeLeft > 0 && playerTimeLeft < lowTimeMs) {
+      lowTimeWarnedRef.current = true
+      playSound('lowTime')
+    }
+  }, [timed, gameOver, playerTimeLeft, lowTimeMs])
 
   // While a clock is running, update `now` 10 times a second so the clock ticks.
   useEffect(() => {
@@ -500,6 +525,7 @@ export default function Game({
     setAutoWon(false)
     setConfirming(null)
     reportedRef.current = false
+    lowTimeWarnedRef.current = false
     setLessonStep(0)
     setReplyPending(false)
     setLessonHint(null)
@@ -762,6 +788,17 @@ export default function Game({
         </button>
         <button className="resign" onClick={() => setConfirming('resign')} disabled={gameOver || inLesson}>
           Resign
+        </button>
+        <button
+          className="sound-toggle"
+          aria-label={muted ? 'Turn sound on' : 'Turn sound off'}
+          title={muted ? 'Turn sound on' : 'Turn sound off'}
+          onClick={() => {
+            setMuted(!muted)
+            setMutedState(!muted)
+          }}
+        >
+          {muted ? '🔇' : '🔊'}
         </button>
       </div>
 
