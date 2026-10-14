@@ -8,7 +8,7 @@ import { countryName, flagOf } from './countries.js'
 import { displayName } from './useAccount.js'
 
 // Looks like a bot to the Avatar component (a coloured circle with an initial).
-export const PLAYER = { id: 'you', name: 'You', color: '#6f8f4e', flag: '', country: '' }
+export const PLAYER = { id: 'you', name: 'You', color: '#6f8f4e', flag: '', country: '', admin: false }
 
 // How the player looks, from their account (or PLAYER when logged out).
 export function playerLook(account) {
@@ -20,12 +20,30 @@ export function playerLook(account) {
     color: profile?.avatar_color ?? PLAYER.color,
     flag: flagOf(profile?.country),
     country: countryName(profile?.country),
+    admin: Boolean(profile?.is_admin),
   }
 }
 
 // Every screen that shows the player reads their look from here (App provides it).
 export const PlayerContext = createContext(PLAYER)
 export const usePlayer = () => useContext(PlayerContext)
+
+// Whether to show the developer tools (the developer menu and the auto-win buttons): only
+// for admins (set in Supabase, see supabase/04-admins.sql). While developing on the Mac
+// (npm run dev), a test browser can also switch them on with
+// localStorage['chess-campaign-dev-tools'] = 'true'; the published game ignores that.
+export function useDevTools() {
+  const { admin } = usePlayer()
+  return admin || (import.meta.env.DEV && devToolsSwitch())
+}
+
+function devToolsSwitch() {
+  try {
+    return localStorage.getItem('chess-campaign-dev-tools') === 'true'
+  } catch {
+    return false
+  }
+}
 
 // Chess titles, like in real life (Master, International Master, Grandmaster), and on top
 // World Champion, which the Legend tier's World Championship will give. Shown as a small

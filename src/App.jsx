@@ -25,7 +25,7 @@ import Achievements from './Achievements.jsx'
 import MainMenu from './MainMenu.jsx'
 import GameModes from './GameModes.jsx'
 import Profile from './Profile.jsx'
-import { PlayerContext, playerLook, playerTitle, tierStars } from './player.js'
+import { PlayerContext, playerLook, playerTitle, tierStars, useDevTools } from './player.js'
 import { useAccount } from './useAccount.js'
 import './App.css'
 
@@ -59,6 +59,7 @@ function Screens({ account }) {
   const [modesChoice, setModesChoice] = useState({ modeId: 'unlimited', color: 'w', setup: 'archchess', simulBots: [] })
   const [progress, setProgress] = useState(loadProgress)
   const userId = account.user?.id ?? null
+  const devTools = useDevTools() // admins only: the developer menu
 
   // Saves progress in the browser, and to the account when logged in.
   function storeProgress(next) {
@@ -237,7 +238,7 @@ function Screens({ account }) {
       />
     )
   }
-  if (screen === 'dev') {
+  if (screen === 'dev' && devTools) {
     return (
       <Menu
         colorChoice={colorChoice}

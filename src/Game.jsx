@@ -28,7 +28,7 @@ import Avatar from './Avatar.jsx'
 import Icon from './Icon.jsx'
 import TitleBadge from './TitleBadge.jsx'
 import StarBadges from './StarBadges.jsx'
-import { titleById, usePlayer } from './player.js'
+import { titleById, useDevTools, usePlayer } from './player.js'
 import CapturedPieces from './CapturedPieces.jsx'
 import Clock from './Clock.jsx'
 import ConfirmDialog from './ConfirmDialog.jsx'
@@ -108,6 +108,7 @@ export default function Game({
   peeks = 0,
 }) {
   const player = usePlayer() // the player's name and avatar (from their account)
+  const devTools = useDevTools() // admins only: the auto-win buttons
   // chess.js holds the real game (rules, history), also in Fog of War, which only hides
   // squares. `fen` is a text snapshot of the position that we keep in React state, so
   // the screen re-draws after every move.
@@ -594,7 +595,7 @@ export default function Game({
           </p>
           <CapturedPieces color={playerColor} captured={captured[playerColor]} advantage={advantage(playerColor)} />
           {timed && <Clock ms={timeLeft[playerColor]} active={clockRunning && turn === playerColor} />}
-          {import.meta.env.DEV && !gameOver && (
+          {devTools && !gameOver && (
             <button className="simul-small-button dev" onClick={autoWin}>
               ⚡ Win
             </button>
@@ -799,8 +800,8 @@ export default function Game({
         <SettingsButton />
       </div>
 
-      {/* Only shown while developing (npm run dev), never in the published game. */}
-      {import.meta.env.DEV && (
+      {/* Only for admins. */}
+      {devTools && (
         <button className="dev-autowin" onClick={autoWin} disabled={gameOver}>
           ⚡ Auto-win (developer)
         </button>

@@ -3,7 +3,7 @@ import { BOTS } from './bots.js'
 import { EVENTS, eventMaxStars, eventStars, givesStars, isUnlocked, maxStars, starsWon } from './career.js'
 import { roundsWon } from './progress.js'
 import { achievementsFor } from './achievements.js'
-import { playerTitle, tierStars, titleById, usePlayer } from './player.js'
+import { playerTitle, tierStars, titleById, useDevTools, usePlayer } from './player.js'
 import Avatar from './Avatar.jsx'
 import Icon from './Icon.jsx'
 import TitleBadge from './TitleBadge.jsx'
@@ -58,6 +58,7 @@ export default function Home({ progress, onOpenEvent, onOpenAchievements, onBack
   const legendChampionship = EVENTS.filter((event) => event.section === 'legend-championship')
   const title = playerTitle(progress)
   const player = usePlayer()
+  const devTools = useDevTools() // admins only: the developer menu
   const achievements = achievementsFor(progress)
 
   // Go back to where the player was, and remember the spot when they leave.
@@ -112,8 +113,8 @@ export default function Home({ progress, onOpenEvent, onOpenAchievements, onBack
             🏆 {achievements.filter((a) => a.got).length}/{achievements.length}
           </button>
         </div>
-        {/* Only shown while developing (npm run dev), never in the published game. */}
-        {import.meta.env.DEV && (
+        {/* Only for admins. */}
+        {devTools && (
           <button className="dev-link" onClick={onOpenDevMenu}>
             Developer menu
           </button>

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Chess } from 'chess.js'
 import { Chessboard } from 'react-chessboard'
 import PUZZLES from './puzzles.json'
+import { useDevTools } from '../player.js'
 
 // How long to wait before the opponent's moves, so you can see them happen.
 const OPPONENT_DELAY_MS = 600
@@ -17,6 +18,7 @@ const toMove = (uci) => ({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion
 // starts with the opponent's move; then the player must find the best moves.
 // `trial` is { title, band, count, needed }. `onFinish(passed)` is called once at the end.
 export default function PuzzleTrial({ trial, onFinish, onExit }) {
+  const devTools = useDevTools() // admins only: the auto-solve button
   const [puzzles, setPuzzles] = useState(() => pickPuzzles(trial.band, trial.count))
   const [index, setIndex] = useState(0) // which puzzle we're on
   const [results, setResults] = useState([]) // true (solved) or false (missed) per puzzle
@@ -178,8 +180,8 @@ export default function PuzzleTrial({ trial, onFinish, onExit }) {
         <p className={`status puzzle-message ${status}`}>{message}</p>
       </div>
 
-      {/* Only shown while developing (npm run dev), never in the published game. */}
-      {import.meta.env.DEV && (status === 'yours' || status === 'opponent') && (
+      {/* Only for admins. */}
+      {devTools && (status === 'yours' || status === 'opponent') && (
         <button className="dev-autowin" onClick={() => finishPuzzle(true)}>
           ⚡ Auto-solve (developer)
         </button>
