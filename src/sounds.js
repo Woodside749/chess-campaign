@@ -45,30 +45,20 @@ export function setMuted(value) {
   }
 }
 
-// What the sound system is doing, for the developer-only sound check line in the game:
-// the last sound asked for, how many have played, and the last error (if any).
-const status = { last: null, played: 0, error: null }
-export function soundStatus() {
-  return { ...status, state: context ? context.state : 'not started', muted }
-}
-
 // Plays a sound by name: 'move', 'capture', 'check', 'castle', 'promote', 'start', 'win',
 // 'loss', 'draw' or 'lowTime'. Never throws: a sound that can't play is simply skipped.
 export function playSound(name) {
-  status.last = name
   if (muted) return
   try {
     if (SOUND_FILES[name]) {
       const file = new Audio(SOUND_FILES[name])
       file.volume = MASTER_VOLUME
-      file.play().catch((error) => (status.error = String(error)))
+      file.play().catch(() => {})
       return
     }
     SYNTHS[name]?.(audio())
-    status.played++
-  } catch (error) {
-    // No sound support (or not allowed yet): play on silently, but remember why.
-    status.error = String(error)
+  } catch {
+    // No sound support (or not allowed yet): play on silently.
   }
 }
 
@@ -94,7 +84,7 @@ function audio() {
   }
   // Safari pauses sound now and then: 'suspended' until a click, and 'interrupted' after
   // switching tabs or when another app plays sound. Wake it up from either.
-  if (context.state !== 'running') context.resume().catch((error) => (status.error = String(error)))
+  if (context.state !== 'running') context.resume().catch(() => {})
   return context
 }
 
@@ -113,8 +103,8 @@ function unlockAudio() {
       silence.start(0)
       unlocked = true
     }
-  } catch (error) {
-    status.error = String(error)
+  } catch {
+    // No sound support: nothing to unlock.
   }
 }
 if (typeof window !== 'undefined') {

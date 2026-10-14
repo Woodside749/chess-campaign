@@ -15,7 +15,7 @@ import { randomChess960Fen } from './fairy/chess960.js'
 import { ChaosGame } from './chaos/ChaosGame.js'
 import { rollPiece } from './chaos/diceRules.js'
 import Pocket from './Pocket.jsx'
-import { isMuted, moveSound, playSound, setMuted, soundStatus } from './sounds.js'
+import { isMuted, moveSound, playSound, setMuted } from './sounds.js'
 import { chooseChaosMove } from './chaos/chaosBot.js'
 import ChaosPanel from './chaos/ChaosPanel.jsx'
 import { getEngine } from './engine.js'
@@ -812,13 +812,9 @@ export default function Game({
 
       {/* Only shown while developing (npm run dev), never in the published game. */}
       {import.meta.env.DEV && (
-        <div className="dev-tools">
-          <button className="dev-autowin" onClick={autoWin} disabled={gameOver}>
-            ⚡ Auto-win (developer)
-          </button>
-          {/* What the sound system is doing (to find sound problems in Safari). */}
-          <SoundCheck tick={fen} />
-        </div>
+        <button className="dev-autowin" onClick={autoWin} disabled={gameOver}>
+          ⚡ Auto-win (developer)
+        </button>
       )}
 
       <MoveList
@@ -1006,23 +1002,4 @@ function duckStyles(game, pending) {
     styles[move.duckSquare] = { background: 'radial-gradient(circle, rgba(230, 160, 30, 0.75) 20%, transparent 22%)' }
   }
   return styles
-}
-
-// Developer-only line under the Auto-win button: the sound system's state, whether sound is
-// muted, the last sound and any error. `tick` makes it update after every move.
-function SoundCheck({ tick }) {
-  const [, setNow] = useState(0)
-  // Also refresh every second, since Safari can pause sound without a move being made.
-  useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 1000)
-    return () => clearInterval(timer)
-  }, [])
-  const s = soundStatus()
-  return (
-    <p className="sound-check" data-tick={tick ? 1 : 0}>
-      🔧 Sound: {s.state}
-      {s.muted && ' · MUTED'} · last: {s.last ?? '-'} · played {s.played}
-      {s.error && ` · error: ${s.error}`}
-    </p>
-  )
 }

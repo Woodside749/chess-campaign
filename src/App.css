@@ -487,8 +487,7 @@
   .game-screen > .review-nav {
     grid-area: nav;
   }
-  .game-screen > .dev-autowin,
-  .game-screen > .dev-tools {
+  .game-screen > .dev-autowin {
     grid-area: dev;
   }
   .game-screen > .moves {
@@ -1611,14 +1610,4 @@ ul.fairy-legend li {
 
 .league-stars {
   white-space: nowrap;
-}
-
-.sound-check {
-  margin: 6px 0 0;
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.dev-tools .dev-autowin {
-  width: 100%;
 }
