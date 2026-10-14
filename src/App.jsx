@@ -1,10 +1,19 @@
-import { lazy, Suspense, useState } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { BOTS } from './bots.js'
 import { EVENTS } from './career.js'
 import { LESSONS } from './lessons.js'
 import { loadFairy } from './fairy/loadFairy.js'
 import { isFairyVariant } from './fairy/variants.js'
-import { clearProgress, loadProgress, roundsWon, saveProgress, withModeWin, withRoundWon } from './progress.js'
+import {
+  clearProgress,
+  loadProgress,
+  mergeProgress,
+  roundsWon,
+  saveProgress,
+  withModeWin,
+  withRoundWon,
+} from './progress.js'
+import { loadCloudProgress, saveCloudProgress } from './cloudProgress.js'
 import Home from './Home.jsx'
 import Menu from './Menu.jsx'
 import Tournament from './Tournament.jsx'
@@ -38,6 +47,39 @@ export default function App() {
   const [modesChoice, setModesChoice] = useState({ modeId: 'unlimited', color: 'w', setup: 'archchess', simulBots: [] })
   const [progress, setProgress] = useState(loadProgress)
   const account = useAccount() // who is logged in (null when nobody)
+  const userId = account.user?.id ?? null
+
+  // Saves progress in the browser, and to the account when logged in.
+  function storeProgress(next) {
+    saveProgress(next)
+    if (userId) saveCloudProgress(userId, next)
+  }
+
+  // When a player logs in (or opens the page while logged in), the browser's progress and
+  // the account's are combined, so nothing won on either side is lost. When they log out,
+  // the browser forgets it (it is safe in the account), so the next person starts fresh.
+  const previousUserRef = useRef(null)
+  useEffect(() => {
+    const previous = previousUserRef.current
+    previousUserRef.current = userId
+    if (!userId) {
+      if (previous) setProgress(clearProgress())
+      return
+    }
+    let cancelled = false
+    loadCloudProgress(userId).then((cloud) => {
+      if (cancelled) return
+      setProgress((local) => {
+        const merged = mergeProgress(local, cloud)
+        saveProgress(merged)
+        saveCloudProgress(userId, merged)
+        return merged
+      })
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [userId])
 
   // A game from the developer menu: any bot, with clocks.
   function playBot(bot) {
@@ -81,9 +123,11 @@ export default function App() {
 
   // Saves that round `round` of a tournament or puzzle league was won.
   function saveRoundWon(event, round) {
-    const next = withRoundWon(progress, event.id, round)
-    setProgress(next)
-    saveProgress(next)
+    setProgress((current) => {
+      const next = withRoundWon(current, event.id, round)
+      storeProgress(next)
+      return next
+    })
   }
 
   // Called by the game when it ends. Winning a tournament round is saved.
@@ -97,7 +141,7 @@ export default function App() {
   function saveModeWin(modeId, botId) {
     setProgress((current) => {
       const next = withModeWin(current, modeId, botId)
-      saveProgress(next)
+      storeProgress(next)
       return next
     })
   }
@@ -186,7 +230,11 @@ export default function App() {
         onColorChoice={setColorChoice}
         onPlay={playBot}
         onBack={() => setScreen('home')}
-        onResetProgress={() => setProgress(clearProgress())}
+        onResetProgress={() => {
+          const empty = clearProgress()
+          if (userId) saveCloudProgress(userId, empty)
+          setProgress(empty)
+        }}
       />
     )
   }

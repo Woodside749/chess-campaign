@@ -1,5 +1,6 @@
 // The player's career progress, saved in the browser (localStorage), so it survives
-// closing the page. It only lives in this browser on this device for now.
+// closing the page. When the player is logged in, App also saves it to their account
+// (cloudProgress.js), and mergeProgress combines the two.
 //
 // Shape: { tournaments: { [eventId]: { roundsWon: 0 } },
 //          modeWins: { [gameModeId]: [botId, ...] } }   (bots beaten in the game modes menu)
@@ -55,6 +56,19 @@ export function withModeWin(progress, modeId, botId) {
   const wins = modeWins(progress, modeId)
   if (wins.has(botId)) return progress
   return { ...progress, modeWins: { ...progress.modeWins, [modeId]: [...wins, botId] } }
+}
+
+// Everything won in either `a` or `b` (for example the browser's progress and the
+// account's): the most rounds won in each tournament, and every trophy from both.
+export function mergeProgress(a, b) {
+  const merged = { tournaments: { ...a?.tournaments }, modeWins: { ...a?.modeWins } }
+  for (const [eventId, { roundsWon: won }] of Object.entries(b?.tournaments ?? {})) {
+    if (won > roundsWon(merged, eventId)) merged.tournaments[eventId] = { roundsWon: won }
+  }
+  for (const [modeId, bots] of Object.entries(b?.modeWins ?? {})) {
+    merged.modeWins[modeId] = [...new Set([...(merged.modeWins[modeId] ?? []), ...bots])]
+  }
+  return merged
 }
 
 // Clears all saved progress (used by the developer menu).
