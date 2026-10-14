@@ -26,6 +26,13 @@ export const ACHIEVEMENTS = [
     text: 'Win the Grandmaster Title Championship and earn the GM title, the highest title in chess.',
     earned: (wonIn) => wonEvent(wonIn, 'gm-championship'),
   },
+  {
+    id: 'world-champion',
+    icon: '🏆',
+    name: 'World Champion',
+    text: 'Win the World Championship and become the World Champion: the end of the career.',
+    earned: (wonIn) => wonEvent(wonIn, 'world-championship'),
+  },
 ]
 
 // Every achievement with `got: true` or false for this player.

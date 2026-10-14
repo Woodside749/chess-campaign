@@ -9,10 +9,10 @@
 // Every event also has:
 // - section: where it is shown on the home screen ('school', 'leagues', 'championship',
 //   'advanced', 'advanced-championship', 'expert', 'expert-championship', 'master',
-//   'master-championship' or 'legend').
+//   'master-championship', 'legend' or 'legend-championship').
 // - requires: (optional) what must be won first: a whole event, like
 //   { event: 'school-tournament' }, or a number of leagues, like { leagues: 4 } (Amateur)
-//   or { leagues: 4, section: 'advanced' } (or 'expert', or 'master').
+//   or { leagues: 4, section: 'advanced' } (or 'expert', 'master' or 'legend').
 // - comingSoon: (optional) a placeholder for an event that isn't built yet.
 // - variant: (optional) a chess variant, like 'fog' for Fog of War.
 //
@@ -1007,6 +1007,42 @@ export const EVENTS = [
       { title: 'Third simul', opponents: ['maria', 'dragan', 'thea'], needed: 2 },
     ],
   },
+  {
+    id: 'world-championship',
+    section: 'legend-championship',
+    type: 'tournament',
+    title: 'World Championship',
+    place: 'Legend Championship',
+    description: 'The final tournament of the career: a 16-player knockout for the world title. Win four matches; the final is against the World Champion, Noor.',
+    requires: { leagues: 4, section: 'legend' },
+    timed: true,
+    minutes: 10,
+    championText: 'You are the World Champion! The crown is yours.',
+    bracket: [
+      ['rohan', 'nurlan'],
+      ['valentina', 'putri'],
+      ['leon', 'you'],
+      ['selam', 'kalev'],
+      ['noor', 'santiago'],
+      ['baterdene', 'freyja'],
+      ['aziz', 'thea'],
+      ['dragan', 'maria'],
+    ],
+    rounds: [
+      { name: 'Round of 16', opponent: 'leon', color: 'w' },
+      { name: 'Quarter-final', opponent: 'selam', color: 'b' },
+      { name: 'Semi-final', opponent: 'rohan', color: 'w' },
+      { name: 'Final', opponent: 'noor', color: 'b' },
+    ],
+    ranking: ['noor', 'rohan', 'selam', 'leon', 'baterdene', 'valentina', 'aziz', 'thea', 'dragan', 'maria', 'freyja', 'nurlan', 'putri', 'kalev', 'santiago'],
+    // Visiting players who fill the 16 places. They only appear in the bracket.
+    classmates: {
+      nurlan: { id: 'nurlan', name: 'Nurlan Abenov', country: 'Kazakhstan', flag: '🇰🇿', color: '#3a8ab0' },
+      putri: { id: 'putri', name: 'Putri Santoso', country: 'Indonesia', flag: '🇮🇩', color: '#b04a4a' },
+      kalev: { id: 'kalev', name: 'Kalev Tamm', country: 'Estonia', flag: '🇪🇪', color: '#4a6a8a' },
+      santiago: { id: 'santiago', name: 'Santiago Rivas', country: 'Uruguay', flag: '🇺🇾', color: '#6a9ac0' },
+    },
+  },
 ]
 
 // Whether an event's requirement is met. `roundsWonIn(id)` tells how many rounds of an
@@ -1020,7 +1056,8 @@ export function isUnlocked(event, roundsWonIn) {
 }
 
 // How many leagues in a section the player has won completely: the Amateur Leagues
-// ('leagues', the default), the Advanced, Expert or Master Leagues ('advanced', 'expert', 'master').
+// ('leagues', the default), or the Advanced, Expert, Master or Legend Leagues ('advanced',
+// 'expert', 'master', 'legend').
 export function leaguesWon(roundsWonIn, section = 'leagues') {
   return EVENTS.filter((event) => event.section === section && event.rounds && roundsWonIn(event.id) >= event.rounds.length).length
 }
