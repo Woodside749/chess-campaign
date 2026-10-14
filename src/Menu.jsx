@@ -94,7 +94,7 @@ function ResetProgressButton({ onReset }) {
         setDone(true)
       }}
     >
-      {done ? 'Career progress reset ✓' : 'Reset career progress'}
+      {done ? 'Campaign progress reset ✓' : 'Reset campaign progress'}
     </button>
   )
 }

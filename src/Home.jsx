@@ -90,7 +90,7 @@ export default function Home({ progress, onOpenEvent, onOpenAchievements, onOpen
         <h1>Chess Campaign</h1>
         <p>
           Travel a world tour of chess clubs, tournaments and rivals. Every opponent has their own
-          style, and every event moves your career forward.
+          style, and every event moves your campaign forward.
         </p>
         <div className="player-card">
           <Avatar bot={PLAYER} size={48} />

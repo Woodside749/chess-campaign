@@ -30,7 +30,7 @@ export const ACHIEVEMENTS = [
     id: 'world-champion',
     icon: '🏆',
     name: 'World Champion',
-    text: 'Win the World Championship and become the World Champion: the end of the career.',
+    text: 'Win the World Championship and become the World Champion: the end of the campaign.',
     earned: (wonIn) => wonEvent(wonIn, 'world-championship'),
   },
 ]

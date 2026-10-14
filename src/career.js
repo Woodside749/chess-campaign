@@ -1013,7 +1013,7 @@ export const EVENTS = [
     type: 'tournament',
     title: 'World Championship',
     place: 'Legend Championship',
-    description: 'The final tournament of the career: a 16-player knockout for the world title. Win four matches; the final is against the World Champion, Noor.',
+    description: 'The final tournament of the campaign: a 16-player knockout for the world title. Win four matches; the final is against the World Champion, Noor.',
     requires: { leagues: 4, section: 'legend' },
     timed: true,
     minutes: 10,

@@ -1328,7 +1328,7 @@ export const BOTS = {
       botCaptures: ['At this level, every inaccuracy is punished.', 'That was the one mistake you could not afford.'],
       botChecks: ['Check. This is the Master tier.', 'Check. The champion does not wait.'],
       botWins: ['The title stays with me. Come back stronger.', 'Close, but not yet.'],
-      playerWins: ['Incredible. You are the champion now.', 'You beat me fairly. The top of the career is yours.'],
+      playerWins: ['Incredible. You are the champion now.', 'You beat me fairly. Only the Legends are above you now.'],
       draw: ['A draw with the champion. Very few can say that.', 'Equal today. That is a great result.'],
     },
   },
