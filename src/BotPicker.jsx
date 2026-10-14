@@ -34,7 +34,8 @@ export function ColorChoice({ value, onChange }) {
 
 // A list of bots to tap. `beaten` (optional) is a set of bot ids that get a 🏆, and
 // `action` the symbol at the end of each row (▶ to play, ＋ to add to a simul).
-export function BotList({ bots, onPick, beaten, action = '▶' }) {
+// `titles` false hides the chess titles (the game modes menu shows none).
+export function BotList({ bots, onPick, beaten, action = '▶', titles = true }) {
   return (
     <ul className="bot-list">
       {bots.map((bot) => (
@@ -43,7 +44,7 @@ export function BotList({ bots, onPick, beaten, action = '▶' }) {
             <Avatar bot={bot} size={56} />
             <div className="bot-card-text">
               <div className="opponent-name">
-                <TitleBadge title={titleById(bot.chessTitle)} /> {bot.name} <span className="rating">({shownRating(bot)})</span>
+                {titles && <TitleBadge title={titleById(bot.chessTitle)} />} {bot.name} <span className="rating">({shownRating(bot)})</span>
                 {beaten?.has(bot.id) && (
                   <span className="beaten" title="You have beaten this bot in this mode">
                     {' '}

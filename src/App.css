@@ -1890,13 +1890,6 @@ ul.fairy-legend li {
   gap: 4px;
 }
 
-/* A line between the time controls (top four) and the variants. */
-.mode-list li.first-variant {
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid var(--border);
-}
-
 .mode-item {
   width: 100%;
   display: flex;
@@ -1927,12 +1920,6 @@ ul.fairy-legend li {
   width: 22px;
   display: inline-grid;
   place-items: center;
-}
-
-.mode-wins {
-  margin-left: auto;
-  font-size: 13px;
-  white-space: nowrap;
 }
 
 .mode-detail h2 {
@@ -1980,6 +1967,7 @@ ul.fairy-legend li {
 
 /* The simul: three slots for the chosen bots, and the start button. */
 .simul-slots {
+  margin-bottom: 20px;
   display: flex;
   flex-wrap: wrap;
   align-items: center;

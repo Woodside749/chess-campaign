@@ -1,10 +1,13 @@
-import { BOT_GROUPS, BOTS, botsInGroup } from './bots.js'
+import { BOTS } from './bots.js'
 import { GAME_MODES, modeById } from './gameModes.js'
 import { FAIRY_VARIANTS } from './fairy/variants.js'
 import { modeWins } from './progress.js'
 import { BotList, ColorChoice } from './BotPicker.jsx'
 import Avatar from './Avatar.jsx'
 import Icon from './Icon.jsx'
+
+// Every bot, weakest first (the game modes menu lists them by rating, without groups).
+const BOTS_BY_RATING = Object.values(BOTS).sort((a, b) => a.rating - b.rating)
 
 // The game modes menu: every mode in a list on the left; on the right the chosen mode,
 // with the colour choice and every bot to play (a 🏆 for each bot beaten in this mode).
@@ -34,8 +37,8 @@ export default function GameModes({ progress, choice, onChoice, onPlay, onPlaySi
         </button>
         <h1>Game modes</h1>
         <ul className="mode-list">
-          {GAME_MODES.map((m, i) => (
-            <li key={m.id} className={i === 4 ? 'first-variant' : ''}>
+          {GAME_MODES.map((m) => (
+            <li key={m.id}>
               <button
                 className={m.id === mode.id ? 'mode-item selected' : 'mode-item'}
                 onClick={() => set({ modeId: m.id, simulBots: [] })}
@@ -44,11 +47,6 @@ export default function GameModes({ progress, choice, onChoice, onPlay, onPlaySi
                   <Icon icon={m.icon} />
                 </span>
                 {m.title}
-                {modeWins(progress, m.id).size > 0 && (
-                  <span className="mode-wins" title="Bots beaten in this mode">
-                    🏆 {modeWins(progress, m.id).size}
-                  </span>
-                )}
               </button>
             </li>
           ))}
@@ -83,12 +81,13 @@ export default function GameModes({ progress, choice, onChoice, onPlay, onPlaySi
           <ColorChoice value={choice.color} onChange={(color) => set({ color })} />
         )}
 
-        {BOT_GROUPS.map((group) => (
-          <section key={group.id}>
-            <h3 className="group-title">{group.title}</h3>
-            <BotList bots={botsInGroup(group.id)} onPick={pickBot} beaten={beaten} action={mode.simul ? '＋' : '▶'} />
-          </section>
-        ))}
+        <BotList
+          bots={BOTS_BY_RATING}
+          onPick={pickBot}
+          beaten={beaten}
+          action={mode.simul ? '＋' : '▶'}
+          titles={false}
+        />
       </section>
     </main>
   )
