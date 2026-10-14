@@ -20,7 +20,7 @@ const SOUND_FILES = {
 
 // Overall volume of all sounds, from 0 (silent) to 1 (full). Lower it to make every
 // sound quieter at once.
-const MASTER_VOLUME = 0.7
+const MASTER_VOLUME = 0.5
 
 const MUTE_KEY = 'chess-campaign-muted'
 
