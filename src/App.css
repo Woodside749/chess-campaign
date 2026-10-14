@@ -587,6 +587,15 @@
 
 .home-intro {
   flex: 0 0 360px;
+  /* As tall as a section on the road (its heading plus two league cards), so the
+     "Main menu" button lines up with the section headings and everything sits at the top. */
+  /* (A fixed height: if the text wraps onto an extra line, it just reaches a little lower.) */
+  height: calc(17px * 1.2 + 12px + 2 * var(--league-card-height) + var(--league-gap));
+}
+
+/* The button's own padding would push its text below the section headings. */
+.home-intro .back {
+  margin-top: -6px;
 }
 
 .home-intro h1 {
@@ -805,6 +814,7 @@
 
   .home-intro {
     flex: none;
+    height: auto;
   }
 
   .home-intro h1 {
