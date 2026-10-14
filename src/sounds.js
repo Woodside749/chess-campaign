@@ -70,7 +70,9 @@ export function moveSound(move) {
 let context = null
 function audio() {
   context ??= new (window.AudioContext || window.webkitAudioContext)()
-  if (context.state === 'suspended') context.resume()
+  // Safari pauses sound now and then: 'suspended' until a click, and 'interrupted' after
+  // switching tabs or when another app plays sound. Wake it up from either.
+  if (context.state !== 'running') context.resume().catch(() => {})
   return context
 }
 
@@ -133,10 +135,15 @@ function tone(ctx, { at = 0, frequency = 880, volume = 0.2, length = 0.15, type 
 }
 
 const SYNTHS = {
-  move: (ctx) => knock(ctx),
+  // A wooden "tok" with a short pitched click in it, so it is always clearly audible.
+  move: (ctx) => {
+    knock(ctx, { volume: 0.8 })
+    tone(ctx, { frequency: 620, volume: 0.12, length: 0.06, type: 'sine' })
+  },
   capture: (ctx) => {
-    knock(ctx, { pitch: 2200, thump: 120, volume: 0.8, length: 0.1 })
-    knock(ctx, { at: 0.04, pitch: 1600, volume: 0.4 })
+    knock(ctx, { pitch: 2200, thump: 120, volume: 1, length: 0.1 })
+    knock(ctx, { at: 0.05, pitch: 1600, volume: 0.6 })
+    tone(ctx, { frequency: 420, volume: 0.14, length: 0.09, type: 'sine' })
   },
   check: (ctx) => {
     knock(ctx)

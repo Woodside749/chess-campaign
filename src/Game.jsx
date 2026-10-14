@@ -802,6 +802,8 @@ export default function Game({
           onClick={() => {
             setMuted(!muted)
             setMutedState(!muted)
+            // A test sound when turning sound on, so you know what to listen for.
+            if (muted) playSound('move')
           }}
         >
           {muted ? '🔇' : '🔊'}
