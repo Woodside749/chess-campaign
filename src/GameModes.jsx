@@ -13,10 +13,14 @@ const BOTS_BY_RATING = Object.values(BOTS).sort((a, b) => a.rating - b.rating)
 // with the colour choice and every bot to play (a 🏆 for each bot beaten in this mode).
 // Fairy Chess first asks which setup; the Simul asks for three bots (the same bot may be
 // picked more than once). `choice` holds what is picked, kept by App so it is still there
-// after a game: { modeId, color, setup, simulBots }.
-export default function GameModes({ progress, choice, onChoice, onPlay, onPlaySimul, onBack }) {
+// after a game: { modeId, color, setup, simulBots, names }.
+// With `local` it is the Play local menu instead: two people on one device, so the same
+// modes (without the Simul) but two name fields and a start button instead of the bots;
+// `onPlayLocal(mode)` starts the game.
+export default function GameModes({ progress, choice, onChoice, onPlay, onPlaySimul, onBack, local = false, onPlayLocal }) {
   const mode = modeById(choice.modeId)
   const beaten = modeWins(progress, mode.id)
+  const modes = local ? GAME_MODES.filter((m) => !m.simul) : GAME_MODES
   const set = (changes) => onChoice((current) => ({ ...current, ...changes }))
 
   function pickBot(bot) {
@@ -30,14 +34,14 @@ export default function GameModes({ progress, choice, onChoice, onPlay, onPlaySi
   }
 
   return (
-    <main className="game-modes">
+    <main className={local ? 'game-modes local-modes' : 'game-modes'}>
       <aside className="mode-list-panel">
         <button className="back" onClick={onBack}>
           ← Main menu
         </button>
-        <h1>Game modes</h1>
+        <h1>{local ? 'Play local' : 'Game modes'}</h1>
         <ul className="mode-list">
-          {GAME_MODES.map((m) => (
+          {modes.map((m) => (
             <li key={m.id}>
               <button
                 className={m.id === mode.id ? 'mode-item selected' : 'mode-item'}
@@ -75,21 +79,47 @@ export default function GameModes({ progress, choice, onChoice, onPlay, onPlaySi
           </div>
         )}
 
-        {mode.simul ? (
+        {local ? (
+          <LocalStart names={choice.names} onNames={(names) => set({ names })} onStart={() => onPlayLocal(mode)} />
+        ) : mode.simul ? (
           <SimulPicks bots={choice.simulBots} onRemove={(i) => set({ simulBots: choice.simulBots.filter((_, j) => j !== i) })} onStart={() => onPlaySimul(mode, choice.simulBots)} />
         ) : (
           <ColorChoice value={choice.color} onChange={(color) => set({ color })} />
         )}
 
-        <BotList
-          bots={BOTS_BY_RATING}
-          onPick={pickBot}
-          beaten={beaten}
-          action={mode.simul ? '＋' : '▶'}
-          titles={false}
-        />
+        {!local && (
+          <BotList
+            bots={BOTS_BY_RATING}
+            onPick={pickBot}
+            beaten={beaten}
+            action={mode.simul ? '＋' : '▶'}
+            titles={false}
+          />
+        )}
       </section>
     </main>
+  )
+}
+
+// Play local: the two players' names (empty means "White" and "Black") and the start button.
+function LocalStart({ names, onNames, onStart }) {
+  return (
+    <div className="local-start">
+      <p className="mode-text">Two players on this device, taking turns. The board turns to whoever is to move.</p>
+      <div className="local-names">
+        <label className="account-field">
+          ♔ White
+          <input value={names.w} placeholder="White" maxLength={20} onChange={(e) => onNames({ ...names, w: e.target.value })} />
+        </label>
+        <label className="account-field">
+          ♚ Black
+          <input value={names.b} placeholder="Black" maxLength={20} onChange={(e) => onNames({ ...names, b: e.target.value })} />
+        </label>
+      </div>
+      <button className="event-play" onClick={onStart}>
+        Start game
+      </button>
+    </div>
   )
 }
 

@@ -38,6 +38,9 @@ import PromotionPicker from './PromotionPicker.jsx'
 
 const START_TIME_MS = 10 * 60 * 1000 // 10 minutes each, unless the event says otherwise
 
+// Local games: the avatar colours of the two players.
+const LOCAL_COLORS = { w: '#a39e94', b: '#4a4844' }
+
 // Clock state: time left for each side when its turn began, and when the current
 // turn began. White's clock starts running as soon as the game starts.
 const freshClock = (minutes) => {
@@ -91,6 +94,9 @@ function pressClock(clock, color, incrementMs = 0) {
 // button, move list, review buttons or game-over pop-up (the result shows under the board).
 // `playerTitle` is the player's title (like Master), shown as a badge by their name, and
 // `playerStars` the tier stars they have earned, shown small next to their avatar.
+// `local` turns it into a game for two people on one device (Play local), with their
+// names like { w: 'Emma', b: 'Noah' } and no bot: the board turns to whoever is to move,
+// and in Fog of War a cover hides the board while the device is passed over.
 export default function Game({
   bot,
   startColor,
@@ -106,6 +112,7 @@ export default function Game({
   playerTitle = null,
   playerStars = [],
   peeks = 0,
+  local = null,
 }) {
   const player = usePlayer() // the player's name and avatar (from their account)
   const devTools = useDevTools() // admins only: the auto-win buttons
@@ -122,11 +129,15 @@ export default function Game({
   // In Fog of War, the bot's memory of where it last saw the player's pieces.
   const fogMemoryRef = useRef(null)
   const [fen, setFen] = useState(game.fen())
-  const playerColor = startColor
+  // Whose pieces can be moved (and are shown at the bottom): the player's, or in a local
+  // game whoever is to move.
+  const playerColor = local ? game.turn() : startColor
   const [selected, setSelected] = useState(null)
   const [clock, setClock] = useState(() => freshClock(minutes))
   const [now, setNow] = useState(() => Date.now())
-  const [speech, setSpeech] = useState(() => pickLine(bot, 'start'))
+  const [speech, setSpeech] = useState(() => (local ? null : pickLine(bot, 'start')))
+  // Local Fog of War: the board is covered after each move until the next player is ready.
+  const [covered, setCovered] = useState(false)
   const [dialogClosed, setDialogClosed] = useState(false)
   // Which position you are looking at when stepping back through the moves:
   // a number of moves from the start, or null for the live position.
@@ -176,12 +187,14 @@ export default function Game({
   const flagged = timeLeft[turn] <= 0
   const result = useMemo(
     () =>
-      boardResult(game, playerColor) ??
-      (autoWon ? { outcome: 'win', reason: 'Auto-win (developer button).' } : null) ??
-      (resigned ? { outcome: 'loss', reason: 'You resigned.' } : null) ??
-      (flagged ? timeoutResult(game, turn, playerColor) : null),
+      local
+        ? localResult(game, local, resigned, flagged)
+        : (boardResult(game, playerColor) ??
+          (autoWon ? { outcome: 'win', reason: 'Auto-win (developer button).' } : null) ??
+          (resigned ? { outcome: 'loss', reason: 'You resigned.' } : null) ??
+          (flagged ? timeoutResult(game, turn, playerColor) : null)),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `game` changes in place; `fen` tells us when
-    [game, fen, playerColor, resigned, autoWon, flagged, turn],
+    [game, fen, playerColor, resigned, autoWon, flagged, turn, local],
   )
   const gameOver = result !== null
   const clockRunning = timed && !gameOver
@@ -231,9 +244,10 @@ export default function Game({
   useEffect(() => {
     if (!result || reportedRef.current) return
     reportedRef.current = true
-    playSound(result.outcome) // 'win', 'loss' or 'draw'
+    // 'win', 'loss' or 'draw' (a local game always has a winner to cheer for, or a draw)
+    playSound(local ? (result.winner ? 'win' : 'draw') : result.outcome)
     onResult?.(result)
-  }, [result, onResult])
+  }, [result, onResult, local])
 
   // Sounds: a chime when a game starts, and a sound for every move (yours and the bot's).
   useEffect(() => playSound('start'), [game])
@@ -299,7 +313,7 @@ export default function Game({
   // Whenever the position changes and it's the bot's turn, let the bot move.
   // (Not during a lesson: then the coach's moves come from the script.)
   useEffect(() => {
-    if (gameOver || inLesson || game.turn() !== botColor) return
+    if (local || gameOver || inLesson || game.turn() !== botColor) return
     let cancelled = false // set if a new game starts, time runs out or you leave while the bot is thinking
 
     async function playBotMove() {
@@ -369,7 +383,7 @@ export default function Game({
     return () => {
       cancelled = true
     }
-  }, [fen, playerColor, botColor, botTimeLeft, clockMs, incrementMs, game, gameOver, inLesson, bot, fog, chaos, fairy, variant])
+  }, [fen, playerColor, botColor, botTimeLeft, clockMs, incrementMs, game, gameOver, inLesson, bot, fog, chaos, fairy, variant, local])
 
   // Tries to play the player's move. Returns true if it was legal.
   // A pawn reaching the last rank first opens the promotion picker, unless
@@ -414,8 +428,13 @@ export default function Game({
   // After the player's move: press the clock, let the bot react, redraw.
   function finishPlayerMove(move) {
     setClock((c) => pressClock(c, playerColor, incrementMs))
-    const line = reactionLine(bot, move, playerColor)
-    if (line) setSpeech(line)
+    if (local) {
+      // Local Fog of War: hide the board until the next player has the device.
+      if (fog) setCovered(true)
+    } else {
+      const line = reactionLine(bot, move, playerColor)
+      if (line) setSpeech(line)
+    }
     if (inLesson) {
       setLessonHint(null)
       setReplyPending(true)
@@ -535,12 +554,15 @@ export default function Game({
     setReplyPending(false)
     setLessonHint(null)
     setClock(freshClock(minutes))
-    setSpeech(pickLine(bot, 'start'))
+    setSpeech(local ? null : pickLine(bot, 'start'))
+    setCovered(false)
     setDialogClosed(false)
     setFen(fresh.fen())
   }
 
-  const botLine = result ? endLine(bot, result, game) : speech
+  const botLine = local ? null : result ? endLine(bot, result, game) : speech
+  // Local games: how each player looks (a plain avatar with their name), and the other side.
+  const look = (color) => ({ id: color, name: local[color], color: LOCAL_COLORS[color], flag: '', country: '' })
 
   // The green arrow showing the move the coach asks for.
   const lessonArrows =
@@ -625,13 +647,17 @@ export default function Game({
       </button>
 
       <header className="player-bar opponent-bar">
-        <Avatar bot={bot} />
+        <Avatar bot={local ? look(botColor) : bot} />
         <div className="player-info">
-          <div className="opponent-name">
-            <TitleBadge title={titleById(bot.chessTitle)} /> {bot.name} <span className="rating">({shownRating(bot)})</span>
-            {botThinking && <span className="thinking"> thinking…</span>}
-          </div>
-          {!inLesson && <div className="speech">“{botLine}”</div>}
+          {local ? (
+            <div className="opponent-name">{local[botColor]}</div>
+          ) : (
+            <div className="opponent-name">
+              <TitleBadge title={titleById(bot.chessTitle)} /> {bot.name} <span className="rating">({shownRating(bot)})</span>
+              {botThinking && <span className="thinking"> thinking…</span>}
+            </div>
+          )}
+          {!inLesson && !local && <div className="speech">“{botLine}”</div>}
           {fairy?.pockets ? (
             <Pocket pieces={game.pocket(botColor)} color={botColor} />
           ) : (
@@ -649,8 +675,8 @@ export default function Game({
           <p className="lesson-text">{fairy.intro}</p>
           {fairy.checkCounter && game.checksLeft() && (
             <p className="check-counter">
-              Checks given: <strong>You {3 - game.checksLeft()[playerColor]}/3</strong> · {bot.name.split(' ')[0]}{' '}
-              {3 - game.checksLeft()[botColor]}/3
+              Checks given: <strong>{local ? local[playerColor] : 'You'} {3 - game.checksLeft()[playerColor]}/3</strong> ·{' '}
+              {local ? local[botColor] : bot.name.split(' ')[0]} {3 - game.checksLeft()[botColor]}/3
             </p>
           )}
           {fairy.pieces && (
@@ -672,7 +698,7 @@ export default function Game({
         <ChaosPanel
           rule={game.currentRule()}
           yourTurn={turn === playerColor}
-          botName={bot.name.split(' ')[0]}
+          botName={local ? local[botColor] : bot.name.split(' ')[0]}
           hasPowers={game.moves({ verbose: true }).some((m) => m.special)}
           dice={variant === 'dice'}
         />
@@ -741,12 +767,12 @@ export default function Game({
 
       <div className="player-bar you-bar">
         <div className="avatar-with-stars">
-          <Avatar bot={player} />
-          <StarBadges stars={playerStars} />
+          <Avatar bot={local ? look(playerColor) : player} />
+          {!local && <StarBadges stars={playerStars} />}
         </div>
         <div className="player-info">
           <div className="opponent-name">
-            <TitleBadge title={playerTitle} /> {player.name}
+            {local ? local[playerColor] : <><TitleBadge title={playerTitle} /> {player.name}</>}
           </div>
           <p className="status">
             {viewing
@@ -761,7 +787,9 @@ export default function Game({
                     )
                   : playerInCheck
                   ? '⚠️ Your king is in check!'
-                  : statusText(game, result, playerColor, bot)}
+                  : local
+                    ? localStatusText(game, result, local)
+                    : statusText(game, result, playerColor, bot)}
           </p>
           {fairy?.pockets ? (
             <Pocket
@@ -800,8 +828,8 @@ export default function Game({
         <SettingsButton />
       </div>
 
-      {/* Only for admins. */}
-      {devTools && (
+      {/* Only for admins (and not in local games, which have no bot to beat). */}
+      {devTools && !local && (
         <button className="dev-autowin" onClick={autoWin} disabled={gameOver}>
           ⚡ Auto-win (developer)
         </button>
@@ -811,12 +839,13 @@ export default function Game({
         history={history}
         currentPly={shownPly}
         hiddenColor={fogActive ? botColor : null}
+        hideAll={local && fog && covered && !gameOver}
         onSelect={(ply) => setViewPly(ply >= plyCount ? null : ply)}
       />
 
       {confirming === 'resign' && (
         <ConfirmDialog
-          title="Resign this game?"
+          title={local ? `${local[turn]}, resign this game?` : 'Resign this game?'}
           confirmLabel="Resign"
           onConfirm={resign}
           onCancel={() => setConfirming(null)}
@@ -825,11 +854,26 @@ export default function Game({
       {confirming === 'leave' && (
         <ConfirmDialog
           title="Leave the game?"
-          text="Leaving counts as resigning."
-          confirmLabel="Resign and leave"
+          text={local ? 'The game ends here, without a winner.' : 'Leaving counts as resigning.'}
+          confirmLabel={local ? 'Leave' : 'Resign and leave'}
           onConfirm={onExit}
           onCancel={() => setConfirming(null)}
         />
+      )}
+
+      {/* Local Fog of War: the board stays hidden until the next player taps. */}
+      {local && fog && covered && !gameOver && (
+        <div className="overlay local-cover">
+          <div className="dialog" role="dialog" aria-modal="true">
+            <h2>Pass to {local[turn]}</h2>
+            <p className="reason">{local[botColor]} has moved. Only {local[turn]} should look at the board now.</p>
+            <div className="dialog-buttons">
+              <button className="primary" onClick={() => setCovered(false)} autoFocus>
+                I'm {local[turn]}: show my board
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {result && !dialogClosed && (
@@ -837,6 +881,7 @@ export default function Game({
           result={result}
           bot={bot}
           botLine={botLine}
+          heading={local ? (result.winner ? `${local[result.winner]} wins!` : 'Draw') : null}
           onTryAgain={newGame}
           onClose={() => setDialogClosed(true)}
           onMenu={onExit}
@@ -904,6 +949,34 @@ function squareStyles(game, selected, premove, isPlayersTurn, showTargets = true
   return styles
 }
 
+// Local games: for example "Emma to move", "Emma to move. Check!" or "Noah wins!".
+function localStatusText(game, result, names) {
+  if (result) return result.winner ? `${names[result.winner]} wins!` : 'Draw.'
+  const whose = `${names[game.turn()]} to move`
+  return game.inCheck() ? `${whose}. Check!` : whose
+}
+
+// The result of a local game, like the bot games' but with `winner` ('w', 'b', or null for
+// a draw), and the reason told from the winner's side ("Your king reached the hill!").
+// The side to move is the one who resigns or runs out of time.
+function localResult(game, names, resigned, flagged) {
+  const turn = game.turn()
+  const other = turn === 'w' ? 'b' : 'w'
+  const asWhite = boardResult(game, 'w')
+  if (asWhite) {
+    if (asWhite.outcome === 'draw') return { ...asWhite, winner: null }
+    const winner = asWhite.outcome === 'win' ? 'w' : 'b'
+    return { ...boardResult(game, winner), winner }
+  }
+  if (resigned) return { outcome: 'win', winner: other, reason: `${names[turn]} resigned.` }
+  if (flagged) {
+    const timeout = timeoutResult(game, turn, other)
+    if (timeout.outcome === 'draw') return { ...timeout, winner: null }
+    return { outcome: 'win', winner: other, reason: `${names[turn]}'s time ran out.` }
+  }
+  return null
+}
+
 function statusText(game, result, playerColor, bot) {
   if (result) return { win: 'You won!', loss: `${bot.name} won.`, draw: 'Draw.' }[result.outcome]
   const whose = game.turn() === playerColor ? 'Your move' : `${bot.name} to move`
@@ -913,8 +986,9 @@ function statusText(game, result, playerColor, bot) {
 // The moves so far. Each move can be clicked to view the position after it.
 // `currentPly` is the position being shown (number of moves from the start).
 // Moves by `hiddenColor` are shown as "?" (the opponent's moves in Fog of War).
-function MoveList({ history, currentPly, hiddenColor, onSelect }) {
-  if (history.length === 0) return null
+// `hideAll` hides the whole list (while a local Fog of War board is covered).
+function MoveList({ history, currentPly, hiddenColor, hideAll = false, onSelect }) {
+  if (history.length === 0 || hideAll) return null
   const rows = []
   for (let i = 0; i < history.length; i += 2) rows.push(i)
   const moveButton = (ply) =>

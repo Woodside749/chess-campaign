@@ -57,6 +57,8 @@ function Screens({ account }) {
   const [simulRun, setSimulRun] = useState(null)
   // What is picked in the game modes menu (kept here, so it is still there after a game).
   const [modesChoice, setModesChoice] = useState({ modeId: 'unlimited', color: 'w', setup: 'archchess', simulBots: [] })
+  // What is picked in the Play local menu: the mode, fairy setup and the two names.
+  const [localChoice, setLocalChoice] = useState({ modeId: 'unlimited', setup: 'archchess', simulBots: [], names: { w: '', b: '' } })
   const [progress, setProgress] = useState(loadProgress)
   const userId = account.user?.id ?? null
   const devTools = useDevTools() // admins only: the developer menu
@@ -180,6 +182,25 @@ function Screens({ account }) {
     })
   }
 
+  // A local game: two people on one device (Play local), in any mode but the Simul.
+  async function playLocal(mode) {
+    const variant = mode.setups ? localChoice.setup : (mode.variant ?? null)
+    if (isFairyVariant(variant)) await loadFairy()
+    const names = { w: localChoice.names.w.trim() || 'White', b: localChoice.names.b.trim() || 'Black' }
+    // Two players with the same name would be confusing ("Emma wins!"), so tell them apart.
+    if (names.w === names.b) names.b += ' (Black)'
+    setMatch({
+      bot: null,
+      color: 'w',
+      timed: mode.timed ?? true,
+      minutes: mode.minutes ?? 10,
+      increment: mode.increment,
+      variant,
+      lesson: null,
+      local: names,
+    })
+  }
+
   if (puzzleRun) {
     const { event, round } = puzzleRun
     return (
@@ -228,12 +249,21 @@ function Screens({ account }) {
         minutes={match.minutes}
         increment={match.increment}
         peeks={match.peeks}
+        local={match.local}
         variant={match.variant}
         lesson={match.lesson}
         playerTitle={playerTitle(progress)}
         playerStars={tierStars(progress)}
         onResult={handleResult}
-        exitLabel={match.tournament ? 'Back to bracket' : match.gameMode ? 'Back to game modes' : 'Back to menu'}
+        exitLabel={
+          match.tournament
+            ? 'Back to bracket'
+            : match.gameMode
+              ? 'Back to game modes'
+              : match.local
+                ? 'Back to play local'
+                : 'Back to menu'
+        }
         onExit={() => setMatch(null)}
       />
     )
@@ -261,11 +291,24 @@ function Screens({ account }) {
         onOpenCampaign={() => setScreen('home')}
         onOpenGameModes={() => setScreen('modes')}
         onOpenProfile={() => setScreen('profile')}
+        onOpenLocal={() => setScreen('local')}
       />
     )
   }
   if (screen === 'profile' && account.user) {
     return <Profile progress={progress} account={account} onBack={() => setScreen('menu')} />
+  }
+  if (screen === 'local') {
+    return (
+      <GameModes
+        local
+        progress={progress}
+        choice={localChoice}
+        onChoice={setLocalChoice}
+        onPlayLocal={playLocal}
+        onBack={() => setScreen('menu')}
+      />
+    )
   }
   if (screen === 'modes') {
     return (
