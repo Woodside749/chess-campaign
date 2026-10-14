@@ -19,7 +19,7 @@ import { chooseChaosMove } from './chaos/chaosBot.js'
 import ChaosPanel from './chaos/ChaosPanel.jsx'
 import { getEngine } from './engine.js'
 import { capturedPieces, materialScore, missingPieces } from './material.js'
-import { strengthForRating } from './botStrength.js'
+import { strengthForRating, withoutTraits } from './botStrength.js'
 import { premoveTargets } from './premove.js'
 import { boardResult, reactionTo, timeoutResult } from './rules.js'
 import Avatar from './Avatar.jsx'
@@ -288,10 +288,10 @@ export default function Game({
         const engine = { analyse: (fen, options) => getEngine().analyse(fen, { ...options, chess960: true }) }
         choice = await chooseBotMove(game, { ...bot, openings: null }, botTimeLeft, engine, clockMs)
       } else if (fairy) {
-        // Fairy chess and King of the Hill: Fairy-Stockfish thinks. Opening books are left
-        // out, and so are personality bonuses in variants with new pieces (they were built
-        // for normal pieces). If Fairy-Stockfish can't start in this browser, a simple
-        // backup brain plays instead.
+        // Fairy chess and the other engine variants: Fairy-Stockfish thinks. Opening books
+        // are left out (they are for normal chess), and personality traits that make no
+        // sense in the variant are dropped (see ignoreTraits). If Fairy-Stockfish can't
+        // start in this browser, a simple backup brain plays instead.
         const engine = await fairyEngineFor(fairy.rules ?? variant).catch((error) => {
           console.warn(`${error.message}; using the simple fairy bot instead.`)
           return null
@@ -301,7 +301,7 @@ export default function Game({
         const variantBot = {
           ...bot,
           openings: null,
-          ...(fairy.noPersonality ? { style: {} } : {}),
+          style: withoutTraits(bot.style, fairy.ignoreTraits),
           ...(fairy.strengthCurve ? { strength: strengthForRating(fairy.strengthCurve, bot.rating) } : {}),
         }
         choice = engine ? await chooseBotMove(game, variantBot, botTimeLeft, engine, clockMs) : simpleFairyMove(game, bot)

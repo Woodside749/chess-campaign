@@ -12,7 +12,7 @@
 //
 // Like calibrate.js, the games run without a browser, spread over all CPU cores. Bots
 // choose their moves exactly as in the game: Fairy-Stockfish suggests moves, and the bot
-// picks one by its strength settings (no personality and no opening book in fairy games).
+// picks one by its strength settings and personality (no opening book in variants).
 import { spawn } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
@@ -24,7 +24,7 @@ import { Engine } from '../src/engine.js'
 import { chooseBotMove } from '../src/botBrain.js'
 import { FairyGame } from '../src/fairy/FairyGame.js'
 import { FAIRY_VARIANTS } from '../src/fairy/variants.js'
-import { strengthForRating } from '../src/botStrength.js'
+import { strengthForRating, withoutTraits } from '../src/botStrength.js'
 import { fitRatings } from './elo.js'
 
 const args = process.argv.slice(2)
@@ -178,7 +178,10 @@ async function playGame(ffish, white, black, botEngine, anchorEngine) {
       if (player.startsWith('fsf')) {
         game.move(await anchorMove(anchorEngine, game.fen(), Number(player.slice(3))))
       } else {
-        const bot = { ...playerFor(player), openings: null, style: {} }
+        // As in the game: no opening book, and the bot's personality minus the traits the
+        // variant ignores. (Test bots like "level:0.5" have no personality.)
+        const base = playerFor(player)
+        const bot = { ...base, openings: null, style: withoutTraits(base.style, FAIRY_VARIANTS[VARIANT]?.ignoreTraits) }
         game.move(await chooseBotMove(game, bot, 600_000, engine))
       }
     }

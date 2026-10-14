@@ -2,18 +2,24 @@
 // Each trait is true or false. Bots give a bonus (or penalty) for traits in bots.js.
 import { Chess } from 'chess.js'
 import { PIECE_VALUES, isEndgame, materialScore } from './material.js'
+import { VariantPosition } from './variantBoard.js'
 
 const FILES = 'abcdefgh'
 const distance = (a, b) =>
   Math.max(Math.abs(FILES.indexOf(a[0]) - FILES.indexOf(b[0])), Math.abs(Number(a[1]) - Number(b[1])))
 
 // `game` is the position before the move, and `move` a verbose chess.js move.
+// It works for normal chess and for every variant: variant games (fairy pieces, the duck,
+// no king...) are read with our own variant board instead of chess.js.
 export function moveTraits(game, move) {
   const me = move.color
   const them = me === 'w' ? 'b' : 'w'
   const moveNumber = game.moveNumber()
-  const after = chessPosition(move.after)
+  const after = game.variantName ? new VariantPosition(move.after) : chessPosition(move.after)
+  // Some variants can have no enemy king (Antichess, Atomic, the Horde's pawns).
   const enemyKing = game.findPiece({ type: 'k', color: them })[0]
+  // Crazyhouse: a piece dropped from the pocket has no square it came from.
+  const fromBoard = !move.drop
   const myMaterial = materialScore(game) * (me === 'w' ? 1 : -1) // positive: I'm ahead
   const backRank = me === 'w' ? '1' : '8'
   const forward = me === 'w' ? 1 : -1
@@ -27,16 +33,18 @@ export function moveTraits(game, move) {
     tradeWhenAhead: Boolean(move.captured) && myMaterial >= 2 && PIECE_VALUES[move.captured] >= PIECE_VALUES[move.piece],
     castle: move.flags.includes('k') || move.flags.includes('q'),
     // Bringing a knight or bishop off the back rank in the opening.
-    develop: (move.piece === 'n' || move.piece === 'b') && move.from[1] === backRank && moveNumber <= 12,
+    develop: fromBoard && (move.piece === 'n' || move.piece === 'b') && move.from[1] === backRank && moveNumber <= 12,
     // Bringing the queen out beyond your own first two ranks in the opening.
     earlyQueen: move.piece === 'q' && moveNumber <= 10 && relativeRank(move.to, me) >= 3,
     // Moving a piece (not a pawn or the king) closer to the enemy king, landing within 3 squares of it.
+    // (A drop that lands within 3 squares of the king also counts.)
     towardKing:
+      Boolean(enemyKing) &&
       !'pk'.includes(move.piece) &&
       distance(move.to, enemyKing) <= 3 &&
-      distance(move.to, enemyKing) < distance(move.from, enemyKing),
+      (!fromBoard || distance(move.to, enemyKing) < distance(move.from, enemyKing)),
     // Moving back towards your own side.
-    retreat: move.piece !== 'p' && (Number(move.to[1]) - Number(move.from[1])) * forward < 0,
+    retreat: fromBoard && move.piece !== 'p' && (Number(move.to[1]) - Number(move.from[1])) * forward < 0,
     quiet: !move.captured && !move.san.includes('+'),
     // Pushing a pawn right up against an enemy pawn, which closes the position.
     lockPawns: move.piece === 'p' && !move.captured && pawnInFront(after, move.to, forward, them),
@@ -45,7 +53,7 @@ export function moveTraits(game, move) {
     // After the move, one of our pieces (not pawns) can be taken for free.
     hangs: leavesPieceHanging(after, me, them),
     // In an endgame, walking the king towards the middle of the board.
-    kingActivity: move.piece === 'k' && isEndgame(game) && distance(move.to, 'e4') < distance(move.from, 'e4'),
+    kingActivity: fromBoard && move.piece === 'k' && isEndgame(game) && distance(move.to, 'e4') < distance(move.from, 'e4'),
   }
 }
 

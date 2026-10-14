@@ -4,8 +4,8 @@
 // game shows to players.
 //
 // Per variant: `title`, `icon` and `intro` for the screen; `rules`, the ffish/engine
-// variant name if it differs from the key; `noPersonality` if the bots' personality code
-// can't read its positions (new pieces, exploded kings, pawns on the first rank); `chess960` for
+// variant name if it differs from the key; `ignoreTraits`, personality traits that make no
+// sense in the variant (the bots keep the rest of their personality); `chess960` for
 // Fischer Random; `pieces` for the fairy pieces in the game (letters from FAIRY_PIECES);
 // `hill` for squares to highlight; `winText` for a special way to win;
 // `pockets` for Crazyhouse, where captured pieces can be dropped back on the board;
@@ -43,7 +43,6 @@ export const FAIRY_VARIANTS = {
   archchess: {
     title: 'Archbishop chess',
     icon: '🧚',
-    noPersonality: true,
     strengthCurve: [[0.1, 512], [0.3, 863], [0.5, 1130], [0.7, 1511], [0.85, 1909], [1, 2223]],
     pieces: ['a'],
     intro: 'Both your knights have become Archbishops.',
@@ -51,7 +50,6 @@ export const FAIRY_VARIANTS = {
   chancellorchess: {
     title: 'Chancellor chess',
     icon: '🧚',
-    noPersonality: true,
     strengthCurve: [[0.1, 465], [0.3, 776], [0.5, 1081], [0.7, 1284], [0.85, 1843], [1, 2255]],
     pieces: ['c'],
     intro: 'Both your rooks have become Chancellors. They still castle like rooks.',
@@ -59,7 +57,6 @@ export const FAIRY_VARIANTS = {
   amazonchess: {
     title: 'Amazon & Centaurs',
     icon: '🧚',
-    noPersonality: true,
     strengthCurve: [[0.1, 458], [0.3, 757], [0.5, 1070], [0.7, 1475], [0.85, 1805], [1, 2212]],
     pieces: ['z', 'e'],
     intro: 'Your queen has become an Amazon, the strongest piece in the game, and your knights have become Centaurs.',
@@ -68,7 +65,6 @@ export const FAIRY_VARIANTS = {
   leapers: {
     title: 'Leapers',
     icon: '🧚',
-    noPersonality: true,
     strengthCurve: [[0.1, 623], [0.3, 841], [0.5, 1085], [0.7, 1510], [0.75, 1557], [0.8, 1774], [0.85, 1912], [0.9, 1996], [0.95, 2323]],
     pieces: ['i', 'l'],
     intro: `${FAIRY_INTRO} Knights have become Nightriders and bishops have become Camels.`,
@@ -76,7 +72,6 @@ export const FAIRY_VARIANTS = {
   eastern: {
     title: 'Eastern army',
     icon: '🧚',
-    noPersonality: true,
     strengthCurve: [[0.1, 513], [0.3, 779], [0.5, 1042], [0.7, 1592], [0.75, 1716], [0.8, 1897], [0.85, 1941], [0.9, 2106], [0.95, 2348]],
     pieces: ['o', 'h'],
     intro: `${FAIRY_INTRO} Rooks have become Cannons (from Chinese chess) and bishops Dragon Horses (from Japanese chess). Cannons still castle like rooks.`,
@@ -84,7 +79,6 @@ export const FAIRY_VARIANTS = {
   royalcourt: {
     title: 'Royal court',
     icon: '🧚',
-    noPersonality: true,
     strengthCurve: [[0.1, 526], [0.3, 817], [0.5, 1051], [0.7, 1473], [0.75, 1598], [0.8, 1724], [0.85, 1776], [0.9, 1812], [0.95, 2214], [1, 2278], [1.05, 2560], [1.1, 2650]],
     pieces: ['c', 'a'],
     intro: `${FAIRY_INTRO} Rooks have become Chancellors and bishops Archbishops: four big hybrid pieces each.`,
@@ -114,7 +108,6 @@ export const FAIRY_VARIANTS = {
   atomic: {
     title: 'Atomic chess',
     icon: '💥',
-    noPersonality: true,
     intro:
       'Every capture explodes: the capturing piece and every piece next to it (except pawns) are destroyed. Blow up the enemy king to win, and never capture next to your own king!',
     winText: {
@@ -125,7 +118,6 @@ export const FAIRY_VARIANTS = {
   horde: {
     title: 'Horde',
     icon: '🐜',
-    noPersonality: true,
     intro:
       'White is a horde of 36 pawns, Black a normal army. The army wins by capturing every last pawn; the horde wins by checkmate.',
     winText: {
@@ -136,8 +128,9 @@ export const FAIRY_VARIANTS = {
   // Expert tier variants (built into Fairy-Stockfish, so no entry in variants.ini).
   antichess: {
     title: 'Antichess',
+    // Losing pieces is the goal here and there is no check, so these traits make no sense.
+    ignoreTraits: ['check', 'threat', 'towardKing', 'hangs', 'tradeWhenAhead', 'evenTrade', 'castle', 'kingActivity'],
     icon: '🙃',
-    noPersonality: true,
     intro:
       'Lose all your pieces to win! If you can capture, you must. The king is an ordinary piece that can be captured, and there is no check. You also win if you have no legal moves left.',
     winText: {
@@ -149,7 +142,6 @@ export const FAIRY_VARIANTS = {
   crazyhouse: {
     title: 'Crazyhouse',
     icon: '🏠',
-    noPersonality: true,
     pockets: true,
     intro:
       'Pieces you capture switch sides and go into your pocket. Instead of moving, you may drop a pocket piece onto any empty square (pawns not on the first or last rank). Tap the piece in your pocket, then the square.',
@@ -159,7 +151,6 @@ export const FAIRY_VARIANTS = {
   duckchess: {
     title: 'Duck Chess',
     icon: 'rubber-duck',
-    noPersonality: true,
     duck: true,
     intro:
       'After every move, you also move the duck to any empty square. Nobody can pass through it or capture it. There is no check: capture the king to win!',
@@ -172,8 +163,9 @@ export const FAIRY_VARIANTS = {
   // board is always shown from White's side (`whiteView`).
   racingkings: {
     title: 'Racing Kings',
+    // Checks are illegal, there is no castling and no enemy king to attack.
+    ignoreTraits: ['check', 'castle', 'develop', 'towardKing', 'earlyQueen', 'kingActivity'],
     icon: '🏎️',
-    noPersonality: true,
     whiteView: true,
     intro:
       'Both kings race to the top row: the first king to reach the 8th rank wins. Nobody may give check. If White gets there first, Black still gets one move to reach it too, and then it is a draw.',

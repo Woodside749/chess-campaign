@@ -65,3 +65,9 @@ export function strengthForRating(curve, rating) {
   }
   return points.at(-1)[0]
 }
+
+// A bot's style without the personality traits a variant ignores (see `ignoreTraits` in
+// fairy/variants.js), like "likes giving check" in Antichess, where there is no check.
+export function withoutTraits(style = {}, ignored = []) {
+  return Object.fromEntries(Object.entries(style).filter(([trait]) => !ignored.includes(trait)))
+}
