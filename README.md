@@ -1,6 +1,6 @@
 # Chess Campaign
 
-A chess career game in the browser, to be published at chesscampaign.com. See `Chess Campaign Game Design.md` for the design.
+A chess campaign game in the browser, playable at [chesscampaign.com](https://chesscampaign.com).
 
 ## Run it
 

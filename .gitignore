@@ -26,3 +26,6 @@ dist-ssr
 # Copied from node_modules by scripts/copy-stockfish.js
 public/stockfish
 public/fairy-stockfish
+
+# The design doc stays on the Mac only (it is the private plan, not part of the public code)
+Chess Campaign Game Design.md
