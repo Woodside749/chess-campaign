@@ -3,7 +3,7 @@ import { BOTS } from './bots.js'
 import { EVENTS, eventMaxStars, eventStars, givesStars, isUnlocked, maxStars, starsWon } from './career.js'
 import { roundsWon } from './progress.js'
 import { achievementsFor } from './achievements.js'
-import { PLAYER, playerTitle, tierStars, titleById } from './player.js'
+import { playerTitle, tierStars, titleById, usePlayer } from './player.js'
 import Avatar from './Avatar.jsx'
 import Icon from './Icon.jsx'
 import TitleBadge from './TitleBadge.jsx'
@@ -57,6 +57,7 @@ export default function Home({ progress, onOpenEvent, onOpenAchievements, onBack
   const legendOpen = legend.some((event) => isUnlocked(event, wonIn))
   const legendChampionship = EVENTS.filter((event) => event.section === 'legend-championship')
   const title = playerTitle(progress)
+  const player = usePlayer()
   const achievements = achievementsFor(progress)
 
   // Go back to where the player was, and remember the spot when they leave.
@@ -98,12 +99,12 @@ export default function Home({ progress, onOpenEvent, onOpenAchievements, onBack
         </p>
         <div className="player-card">
           <div className="avatar-with-stars">
-            <Avatar bot={PLAYER} size={48} />
+            <Avatar bot={player} size={48} />
             <StarBadges stars={tierStars(progress)} />
           </div>
           <div className="player-card-info">
             <div className="player-card-name">
-              <TitleBadge title={title} /> You
+              <TitleBadge title={title} /> {player.name}
             </div>
             <div className="player-card-title">{title ? title.name : 'No title yet'}</div>
           </div>

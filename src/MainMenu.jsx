@@ -7,7 +7,7 @@ import AccountButton from './Account.jsx'
 // The main menu, the first screen of the game: big tiles on the left (the chess campaign
 // and the game modes work so far, the rest are coming soon) and the global chat on the right
 // (coming soon: it needs accounts and a server).
-export default function MainMenu({ progress, account, onOpenCampaign, onOpenGameModes }) {
+export default function MainMenu({ progress, account, onOpenCampaign, onOpenGameModes, onOpenProfile }) {
   const wonIn = (eventId) => roundsWon(progress, eventId)
   const started = Object.keys(progress.tournaments).length > 0
   const stars = STAR_TIERS.reduce((sum, tier) => sum + starsWon(wonIn, tier.section), 0)
@@ -19,7 +19,7 @@ export default function MainMenu({ progress, account, onOpenCampaign, onOpenGame
         <div className="menu-title-row">
           <h1 className="menu-title">Chess Campaign</h1>
           <div className="menu-buttons">
-            <AccountButton account={account} />
+            <AccountButton account={account} onOpenProfile={onOpenProfile} />
             <SettingsButton />
           </div>
         </div>

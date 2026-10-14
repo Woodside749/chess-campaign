@@ -1,5 +1,5 @@
 import { achievementsFor } from './achievements.js'
-import { PLAYER, playerTitle, tierStars } from './player.js'
+import { playerTitle, tierStars, usePlayer } from './player.js'
 import Avatar from './Avatar.jsx'
 import TitleBadge from './TitleBadge.jsx'
 import StarBadges from './StarBadges.jsx'
@@ -10,6 +10,7 @@ export default function Achievements({ progress, onBack }) {
   const achievements = achievementsFor(progress)
   const title = playerTitle(progress)
   const earned = achievements.filter((a) => a.got).length
+  const player = usePlayer()
   return (
     <main className="achievements-screen">
       <button className="back" onClick={onBack}>
@@ -17,12 +18,12 @@ export default function Achievements({ progress, onBack }) {
       </button>
       <header className="achievements-header">
         <div className="avatar-with-stars">
-          <Avatar bot={PLAYER} size={64} />
+          <Avatar bot={player} size={64} />
           <StarBadges stars={tierStars(progress)} size={18} />
         </div>
         <div>
           <h1>
-            <TitleBadge title={title} /> You
+            <TitleBadge title={title} /> {player.name}
           </h1>
           <p className="achievements-summary">
             {title ? `${title.name} · ` : 'No title yet · '}

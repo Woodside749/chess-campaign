@@ -28,7 +28,7 @@ import Avatar from './Avatar.jsx'
 import Icon from './Icon.jsx'
 import TitleBadge from './TitleBadge.jsx'
 import StarBadges from './StarBadges.jsx'
-import { PLAYER, titleById } from './player.js'
+import { titleById, usePlayer } from './player.js'
 import CapturedPieces from './CapturedPieces.jsx'
 import Clock from './Clock.jsx'
 import ConfirmDialog from './ConfirmDialog.jsx'
@@ -107,6 +107,7 @@ export default function Game({
   playerStars = [],
   peeks = 0,
 }) {
+  const player = usePlayer() // the player's name and avatar (from their account)
   // chess.js holds the real game (rules, history), also in Fog of War, which only hides
   // squares. `fen` is a text snapshot of the position that we keep in React state, so
   // the screen re-draws after every move.
@@ -739,12 +740,12 @@ export default function Game({
 
       <div className="player-bar you-bar">
         <div className="avatar-with-stars">
-          <Avatar bot={PLAYER} />
+          <Avatar bot={player} />
           <StarBadges stars={playerStars} />
         </div>
         <div className="player-info">
           <div className="opponent-name">
-            <TitleBadge title={playerTitle} /> You
+            <TitleBadge title={playerTitle} /> {player.name}
           </div>
           <p className="status">
             {viewing

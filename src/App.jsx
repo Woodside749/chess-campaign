@@ -24,7 +24,8 @@ import Simul from './Simul.jsx'
 import Achievements from './Achievements.jsx'
 import MainMenu from './MainMenu.jsx'
 import GameModes from './GameModes.jsx'
-import { playerTitle, tierStars } from './player.js'
+import Profile from './Profile.jsx'
+import { PlayerContext, playerLook, playerTitle, tierStars } from './player.js'
 import { useAccount } from './useAccount.js'
 import './App.css'
 
@@ -35,6 +36,17 @@ const PuzzleTrial = lazy(() => import('./puzzles/PuzzleTrial.jsx'))
 // screen, the developer
 // menu (every bot), a tournament's bracket, a puzzle trial, a simul, or a game. It also keeps the career progress.
 export default function App() {
+  const account = useAccount() // who is logged in (null when nobody)
+  return (
+    // Every screen can show the player's name and avatar (usePlayer in player.js).
+    <PlayerContext.Provider value={playerLook(account)}>
+      <Screens account={account} />
+    </PlayerContext.Provider>
+  )
+}
+
+// Picks the screen to show (see App above).
+function Screens({ account }) {
   // 'menu' (the main menu), 'home' (the chess campaign), 'dev', 'achievements', or an event id
   const [screen, setScreen] = useState('menu')
   const [colorChoice, setColorChoice] = useState('w') // developer menu: 'w', 'b' or 'random'
@@ -46,7 +58,6 @@ export default function App() {
   // What is picked in the game modes menu (kept here, so it is still there after a game).
   const [modesChoice, setModesChoice] = useState({ modeId: 'unlimited', color: 'w', setup: 'archchess', simulBots: [] })
   const [progress, setProgress] = useState(loadProgress)
-  const account = useAccount() // who is logged in (null when nobody)
   const userId = account.user?.id ?? null
 
   // Saves progress in the browser, and to the account when logged in.
@@ -63,7 +74,10 @@ export default function App() {
     const previous = previousUserRef.current
     previousUserRef.current = userId
     if (!userId) {
-      if (previous) setProgress(clearProgress())
+      if (previous) {
+        setProgress(clearProgress())
+        setScreen((current) => (current === 'profile' ? 'menu' : current))
+      }
       return
     }
     let cancelled = false
@@ -239,7 +253,18 @@ export default function App() {
     )
   }
   if (screen === 'menu') {
-    return <MainMenu progress={progress} account={account} onOpenCampaign={() => setScreen('home')} onOpenGameModes={() => setScreen('modes')} />
+    return (
+      <MainMenu
+        progress={progress}
+        account={account}
+        onOpenCampaign={() => setScreen('home')}
+        onOpenGameModes={() => setScreen('modes')}
+        onOpenProfile={() => setScreen('profile')}
+      />
+    )
+  }
+  if (screen === 'profile' && account.user) {
+    return <Profile progress={progress} account={account} onBack={() => setScreen('menu')} />
   }
   if (screen === 'modes') {
     return (

@@ -1,11 +1,31 @@
 // The player: how they look in the game, and the title they have earned.
-// There are no accounts yet, so the player is simply "You", and the title comes from
-// the career progress saved in this browser.
+// Logged out, the player is simply "You"; logged in, they have their username, avatar
+// colour and flag from their profile. The title comes from the career progress.
+import { createContext, useContext } from 'react'
 import { STAR_TIERS, maxStars, starsWon, wonEvent } from './career.js'
 import { roundsWon } from './progress.js'
+import { countryName, flagOf } from './countries.js'
+import { displayName } from './useAccount.js'
 
 // Looks like a bot to the Avatar component (a coloured circle with an initial).
 export const PLAYER = { id: 'you', name: 'You', color: '#6f8f4e', flag: '', country: '' }
+
+// How the player looks, from their account (or PLAYER when logged out).
+export function playerLook(account) {
+  if (!account.user) return PLAYER
+  const { profile } = account
+  return {
+    ...PLAYER,
+    name: displayName(account),
+    color: profile?.avatar_color ?? PLAYER.color,
+    flag: flagOf(profile?.country),
+    country: countryName(profile?.country),
+  }
+}
+
+// Every screen that shows the player reads their look from here (App provides it).
+export const PlayerContext = createContext(PLAYER)
+export const usePlayer = () => useContext(PlayerContext)
 
 // Chess titles, like in real life (Master, International Master, Grandmaster), and on top
 // World Champion, which the Legend tier's World Championship will give. Shown as a small
