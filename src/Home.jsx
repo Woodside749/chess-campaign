@@ -138,10 +138,7 @@ export default function Home({ progress, onOpenEvent, onOpenAchievements, onOpen
         </div>
       </section>
 
-      <section className="stage" aria-labelledby="championship-title">
-        <h2 id="championship-title" className="section-title">
-          Amateur Championship
-        </h2>
+      <section className="stage championship-stage" aria-label="Amateur Championship">
         {championship.map((event) => (
           <EventCard
             key={event.id}
@@ -175,10 +172,7 @@ export default function Home({ progress, onOpenEvent, onOpenAchievements, onOpen
         </div>
       </section>
 
-      <section className="stage" aria-labelledby="advanced-championship-title">
-        <h2 id="advanced-championship-title" className="section-title">
-          Advanced Championship
-        </h2>
+      <section className="stage championship-stage" aria-label="Advanced Championship">
         {advancedChampionship.map((event) => (
           <EventCard
             key={event.id}
@@ -208,10 +202,7 @@ export default function Home({ progress, onOpenEvent, onOpenAchievements, onOpen
         </div>
       </section>
 
-      <section className="stage" aria-labelledby="expert-championship-title">
-        <h2 id="expert-championship-title" className="section-title">
-          Expert Championship
-        </h2>
+      <section className="stage championship-stage" aria-label="Expert Championship">
         {expertChampionship.map((event) => (
           <EventCard
             key={event.id}
@@ -241,10 +232,7 @@ export default function Home({ progress, onOpenEvent, onOpenAchievements, onOpen
         </div>
       </section>
 
-      <section className="stage" aria-labelledby="master-championship-title">
-        <h2 id="master-championship-title" className="section-title">
-          Master Championship
-        </h2>
+      <section className="stage championship-stage" aria-label="Master Championship">
         {masterChampionship.map((event) => (
           <EventCard
             key={event.id}
