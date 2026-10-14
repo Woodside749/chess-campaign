@@ -16,28 +16,25 @@
 // Near the top, runs against different anchors disagree by up to a few hundred points,
 // so points measured more than once use the average.
 //
-// Each fairy piece is drawn as its base piece (`looksLike`) with a badge in the corner:
-// a small knight for the knight hybrids, or an emoji (`badge`) for the others.
-// `value` is its worth in pawns, used for the material score.
+// How each fairy piece looks is drawn in fairyPieces.js (the knight hybrids are half
+// knight, half the other piece). `value` is its worth in pawns, used for the material score.
 
 export const FAIRY_PIECES = {
-  a: { name: 'Archbishop', looksLike: 'b', value: 7, moves: 'like a bishop and a knight' },
-  c: { name: 'Chancellor', looksLike: 'r', value: 8, moves: 'like a rook and a knight' },
-  z: { name: 'Amazon', looksLike: 'q', value: 12, moves: 'like a queen and a knight' },
-  e: { name: 'Centaur', looksLike: 'n', badge: '👑', value: 5, moves: 'like a king and a knight' },
-  l: { name: 'Camel', looksLike: 'n', badge: '🐪', value: 3, moves: 'with a long jump: three squares one way and one to the side' },
-  i: { name: 'Nightrider', looksLike: 'n', badge: '🌙', value: 5, moves: 'like a knight, but keeps jumping in the same direction' },
+  a: { name: 'Archbishop', value: 7, moves: 'like a bishop and a knight' },
+  c: { name: 'Chancellor', value: 8, moves: 'like a rook and a knight' },
+  z: { name: 'Amazon', value: 12, moves: 'like a queen and a knight' },
+  e: { name: 'Centaur', value: 5, moves: 'like a king and a knight' },
+  l: { name: 'Camel', value: 3, moves: 'with a long jump: three squares one way and one to the side' },
+  i: { name: 'Nightrider', value: 5, moves: 'like a knight, but keeps jumping in the same direction' },
   o: {
     name: 'Cannon',
-    looksLike: 'r',
-    badge: '💣',
     value: 4,
     moves: 'like a rook, but can only capture by hopping over exactly one piece',
   },
-  h: { name: 'Dragon Horse', looksLike: 'b', badge: '🐉', value: 7, moves: 'like a bishop, plus one step straight' },
+  h: { name: 'Dragon Horse', value: 7, moves: 'like a bishop, plus one step straight' },
 }
 
-const FAIRY_INTRO = 'Some of your pieces have become fairy pieces. The badge in the corner tells them apart.'
+const FAIRY_INTRO = 'Some of your pieces have become fairy pieces.'
 
 export const FAIRY_VARIANTS = {
   // Amateur Fairy Cup.
