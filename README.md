@@ -21,7 +21,7 @@ The puzzles in Puzzle Trials come from the [Lichess puzzle database](https://dat
 
 ## Hosting
 
-Fairy-Stockfish needs a "cross-origin isolated" page. The dev server sends the two headers for that (see `vite.config.js`); the hosting site must send them too:
+The game is hosted on Netlify, which builds it from GitHub on every push (settings in `netlify.toml`). Fairy-Stockfish needs a "cross-origin isolated" page. The dev server sends the two headers for that (see `vite.config.js`), and `netlify.toml` makes Netlify send them too:
 
 ```
 Cross-Origin-Opener-Policy: same-origin
