@@ -2921,6 +2921,14 @@ ul.fairy-legend li {
   text-overflow: ellipsis;
 }
 
+button.friend-strip-card {
+  cursor: pointer;
+}
+
+button.friend-strip-card:hover {
+  border-color: var(--accent);
+}
+
 .friend-strip-card.add {
   color: var(--muted);
   border-style: dashed;

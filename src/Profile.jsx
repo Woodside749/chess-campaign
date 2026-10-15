@@ -9,6 +9,7 @@ import { USERNAME_RULE, usernameProblem } from './usernames.js'
 import * as friendsApi from './friends.js'
 import Avatar from './Avatar.jsx'
 import CharacterCreator from './CharacterCreator.jsx'
+import PlayerActions from './PlayerActions.jsx'
 import TitleBadge from './TitleBadge.jsx'
 import StarBadges from './StarBadges.jsx'
 
@@ -178,10 +179,14 @@ function DeleteAccountButton() {
 }
 
 // The player's friends in a row that scrolls sideways: each friend's character with their
-// username below. The last card opens the Friends screen (search, requests), and shows how
-// many requests are waiting.
+// username below. Clicking a friend opens the same menu as on the Friends screen (invite,
+// remove, block, report). The last card opens the Friends screen (search, requests), and
+// shows how many requests are waiting.
 function FriendStrip({ myId, onOpenFriends, api }) {
   const [lists, setLists] = useState(null)
+  const [menuFor, setMenuFor] = useState(null) // { player, friendshipId }
+  const [notice, setNotice] = useState(null)
+  const [round, setRound] = useState(0) // bumped to load again after a change
 
   useEffect(() => {
     let cancelled = false
@@ -195,7 +200,7 @@ function FriendStrip({ myId, onOpenFriends, api }) {
       cancelled = true
       stop()
     }
-  }, [myId, api])
+  }, [myId, api, round])
 
   const requests = lists?.incoming.length ?? 0
   return (
@@ -203,9 +208,11 @@ function FriendStrip({ myId, onOpenFriends, api }) {
       <h2>Friends{lists ? ` (${lists.friends.length})` : ''}</h2>
       <ul className="friend-strip">
         {lists?.friends.map(({ id, player }) => (
-          <li key={id} className="friend-strip-card">
-            <Avatar bot={player} size={64} />
-            <span className="friend-strip-name">{player.name}</span>
+          <li key={id}>
+            <button className="friend-strip-card" onClick={() => setMenuFor({ player, friendshipId: id })}>
+              <Avatar bot={player} size={64} />
+              <span className="friend-strip-name">{player.name}</span>
+            </button>
           </li>
         ))}
         <li>
@@ -222,6 +229,21 @@ function FriendStrip({ myId, onOpenFriends, api }) {
           </button>
         </li>
       </ul>
+      {notice && <p className="account-message">{notice}</p>}
+      {menuFor && (
+        <PlayerActions
+          player={menuFor.player}
+          friendshipId={menuFor.friendshipId}
+          myId={myId}
+          api={api}
+          onDone={(message) => {
+            setMenuFor(null)
+            setNotice(message)
+            setRound((n) => n + 1)
+          }}
+          onClose={() => setMenuFor(null)}
+        />
+      )}
     </section>
   )
 }

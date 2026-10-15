@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 import * as friendsApi from './friends.js'
-import { REPORT_REASONS } from './friends.js'
 import Avatar from './Avatar.jsx'
-import ConfirmDialog from './ConfirmDialog.jsx'
+import PlayerActions from './PlayerActions.jsx'
 
 // The Friends screen (the "Play with friends" tile): find players by username and send
 // them a friend request, answer requests, see your friends with their character and
@@ -19,11 +18,8 @@ export default function Friends({ account, onBack, api = friendsApi }) {
   const [results, setResults] = useState(null) // players found, null before searching
   const [searchRound, setSearchRound] = useState(0) // bumped to search again (after a block)
   const [busy, setBusy] = useState(null) // the id of the player or friendship being changed
-  // Pop-ups: the ⋯ menu for a player, and the remove, block and report dialogs.
+  // The ⋯ menu for a player (remove, block, report; see PlayerActions).
   const [menuFor, setMenuFor] = useState(null) // { player, friendshipId? }
-  const [removing, setRemoving] = useState(null) // { id, player }
-  const [blocking, setBlocking] = useState(null) // player
-  const [reporting, setReporting] = useState(null) // player
 
   // Load the friendships and blocks, and the friendships again whenever one changes (live).
   useEffect(() => {
@@ -69,13 +65,13 @@ export default function Friends({ account, onBack, api = friendsApi }) {
     return error
   }
 
-  async function block(player) {
-    setBlocking(null)
-    const error = await change(player.id, () => api.blockPlayer(myId, player.id))
-    if (!error) {
-      setNotice(`${player.name} is blocked.`)
-      setSearchRound((n) => n + 1) // they disappear from the search results
-    }
+  // After something in the ⋯ menu (remove, block, report): reload, and search again (a
+  // blocked player disappears from the results).
+  async function afterAction(message) {
+    setMenuFor(null)
+    await change(null, async () => null)
+    setNotice(message)
+    setSearchRound((n) => n + 1)
   }
 
   if (!myId) {
@@ -223,64 +219,13 @@ export default function Friends({ account, onBack, api = friendsApi }) {
       )}
 
       {menuFor && (
-        <PlayerMenu
+        <PlayerActions
           player={menuFor.player}
-          isFriend={Boolean(menuFor.friendshipId)}
-          onRemove={() => {
-            setRemoving({ id: menuFor.friendshipId, player: menuFor.player })
-            setMenuFor(null)
-          }}
-          onBlock={() => {
-            setBlocking(menuFor.player)
-            setMenuFor(null)
-          }}
-          onReport={() => {
-            setReporting(menuFor.player)
-            setMenuFor(null)
-          }}
+          friendshipId={menuFor.friendshipId}
+          myId={myId}
+          api={api}
+          onDone={afterAction}
           onClose={() => setMenuFor(null)}
-        />
-      )}
-
-      {removing && (
-        <ConfirmDialog
-          title={`Remove ${removing.player.name}?`}
-          text="You won't be friends anymore. You can send a new request later."
-          confirmLabel="Remove friend"
-          cancelLabel="Keep friend"
-          onConfirm={() => {
-            const { id } = removing
-            setRemoving(null)
-            change(id, () => api.removeFriendship(id))
-          }}
-          onCancel={() => setRemoving(null)}
-        />
-      )}
-
-      {blocking && (
-        <ConfirmDialog
-          title={`Block ${blocking.name}?`}
-          text="You won't see each other in searches, you can't send each other friend requests, and you won't see their chat messages. If you're friends, that ends. You can unblock them later."
-          confirmLabel="Block"
-          cancelLabel="Cancel"
-          onConfirm={() => block(blocking)}
-          onCancel={() => setBlocking(null)}
-        />
-      )}
-
-      {reporting && (
-        <ReportDialog
-          player={reporting}
-          onSend={async (reason, details, alsoBlock) => {
-            const error = await api.reportPlayer(myId, reporting.id, reason, details)
-            if (error) return error
-            const player = reporting
-            setReporting(null)
-            if (alsoBlock) await block(player)
-            setNotice(`Thanks. Your report about ${player.name} has been sent${alsoBlock ? ', and they are blocked' : ''}.`)
-            return null
-          }}
-          onClose={() => setReporting(null)}
         />
       )}
     </main>
@@ -306,85 +251,6 @@ function FriendRow({ player, note, onMore, children }) {
         )}
       </div>
     </li>
-  )
-}
-
-// The ⋯ menu for a player.
-function PlayerMenu({ player, isFriend, onRemove, onBlock, onReport, onClose }) {
-  return (
-    <div className="overlay" onClick={onClose}>
-      <div className="dialog player-menu" role="dialog" aria-modal="true" aria-label={player.name} onClick={(e) => e.stopPropagation()}>
-        <Avatar bot={player} size={64} />
-        <h2>{player.name}</h2>
-        <div className="dialog-buttons">
-          {isFriend && (
-            <button className="secondary" onClick={onRemove}>
-              Remove friend
-            </button>
-          )}
-          <button className="secondary" onClick={onBlock}>
-            🚫 Block
-          </button>
-          <button className="secondary" onClick={onReport}>
-            🚩 Report
-          </button>
-          <button className="secondary" onClick={onClose} autoFocus>
-            Cancel
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// Reporting a player to the admins: a reason, a few optional words, and whether to block
-// them too. `onSend(reason, details, alsoBlock)` returns an error message, or null.
-function ReportDialog({ player, onSend, onClose }) {
-  const [reason, setReason] = useState(null)
-  const [details, setDetails] = useState('')
-  const [alsoBlock, setAlsoBlock] = useState(true)
-  const [busy, setBusy] = useState(false)
-  const [problem, setProblem] = useState(null)
-
-  async function send(e) {
-    e.preventDefault()
-    setBusy(true)
-    setProblem(await onSend(reason, details, alsoBlock))
-    setBusy(false)
-  }
-
-  return (
-    <div className="overlay" onClick={onClose}>
-      <form className="dialog account report-dialog" role="dialog" aria-modal="true" onSubmit={send} onClick={(e) => e.stopPropagation()}>
-        <h2>Report {player.name}</h2>
-        <p className="account-hint">What's wrong? The admins will look at it. {player.name} won't be told who reported them.</p>
-        <div className="report-reasons" role="radiogroup" aria-label="Reason">
-          {REPORT_REASONS.map(([value, label]) => (
-            <label key={value} className={reason === value ? 'report-reason selected' : 'report-reason'}>
-              <input type="radio" name="reason" value={value} checked={reason === value} onChange={() => setReason(value)} />
-              {label}
-            </label>
-          ))}
-        </div>
-        <label className="account-field">
-          More details (optional)
-          <textarea rows={3} maxLength={500} value={details} onChange={(e) => setDetails(e.target.value)} />
-        </label>
-        <label className="account-check">
-          <input type="checkbox" checked={alsoBlock} onChange={(e) => setAlsoBlock(e.target.checked)} />
-          <span>Also block {player.name}</span>
-        </label>
-        {problem && <p className="account-message error">{problem}</p>}
-        <div className="dialog-buttons">
-          <button className="primary" type="submit" disabled={!reason || busy}>
-            {busy ? 'Sending…' : 'Send report'}
-          </button>
-          <button className="secondary" type="button" onClick={onClose}>
-            Cancel
-          </button>
-        </div>
-      </form>
-    </div>
   )
 }
 
