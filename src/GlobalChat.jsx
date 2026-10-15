@@ -16,7 +16,7 @@ export default function GlobalChat({ account, chat = chatApi, friends = friendsA
   const [draft, setDraft] = useState('')
   const [problem, setProblem] = useState(null)
   const [sending, setSending] = useState(false)
-  const [menuFor, setMenuFor] = useState(null) // { player, text } for the player menu
+  const [menuFor, setMenuFor] = useState(null) // { player, text, relation } for the player menu
   const [notice, setNotice] = useState(null)
   const [round, setRound] = useState(0) // bumped to load the messages again
   const listRef = useRef(null)
@@ -68,6 +68,16 @@ export default function GlobalChat({ account, chat = chatApi, friends = friendsA
     }
   }
 
+  // Opens the player menu for a message's author, after checking whether we are friends
+  // (so it can offer Add friend, Accept or Remove friend).
+  async function openMenuFor(message) {
+    const { lists } = await friends.loadFriendships(myId)
+    const find = (list) => lists?.[list].find((entry) => entry.player.id === message.author.id)
+    const kind = ['friends', 'incoming', 'outgoing'].find(find)
+    const relation = kind ? { kind: kind === 'friends' ? 'friend' : kind, id: find(kind).id } : { kind: 'none' }
+    setMenuFor({ player: message.author, text: message.text, relation })
+  }
+
   async function remove(id) {
     const error = await chat.deleteMessage(id)
     if (error) setProblem(error)
@@ -88,7 +98,7 @@ export default function GlobalChat({ account, chat = chatApi, friends = friendsA
           {messages?.length === 0 && <li className="chat-empty">No messages in the last hour. Say hi!</li>}
           {messages?.map((message) => {
             const mine = message.author.id === myId
-            const openMenu = mine ? undefined : () => setMenuFor({ player: message.author, text: message.text })
+            const openMenu = mine ? undefined : () => openMenuFor(message)
             return (
               <li key={message.id} className={mine ? 'chat-message mine' : 'chat-message'}>
                 <button className="chat-avatar" onClick={openMenu} disabled={mine} aria-label={message.author.name}>
@@ -148,6 +158,7 @@ export default function GlobalChat({ account, chat = chatApi, friends = friendsA
       {menuFor && (
         <PlayerActions
           player={menuFor.player}
+          relation={menuFor.relation}
           myId={myId}
           api={friends}
           reportReason="chat"

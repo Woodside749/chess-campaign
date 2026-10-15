@@ -3,14 +3,28 @@ import { REPORT_REASONS } from './friends.js'
 import Avatar from './Avatar.jsx'
 import ConfirmDialog from './ConfirmDialog.jsx'
 
-// The menu for another player (the ⋯ button on the Friends screen, or a friend's card on
-// the profile page): Invite to game (coming later), Remove friend (for friends), Block and
-// Report, each with its own "are you sure?" or form.
-// `player` is the other player, `friendshipId` set if they are a friend, `api` friends.js.
+// The menu for another player (the ⋯ button on the Friends screen, a friend's card on the
+// profile page, or a name in the chat): Invite to game (coming later), the friend button
+// (Add friend, Request sent, Accept, or Remove friend), Block and Report, each with its own
+// "are you sure?" or form.
+// `player` is the other player and `api` friends.js. How we are connected is either
+// `friendshipId` (set if they are a friend) or `relation`, like { kind: 'incoming', id }
+// (kind: 'none', 'friend', 'incoming' or 'outgoing'; leave both out to show no friend button).
 // `onDone(message)` is called after a change (to reload and show the message), `onClose`
 // when the menu is closed without one. From the chat, `reportReason` and `reportDetails`
 // fill in the report form (the reason, and the message being reported).
-export default function PlayerActions({ player, friendshipId, myId, api, onDone, onClose, reportReason = null, reportDetails = '' }) {
+export default function PlayerActions({
+  player,
+  friendshipId,
+  relation,
+  myId,
+  api,
+  onDone,
+  onClose,
+  reportReason = null,
+  reportDetails = '',
+}) {
+  const link = relation ?? (friendshipId ? { kind: 'friend', id: friendshipId } : null)
   const [step, setStep] = useState('menu') // 'menu', 'remove', 'block' or 'report'
   const [problem, setProblem] = useState(null)
 
@@ -28,7 +42,7 @@ export default function PlayerActions({ player, friendshipId, myId, api, onDone,
         text="You won't be friends anymore. You can send a new request later."
         confirmLabel="Remove friend"
         cancelLabel="Keep friend"
-        onConfirm={() => act(() => api.removeFriendship(friendshipId), `${player.name} is no longer your friend.`)}
+        onConfirm={() => act(() => api.removeFriendship(link.id), `${player.name} is no longer your friend.`)}
         onCancel={onClose}
       />
     )
@@ -77,7 +91,22 @@ export default function PlayerActions({ player, friendshipId, myId, api, onDone,
           <button className="primary" disabled title="Coming soon: games between players">
             Invite to game
           </button>
-          {friendshipId && (
+          {link?.kind === 'none' && (
+            <button className="secondary" onClick={() => act(() => api.sendRequest(myId, player.id), `Friend request sent to ${player.name}.`)}>
+              Add friend
+            </button>
+          )}
+          {link?.kind === 'outgoing' && (
+            <button className="secondary" disabled>
+              Friend request sent
+            </button>
+          )}
+          {link?.kind === 'incoming' && (
+            <button className="secondary" onClick={() => act(() => api.acceptRequest(link.id), `You and ${player.name} are now friends.`)}>
+              Accept friend request
+            </button>
+          )}
+          {link?.kind === 'friend' && (
             <button className="secondary" onClick={() => setStep('remove')}>
               Remove friend
             </button>
