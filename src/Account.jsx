@@ -84,14 +84,25 @@ function AccountDialog({ account, onClose }) {
         setMessage({ text: problem, error: true })
         return
       }
-      const ok = await run(() =>
-        supabase.auth.signUp({
+      let signedUp
+      const ok = await run(async () => {
+        signedUp = await supabase.auth.signUp({
           email,
           password,
           options: { emailRedirectTo: back, data: { username, age_confirmed: oldEnough } },
-        }),
-      )
-      if (ok) setMessage({ text: `Almost done! We sent an email to ${email}. Open the link in it to confirm your account.` })
+        })
+        return signedUp
+      })
+      // For an email that already has an account, Supabase pretends it worked but sends no
+      // email (its answer then has no login methods). Say so, instead of waiting for nothing.
+      if (ok && signedUp.data.user?.identities?.length === 0) {
+        setMessage({
+          text: 'There is already an account with this email. Log in instead, or use "Forgot your password?" if you can\'t remember it.',
+          error: true,
+        })
+      } else if (ok) {
+        setMessage({ text: `Almost done! We sent an email to ${email}. Open the link in it to confirm your account.` })
+      }
     } else if (page === 'forgot') {
       const ok = await run(() => supabase.auth.resetPasswordForEmail(email, { redirectTo: back }))
       if (ok) setMessage({ text: `If ${email} has an account, we sent it a link to choose a new password.` })
