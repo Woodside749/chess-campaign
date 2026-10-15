@@ -3161,3 +3161,62 @@ button.friend-strip-card:hover {
 .report-dialog .account-hint {
   margin: -8px 0 14px;
 }
+
+/* The empty chat: what it's for, and a few ready-made first messages. */
+.chat-intro {
+  font-size: 14px;
+  text-align: left;
+}
+
+.chat-intro-title {
+  margin: 0 0 8px;
+  font-weight: 700;
+}
+
+.chat-intro li {
+  display: flex;
+  gap: 8px;
+}
+
+.chat-intro ul {
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.chat-intro-rules,
+.chat-login {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.chat-login {
+  margin-top: 4px;
+  text-align: left;
+}
+
+.chat-starters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.chat-starter {
+  padding: 6px 10px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.chat-starter:hover {
+  border-color: var(--accent);
+}

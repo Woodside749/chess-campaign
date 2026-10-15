@@ -5,6 +5,30 @@ import { usePlayer } from './player.js'
 import Avatar from './Avatar.jsx'
 import PlayerActions from './PlayerActions.jsx'
 
+// Ready-made first messages for an empty chat.
+const STARTERS = ['Anyone up for a blitz game?', 'Looking for friends to play with!', 'Who plays Duck Chess?']
+
+// What the chat is for, shown when it is empty (or for players who aren't logged in).
+function ChatIntro() {
+  return (
+    <div className="chat-intro">
+      <p className="chat-intro-title">Talk to other players here</p>
+      <ul>
+        <li>
+          <span aria-hidden="true">👥</span> Find friends to play with
+        </li>
+        <li>
+          <span aria-hidden="true">🎲</span> Find people who want to play the same game mode as you
+        </li>
+        <li>
+          <span aria-hidden="true">✉️</span> Agree on a game and invite each other (coming soon)
+        </li>
+      </ul>
+      <p className="chat-intro-rules">Messages disappear after an hour. No links, and be kind.</p>
+    </div>
+  )
+}
+
 // The global chat on the main menu: everyone who is logged in, live. Messages are short,
 // have no links and disappear after an hour (see chat.js). Clicking a player's name or
 // picture opens the player menu (block, report …); admins can delete any message.
@@ -90,12 +114,23 @@ export default function GlobalChat({ account, chat = chatApi, friends = friendsA
 
       {!myId ? (
         <div className="chat-messages empty">
-          <p className="chat-empty">Meet other players here: find friends, and agree on a game mode to play together.</p>
-          <p className="chat-empty">Log in (top right) to chat.</p>
+          <ChatIntro />
+          <p className="chat-login">Log in (top right) to chat.</p>
+        </div>
+      ) : messages?.length === 0 ? (
+        <div className="chat-messages empty">
+          <ChatIntro />
+          {/* Ready-made first messages: tapping one puts it in the message box. */}
+          <div className="chat-starters">
+            {STARTERS.map((starter) => (
+              <button key={starter} className="chat-starter" onClick={() => setDraft(starter)}>
+                {starter}
+              </button>
+            ))}
+          </div>
         </div>
       ) : (
         <ol className="chat-messages" ref={listRef}>
-          {messages?.length === 0 && <li className="chat-empty">No messages in the last hour. Say hi!</li>}
           {messages?.map((message) => {
             const mine = message.author.id === myId
             const openMenu = mine ? undefined : () => openMenuFor(message)
