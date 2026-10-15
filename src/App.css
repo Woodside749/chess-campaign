@@ -2741,3 +2741,155 @@ ul.fairy-legend li {
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+
+/* ---------- Friends ---------- */
+
+.friends-screen {
+  --accent: #3f8f45;
+  width: min(720px, 100%);
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+.friends-screen h1 {
+  margin: 12px 0 8px;
+  font-size: 30px;
+}
+
+.friends-section h2 {
+  margin: 24px 0 10px;
+  font-size: 15px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.friends-search {
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 11px 14px;
+  font: inherit;
+  font-size: 16px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.friends-search:focus {
+  outline: 2px solid var(--accent);
+  border-color: transparent;
+}
+
+.friends-empty {
+  margin: 0;
+  color: var(--muted);
+  list-style: none;
+}
+
+.friend-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.friend-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.friend-name {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.friend-name strong {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.friend-name span {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.friend-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+}
+
+.friend-button {
+  padding: 7px 12px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.friend-button.primary {
+  color: white;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.friend-button.subtle {
+  color: var(--muted);
+  border-color: transparent;
+}
+
+.friend-button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.friend-status {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.profile-friends-button {
+  margin: 0 0 16px;
+  padding: 9px 16px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.profile-friends-button:hover {
+  border-color: var(--accent);
+}
+
+/* Phones: the buttons go under the name. */
+@media (max-width: 500px) {
+  .friend-row {
+    flex-wrap: wrap;
+  }
+
+  .friend-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}

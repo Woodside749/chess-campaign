@@ -25,6 +25,7 @@ import Achievements from './Achievements.jsx'
 import MainMenu from './MainMenu.jsx'
 import GameModes from './GameModes.jsx'
 import Profile from './Profile.jsx'
+import Friends from './Friends.jsx'
 import { PlayerContext, playerLook, playerTitle, tierStars, useDevTools } from './player.js'
 import { useAccount } from './useAccount.js'
 import './App.css'
@@ -292,11 +293,17 @@ function Screens({ account }) {
         onOpenGameModes={() => setScreen('modes')}
         onOpenProfile={() => setScreen('profile')}
         onOpenLocal={() => setScreen('local')}
+        onOpenFriends={() => setScreen('friends')}
       />
     )
   }
   if (screen === 'profile' && account.user) {
-    return <Profile progress={progress} account={account} onBack={() => setScreen('menu')} />
+    return (
+      <Profile progress={progress} account={account} onBack={() => setScreen('menu')} onOpenFriends={() => setScreen('friends')} />
+    )
+  }
+  if (screen === 'friends') {
+    return <Friends account={account} onBack={() => setScreen('menu')} />
   }
   if (screen === 'local') {
     return (

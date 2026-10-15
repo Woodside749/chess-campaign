@@ -14,7 +14,7 @@ import StarBadges from './StarBadges.jsx'
 
 // The player's profile (only when logged in): how they look to others, their title and
 // stars, a few numbers, and the settings for their avatar, flag and username.
-export default function Profile({ progress, account, onBack }) {
+export default function Profile({ progress, account, onBack, onOpenFriends }) {
   const player = usePlayer()
   const { user, profile, updateProfile } = account
   const title = playerTitle(progress)
@@ -81,6 +81,10 @@ export default function Profile({ progress, account, onBack }) {
           {!profile?.avatar && <p className="profile-hint">Tap your picture to create your character.</p>}
         </div>
       </header>
+
+      <button className="profile-friends-button" onClick={onOpenFriends}>
+        👥 Friends
+      </button>
 
       <ul className="profile-stats">
         <Stat value={`${stars} / ${allStars}`} label="Campaign stars" />

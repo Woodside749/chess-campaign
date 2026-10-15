@@ -1,5 +1,6 @@
-// A small "are you sure?" pop-up, used before resigning or leaving a game.
-export default function ConfirmDialog({ title, text, confirmLabel, onConfirm, onCancel }) {
+// A small "are you sure?" pop-up, used before resigning or leaving a game (and removing a
+// friend). `cancelLabel` names the way back.
+export default function ConfirmDialog({ title, text, confirmLabel, cancelLabel = 'Keep playing', onConfirm, onCancel }) {
   return (
     <div className="overlay" onClick={onCancel}>
       <div
@@ -18,7 +19,7 @@ export default function ConfirmDialog({ title, text, confirmLabel, onConfirm, on
             {confirmLabel}
           </button>
           <button className="secondary" onClick={onCancel} autoFocus>
-            Keep playing
+            {cancelLabel}
           </button>
         </div>
       </div>
