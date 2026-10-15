@@ -42,19 +42,12 @@ export async function loadFriendships(myId) {
   return { lists }
 }
 
-// Players whose username contains `text` (not me), at most 10.
-export async function searchPlayers(text, myId) {
-  // % and _ are wildcards in a search, so they are searched for as plain characters.
-  const escaped = text.replace(/[\\%_]/g, (c) => '\\' + c)
-  const { data, error } = await supabase
-    .from('profiles')
-    .select(PUBLIC_PROFILE)
-    .ilike('username', `%${escaped}%`)
-    .neq('id', myId)
-    .order('username')
-    .limit(10)
+// Players whose username contains `text`, at most 10: never me, and never anyone I have
+// blocked or who has blocked me (Supabase's search_players, see 08-block-report.sql).
+export async function searchPlayers(text) {
+  const { data, error } = await supabase.rpc('search_players', { query: text })
   if (error) return { error: error.message }
-  return { players: data.filter((profile) => profile.username).map(playerCard) }
+  return { players: data.map(playerCard) }
 }
 
 export async function sendRequest(myId, otherId) {
@@ -83,4 +76,46 @@ export function watchFriendships(myId, onChange) {
     .on('postgres_changes', { event: '*', schema: 'public', table: 'friendships' }, onChange)
     .subscribe()
   return () => supabase.removeChannel(channel)
+}
+
+// ---------- Blocking and reporting (see supabase/08-block-report.sql) ----------
+
+// The players I have blocked, as [{ player }], newest first.
+export async function loadBlocked() {
+  const { data, error } = await supabase
+    .from('blocks')
+    .select(`created_at, blocked:blocked (${PUBLIC_PROFILE})`)
+    .order('created_at', { ascending: false })
+  if (error) return { error: error.message }
+  return { blocked: data.map((row) => ({ player: playerCard(row.blocked) })) }
+}
+
+// Blocks a player (any friendship or request between us ends).
+export async function blockPlayer(myId, otherId) {
+  const { error } = await supabase.from('blocks').insert({ blocker: myId, blocked: otherId })
+  // Blocking someone already blocked is fine.
+  if (error?.code === '23505') return null
+  return error?.message ?? null
+}
+
+export async function unblockPlayer(myId, otherId) {
+  const { error } = await supabase.from('blocks').delete().eq('blocker', myId).eq('blocked', otherId)
+  return error?.message ?? null
+}
+
+// Why a player can be reported (the database only accepts these).
+export const REPORT_REASONS = [
+  ['username', 'Offensive username'],
+  ['character', 'Inappropriate character'],
+  ['harassment', 'Harassment or bullying'],
+  ['cheating', 'Cheating'],
+  ['other', 'Something else'],
+]
+
+// Sends a report to the admins. `details` is optional (at most 500 characters).
+export async function reportPlayer(myId, otherId, reason, details) {
+  const { error } = await supabase
+    .from('reports')
+    .insert({ reporter: myId, reported: otherId, reason, details: details.trim().slice(0, 500) || null })
+  return error?.message ?? null
 }

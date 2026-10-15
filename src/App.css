@@ -2951,3 +2951,75 @@ ul.fairy-legend li {
   background: #d64545;
   border-radius: 999px;
 }
+
+/* ---------- Block and report ---------- */
+
+.friend-button.more {
+  padding: 4px 10px;
+  font-size: 18px;
+  line-height: 1;
+  border-color: transparent;
+}
+
+.friend-button.more:hover {
+  border-color: var(--border);
+}
+
+.dialog.player-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.dialog.player-menu h2 {
+  margin: 10px 0 16px;
+  font-size: 22px;
+}
+
+.dialog.player-menu .dialog-buttons {
+  width: 100%;
+}
+
+.report-reasons {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+  text-align: left;
+}
+
+.report-reason {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  font-size: 15px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.report-reason.selected {
+  border-color: var(--accent);
+}
+
+.report-reason input {
+  accent-color: var(--accent);
+}
+
+.account-field textarea {
+  width: 100%;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  resize: vertical;
+}
+
+.report-dialog .account-hint {
+  margin: -8px 0 14px;
+}
