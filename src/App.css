@@ -1753,11 +1753,12 @@ ul.fairy-legend li {
   background: #8a55d4;
 }
 
-/* The global chat (coming soon). */
+/* The global chat (GlobalChat.jsx). */
 .menu-chat {
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   padding: 18px;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -1769,30 +1770,159 @@ ul.fairy-legend li {
   font-size: 18px;
 }
 
+/* The messages scroll on their own; the newest is at the bottom. */
 .chat-messages {
   flex: 1;
   min-height: 200px;
+  margin: 0;
+  padding: 0 4px 0 0;
+  list-style: none;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
+  gap: 10px;
+}
+
+.chat-messages.empty {
   justify-content: center;
   gap: 8px;
   text-align: center;
 }
 
 .chat-empty {
-  margin: 0;
+  margin: auto 0;
   color: var(--muted);
   font-size: 14px;
+  text-align: center;
+}
+
+.chat-messages.empty .chat-empty {
+  margin: 0;
+}
+
+.chat-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.chat-avatar,
+.chat-name {
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.chat-avatar:disabled,
+.chat-name:disabled {
+  cursor: default;
+}
+
+.chat-body {
+  min-width: 0;
+  flex: 1;
+}
+
+.chat-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.chat-name {
+  font-weight: 700;
+}
+
+.chat-name:not(:disabled):hover {
+  text-decoration: underline;
+}
+
+.chat-message.mine .chat-name {
+  color: var(--accent);
+}
+
+.chat-meta time {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.chat-delete {
+  margin-left: auto;
+  padding: 0 2px;
+  font-size: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  opacity: 0.5;
+}
+
+.chat-delete:hover {
+  opacity: 1;
+}
+
+.chat-text {
+  margin: 1px 0 0;
+  font-size: 14px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.chat-notice,
+.chat-problem,
+.chat-count {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.chat-problem {
+  color: #e05252;
+}
+
+.chat-count {
+  margin-top: -6px;
+  text-align: right;
+}
+
+.chat-form {
+  display: flex;
+  gap: 6px;
 }
 
 .chat-input {
+  flex: 1;
+  min-width: 0;
   padding: 10px 12px;
   border: 1px solid var(--border);
   border-radius: 10px;
   background: var(--bg);
-  color: var(--muted);
+  color: var(--text);
   font: inherit;
-  font-size: 14px;
+  font-size: 16px; /* 16px stops iPhones from zooming in on the field */
+}
+
+.chat-input:disabled {
+  color: var(--muted);
+}
+
+.chat-send {
+  padding: 0 14px;
+  font: inherit;
+  font-weight: 600;
+  color: white;
+  background: var(--accent);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.chat-send:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 
 @media (max-width: 900px) {

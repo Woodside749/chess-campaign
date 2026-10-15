@@ -3,10 +3,11 @@ import { playerTitle } from './player.js'
 import { roundsWon } from './progress.js'
 import SettingsButton from './Settings.jsx'
 import AccountButton from './Account.jsx'
+import GlobalChat from './GlobalChat.jsx'
 
 // The main menu, the first screen of the game: big tiles on the left (the chess campaign,
-// the game modes, play local and friends work so far, the rest are coming soon) and the global chat on the right
-// (coming soon: it needs accounts and a server).
+// the game modes, play local and friends work so far, the rest are coming soon) and the
+// global chat on the right (GlobalChat.jsx).
 export default function MainMenu({ progress, account, onOpenCampaign, onOpenGameModes, onOpenProfile, onOpenLocal, onOpenFriends }) {
   const wonIn = (eventId) => roundsWon(progress, eventId)
   const started = Object.keys(progress.tournaments).length > 0
@@ -49,19 +50,7 @@ export default function MainMenu({ progress, account, onOpenCampaign, onOpenGame
         </div>
       </section>
 
-      <aside className="menu-chat" aria-label="Global chat">
-        <h2>🌍 Global chat</h2>
-        <div className="chat-messages">
-          <p className="chat-empty">
-            Meet other players here: find friends, and agree on a game mode to play together.
-          </p>
-          <p className="chat-empty">Coming soon, for everyone with an account.</p>
-        </div>
-        <input className="chat-input" placeholder="Create an account to chat (coming soon)" disabled />
-        <p className="menu-links">
-          <a href="/privacy.html">Privacy</a> · <a href="/credits.html">Credits</a>
-        </p>
-      </aside>
+      <GlobalChat account={account} />
     </main>
   )
 }

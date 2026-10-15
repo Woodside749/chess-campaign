@@ -8,7 +8,7 @@ import { PLAYER } from './player.js'
 // messages for the screen to show.
 
 // What we read about other players: only what everyone may see.
-const PUBLIC_PROFILE = 'id, username, avatar, avatar_color, country'
+export const PUBLIC_PROFILE = 'id, username, avatar, avatar_color, country'
 
 // Another player in the form the Avatar component expects (like a bot).
 export function playerCard(profile) {
@@ -106,6 +106,7 @@ export async function unblockPlayer(myId, otherId) {
 // Why a player can be reported (the database only accepts these).
 export const REPORT_REASONS = [
   ['username', 'Offensive username'],
+  ['chat', 'Inappropriate chat message'],
   ['harassment', 'Harassment or bullying'],
   ['cheating', 'Cheating'],
   ['other', 'Something else'],

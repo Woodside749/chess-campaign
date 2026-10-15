@@ -8,8 +8,9 @@ import ConfirmDialog from './ConfirmDialog.jsx'
 // Report, each with its own "are you sure?" or form.
 // `player` is the other player, `friendshipId` set if they are a friend, `api` friends.js.
 // `onDone(message)` is called after a change (to reload and show the message), `onClose`
-// when the menu is closed without one.
-export default function PlayerActions({ player, friendshipId, myId, api, onDone, onClose }) {
+// when the menu is closed without one. From the chat, `reportReason` and `reportDetails`
+// fill in the report form (the reason, and the message being reported).
+export default function PlayerActions({ player, friendshipId, myId, api, onDone, onClose, reportReason = null, reportDetails = '' }) {
   const [step, setStep] = useState('menu') // 'menu', 'remove', 'block' or 'report'
   const [problem, setProblem] = useState(null)
 
@@ -50,6 +51,8 @@ export default function PlayerActions({ player, friendshipId, myId, api, onDone,
     return (
       <ReportDialog
         player={player}
+        initialReason={reportReason}
+        initialDetails={reportDetails}
         onSend={async (reason, details, alsoBlock) => {
           const reported = await api.reportPlayer(myId, player.id, reason, details)
           if (reported) return reported
@@ -96,9 +99,9 @@ export default function PlayerActions({ player, friendshipId, myId, api, onDone,
 
 // Reporting a player to the admins: a reason, a few optional words, and whether to block
 // them too. `onSend(reason, details, alsoBlock)` returns an error message, or null.
-function ReportDialog({ player, onSend, onClose }) {
-  const [reason, setReason] = useState(null)
-  const [details, setDetails] = useState('')
+function ReportDialog({ player, initialReason, initialDetails, onSend, onClose }) {
+  const [reason, setReason] = useState(initialReason)
+  const [details, setDetails] = useState(initialDetails)
   const [alsoBlock, setAlsoBlock] = useState(true)
   const [busy, setBusy] = useState(false)
   const [problem, setProblem] = useState(null)
