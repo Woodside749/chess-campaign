@@ -6,9 +6,10 @@ import { playerTitle, tierStars } from './player.js'
 import Game from './Game.jsx'
 
 // A game against another player: loads it from Supabase, listens for changes (moves, draw
-// offers, the end) and shows it on the normal game screen in its online version.
+// offers, the end) and shows it on the normal game screen in its online version. `compact`
+// shows the small board of the simul screen, and `onResult` hears how the game ended.
 // If this screen gets out of step with the server, the game is loaded again from scratch.
-export default function OnlineGame({ gameId, account, progress, onExit, api = onlineApi }) {
+export default function OnlineGame({ gameId, account, progress, onExit, compact = false, onResult, api = onlineApi }) {
   const myId = account.user?.id
   const [game, setGame] = useState(null)
   const [problem, setProblem] = useState(null)
@@ -45,7 +46,7 @@ export default function OnlineGame({ gameId, account, progress, onExit, api = on
       </main>
     )
   }
-  if (!game) return <p className="loading">Loading the game…</p>
+  if (!game) return compact ? <section className="simul-board simul-waiting">Loading…</section> : <p className="loading">Loading the game…</p>
 
   return (
     <Game
@@ -68,6 +69,8 @@ export default function OnlineGame({ gameId, account, progress, onExit, api = on
       }}
       exitLabel="Back to menu"
       onExit={onExit}
+      compact={compact}
+      onResult={onResult}
     />
   )
 }

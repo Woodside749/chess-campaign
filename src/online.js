@@ -60,6 +60,15 @@ export async function loadInvites(myId) {
   return { invites }
 }
 
+// Where some of my invites stand: { [id]: { status, gameId } } (status: 'pending',
+// 'accepted', 'declined' or 'cancelled'). Used by the simul to follow its boards' invites.
+export async function loadInviteStates(ids) {
+  if (ids.length === 0) return { states: {} }
+  const { data, error } = await supabase.from('game_invites').select('id, status, game_id').in('id', ids)
+  if (error) return { error: error.message }
+  return { states: Object.fromEntries(data.map((row) => [row.id, { status: row.status, gameId: row.game_id }])) }
+}
+
 // Calls `onChange(row)` whenever one of my invites is sent, answered or cancelled.
 export function watchInvites(myId, onChange) {
   const channel = supabase

@@ -210,7 +210,9 @@ export default function Game({
   const finishedOnBoard = boardResult(game, playerColor)
   const stopped = finishedOnBoard || resigned || autoWon
   const onlineOver = online?.status === 'finished'
-  const elapsed = stopped || onlineOver ? 0 : Math.max(0, now - shownClock.turnStart)
+  // (Online, the clocks start with White's first move.)
+  const notStarted = online && online.moves.length === 0
+  const elapsed = stopped || onlineOver || notStarted ? 0 : Math.max(0, now - shownClock.turnStart)
   const timeLeft = timed
     ? { w: shownClock.w - (turn === 'w' ? elapsed : 0), b: shownClock.b - (turn === 'b' ? elapsed : 0) }
     : { w: Infinity, b: Infinity }
@@ -485,7 +487,9 @@ export default function Game({
   // Online: sends our move to the server (with the result, if it ended the game). If the
   // server refuses it (we were out of step), the game is loaded again from the server.
   async function sendOnlineMove(move) {
-    setPressed({ from: online.clock, clock: pressClock(online.clock, playerColor, incrementMs) })
+    // White's first move costs no time: the clocks only start with it.
+    const base = online.moves.length === 0 ? { ...online.clock, turnStart: Date.now() } : online.clock
+    setPressed({ from: online.clock, clock: pressClock(base, playerColor, incrementMs) })
     const ended = boardResult(game, 'w')
     const result = ended ? { winner: ended.outcome === 'draw' ? null : ended.outcome === 'win' ? 'w' : 'b', reason: 'board' } : null
     const error = await online.api.playMove(online.id, game.history().length - 1, moveForWire(move), result)
@@ -680,12 +684,16 @@ export default function Game({
     return (
       <section className={`simul-board${isPlayersTurn ? ' your-turn' : ''}${result ? ` ${result.outcome}` : ''}`}>
         <header className="player-bar opponent-bar">
-          <Avatar bot={bot} size={36} />
+          <Avatar bot={online ? online.opponent : bot} size={36} />
           <div className="player-info">
-            <div className="opponent-name">
-              <TitleBadge title={titleById(bot.chessTitle)} /> {bot.name} <span className="rating">({shownRating(bot)})</span>
-            </div>
-            <div className="speech">“{botLine}”</div>
+            {online ? (
+              <div className="opponent-name">{opponentName}</div>
+            ) : (
+              <div className="opponent-name">
+                <TitleBadge title={titleById(bot.chessTitle)} /> {bot.name} <span className="rating">({shownRating(bot)})</span>
+              </div>
+            )}
+            {botLine && <div className="speech">“{botLine}”</div>}
           </div>
           {timed && <Clock ms={timeLeft[botColor]} active={clockRunning && turn === botColor} />}
         </header>
@@ -712,11 +720,13 @@ export default function Game({
               ? { win: '✓ You won', loss: '✗ You lost', draw: '½ Draw' }[result.outcome]
               : isPlayersTurn
                 ? 'Your move'
-                : `${bot.name} is thinking…`}
+                : online
+                  ? `${opponentName}'s move`
+                  : `${bot.name} is thinking…`}
           </p>
           <CapturedPieces color={playerColor} captured={captured[playerColor]} advantage={advantage(playerColor)} />
           {timed && <Clock ms={timeLeft[playerColor]} active={clockRunning && turn === playerColor} />}
-          {devTools && !gameOver && (
+          {devTools && !gameOver && !online && (
             <button className="simul-small-button dev" onClick={autoWin}>
               ⚡ Win
             </button>
@@ -729,7 +739,7 @@ export default function Game({
         </div>
         {confirming === 'resign' && (
           <ConfirmDialog
-            title={`Resign against ${bot.name}?`}
+            title={`Resign against ${opponentName}?`}
             confirmLabel="Resign"
             onConfirm={resign}
             onCancel={() => setConfirming(null)}

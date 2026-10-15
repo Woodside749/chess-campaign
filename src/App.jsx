@@ -83,9 +83,16 @@ function Screens({ account, onlineGameId, onLeaveOnlineGame }) {
   // (round = { title, opponents, needed }) from the game modes menu.
   const [simulRun, setSimulRun] = useState(null)
   // What is picked in the game modes menu (kept here, so it is still there after a game).
-  const [modesChoice, setModesChoice] = useState({ modeId: 'unlimited', color: 'w', setup: 'archchess', simulBots: [], minutes: 10 })
+  const [modesChoice, setModesChoice] = useState({
+    modeId: 'unlimited',
+    color: 'w',
+    setup: 'archchess',
+    simulCount: 3,
+    simulBoards: [],
+    minutes: 10,
+  })
   // What is picked in the Play local menu: the mode, fairy setup and the two names.
-  const [localChoice, setLocalChoice] = useState({ modeId: 'unlimited', setup: 'archchess', simulBots: [], names: { w: '', b: '' }, minutes: 10 })
+  const [localChoice, setLocalChoice] = useState({ modeId: 'unlimited', setup: 'archchess', names: { w: '', b: '' }, minutes: 10 })
   const [progress, setProgress] = useState(loadProgress)
   const userId = account.user?.id ?? null
   const devTools = useDevTools() // admins only: the developer menu
@@ -200,6 +207,21 @@ function Screens({ account, onlineGameId, onLeaveOnlineGame }) {
     setMatch({ bot, color, ...clockFor(mode, modesChoice.minutes), variant, lesson: null, gameMode: mode.id })
   }
 
+  // A simul from the game modes menu. Friends on its boards get an invite to play that board
+  // online (normal chess, they play Black); the boards with bots start at once.
+  async function startSimul(mode, boards) {
+    const clock = clockFor(mode, modesChoice.minutes)
+    const settings = { mode: 'simul', variant: null, timed: clock.timed, minutes: clock.minutes, increment: clock.increment ?? 0, color: 'w' }
+    const invited = await Promise.all(
+      boards.map(async (board) => {
+        if (board.kind !== 'friend') return board
+        const { id, error } = await sendInvite(account.user.id, board.player.id, settings)
+        return { ...board, inviteId: id, error }
+      }),
+    )
+    setSimulRun({ boards: invited, ...clock, gameMode: mode.id })
+  }
+
   // A local game: two people on one device (Play local), in any mode but the Simul.
   async function playLocal(mode) {
     const variant = mode.setups ? localChoice.setup : (mode.variant ?? null)
@@ -231,10 +253,11 @@ function Screens({ account, onlineGameId, onLeaveOnlineGame }) {
     // A simul from the game modes menu: every board won is a 🏆 against that bot.
     return (
       <Simul
-        round={simulRun.round}
+        boards={simulRun.boards}
         timed={simulRun.timed}
         minutes={simulRun.minutes}
-        onFinish={() => {}}
+        account={account}
+        progress={progress}
         onGameResult={(botId, outcome) => outcome === 'win' && saveModeWin(simulRun.gameMode, botId)}
         onExit={() => setSimulRun(null)}
       />
@@ -337,9 +360,8 @@ function Screens({ account, onlineGameId, onLeaveOnlineGame }) {
         choice={modesChoice}
         onChoice={setModesChoice}
         onPlay={playGameMode}
-        onPlaySimul={(mode, opponents) =>
-          setSimulRun({ round: { title: 'Simul', opponents, needed: 2 }, ...clockFor(mode, modesChoice.minutes), gameMode: mode.id })
-        }
+        account={account}
+        onPlaySimul={startSimul}
         onBack={() => setScreen('menu')}
       />
     )

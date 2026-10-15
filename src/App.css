@@ -1217,6 +1217,12 @@
   .simul-boards {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+
+  /* Two boards side by side, and four as two rows of two. */
+  .simul-boards.boards-2,
+  .simul-boards.boards-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .simul-board {
@@ -3340,4 +3346,44 @@ button.friend-strip-card:hover {
   color: white;
   background: #43a047;
   border-color: #43a047;
+}
+
+/* The simul with friends: boards waiting for a friend, and choosing who plays. */
+.simul-board.simul-waiting {
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.simul-board.simul-waiting p {
+  margin: 0;
+}
+
+.simul-stand-in {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 260px;
+}
+
+.simul-slot.add-friend {
+  color: var(--text);
+  border-style: dashed;
+  cursor: pointer;
+}
+
+.simul-friend-picker {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }

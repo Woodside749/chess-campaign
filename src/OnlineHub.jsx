@@ -24,8 +24,9 @@ export default function OnlineHub({ account, inGame, onOpenGame, api = onlineApi
     }
     load()
     const stop = api.watchInvites(myId, (row) => {
-      // My invite was accepted: open the game.
-      if (row?.status === 'accepted' && row.sender === myId && row.game_id) onOpenGame(row.game_id)
+      // My invite was accepted: open the game. (Not for simul boards: the simul screen shows
+      // those itself.)
+      if (row?.status === 'accepted' && row.sender === myId && row.game_id && row.mode !== 'simul') onOpenGame(row.game_id)
       load()
     })
     return () => {
@@ -55,7 +56,8 @@ export default function OnlineHub({ account, inGame, onOpenGame, api = onlineApi
   // The receiver plays the other colour than the sender picked.
   const yourColor = (color) => ({ w: 'You play Black', b: 'You play White', random: 'Colours are random' })[color]
   const rejoin = inGame ? [] : games
-  if (invites.incoming.length + invites.outgoing.length + rejoin.length === 0 && !problem) return null
+  const waiting = invites.outgoing.filter((invite) => invite.settings.mode !== 'simul')
+  if (invites.incoming.length + waiting.length + rejoin.length === 0 && !problem) return null
 
   return (
     <div className="online-hub" aria-live="polite">
@@ -63,7 +65,9 @@ export default function OnlineHub({ account, inGame, onOpenGame, api = onlineApi
         <div key={invite.id} className="hub-card invite">
           <Avatar bot={{ ...invite.player, flag: '' }} size={40} />
           <div className="hub-text">
-            <strong>{invite.player.name} invites you to play</strong>
+            <strong>
+              {invite.player.name} invites you to {invite.settings.mode === 'simul' ? 'a board in their simul' : 'play'}
+            </strong>
             <span>
               {describeInvite(invite.settings)} · {yourColor(invite.settings.color)}
             </span>
@@ -78,7 +82,7 @@ export default function OnlineHub({ account, inGame, onOpenGame, api = onlineApi
           </div>
         </div>
       ))}
-      {invites.outgoing.map((invite) => (
+      {waiting.map((invite) => (
         <div key={invite.id} className="hub-card">
           <Avatar bot={{ ...invite.player, flag: '' }} size={40} />
           <div className="hub-text">
