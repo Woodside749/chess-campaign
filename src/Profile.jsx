@@ -25,10 +25,28 @@ export default function Profile({ progress, account, onBack }) {
   const modeWins = Object.values(progress.modeWins ?? {}).reduce((sum, bots) => sum + bots.length, 0)
   const since = profile?.created_at ?? user.created_at
   const [message, setMessage] = useState(null) // { text, error }
+  // The character editor opens on its own screen when the profile picture is clicked.
+  const [editing, setEditing] = useState(false)
 
   async function save(changes, success) {
     const problem = await updateProfile(changes)
     setMessage(problem ? { text: problem, error: true } : success ? { text: success } : null)
+  }
+
+  if (editing) {
+    return (
+      <main className="profile-screen">
+        <button className="back" onClick={() => setEditing(false)}>
+          ← Profile
+        </button>
+        <h1 className="creator-title">Your character</h1>
+        <CharacterCreator
+          character={profile?.avatar}
+          background={player.color}
+          onSave={(avatar, color) => updateProfile({ avatar, avatar_color: color })}
+        />
+      </main>
+    )
   }
 
   return (
@@ -39,7 +57,14 @@ export default function Profile({ progress, account, onBack }) {
 
       <header className="profile-header">
         <div className="avatar-with-stars">
-          <Avatar bot={player} size={88} />
+          {/* Clicking the picture opens the character editor. */}
+          <button className="avatar-edit" onClick={() => setEditing(true)} title="Edit your character">
+            <Avatar bot={player} size={88} />
+            <span className="avatar-edit-badge" aria-hidden="true">
+              ✏️
+            </span>
+            <span className="visually-hidden">Edit your character</span>
+          </button>
           <StarBadges stars={tierStars(progress)} size={18} />
         </div>
         <div className="profile-who">
@@ -53,6 +78,7 @@ export default function Profile({ progress, account, onBack }) {
           <p className="profile-sub">
             Playing since {new Date(since).toLocaleDateString('en', { month: 'long', year: 'numeric' })}
           </p>
+          {!profile?.avatar && <p className="profile-hint">Tap your picture to create your character.</p>}
         </div>
       </header>
 
@@ -63,13 +89,6 @@ export default function Profile({ progress, account, onBack }) {
       </ul>
 
       <section className="profile-section">
-        <h2>Your character</h2>
-        <CharacterCreator
-          character={profile?.avatar}
-          background={player.color}
-          onSave={(avatar, color) => updateProfile({ avatar, avatar_color: color })}
-        />
-
         <h2>Country</h2>
         <select
           className="profile-select"

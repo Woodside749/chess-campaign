@@ -2690,3 +2690,54 @@ ul.fairy-legend li {
 .creator-swatches .swatch:not(.selected) {
   box-shadow: 0 0 0 1px var(--border);
 }
+
+/* The profile picture is a button that opens the character editor. */
+.avatar-edit {
+  position: relative;
+  padding: 0;
+  font: inherit;
+  background: none;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.avatar-edit:hover .avatar,
+.avatar-edit:focus-visible .avatar {
+  box-shadow: 0 0 0 3px var(--accent);
+}
+
+/* A small pencil at the top right says the picture can be edited. */
+.avatar-edit-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+}
+
+.profile-hint {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: var(--accent);
+}
+
+.creator-title {
+  margin: 12px 0 20px;
+  font-size: 30px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
