@@ -12,6 +12,7 @@ import { allPieces } from './fairy/fairyPieces.js'
 import { fairyRules } from './fairy/loadFairy.js'
 import { FAIRY_PIECES, FAIRY_VARIANTS, isFairyVariant } from './fairy/variants.js'
 import { randomChess960Fen } from './fairy/chess960.js'
+import { seededRandom } from './seededRandom.js'
 import { ChaosGame } from './chaos/ChaosGame.js'
 import { rollPiece } from './chaos/diceRules.js'
 import Pocket from './Pocket.jsx'
@@ -51,17 +52,35 @@ const freshClock = (minutes) => {
 // A new game: normal chess (which Fog of War also uses), Chaos Chess (our own rules on
 // top of chess.js), or a variant that runs on the rules library (it must already be
 // loaded, see loadFairy.js): fairy chess, or Fischer Random with a new random starting
-// position every game.
-function createGame(variant) {
-  if (variant === 'chaos') return new ChaosGame()
-  if (variant === 'dice') return new ChaosGame(undefined, rollPiece)
+// position every game. `seed` (online games) makes the random parts (the Fischer Random
+// start, Chaos rules, dice) come out the same for both players.
+function createGame(variant, seed) {
+  const random = seed === undefined ? Math.random : seededRandom(seed)
+  if (variant === 'chaos') return new ChaosGame(undefined, undefined, random)
+  if (variant === 'dice') return new ChaosGame(undefined, rollPiece, random)
   if (!isFairyVariant(variant)) return new Chess()
   const info = FAIRY_VARIANTS[variant]
   const game = info.chess960
-    ? new FairyGame(fairyRules(), info.rules, randomChess960Fen(), true)
+    ? new FairyGame(fairyRules(), info.rules, randomChess960Fen(random), true)
     : new FairyGame(fairyRules(), info.rules ?? variant)
   game.winText = info.winText // how to describe a special win, like reaching the hill
   return game
+}
+
+// Online games: a move as it is sent to the other player (it works for every kind of game:
+// promotions, Crazyhouse drops like "N@", the duck's square, and Chaos moves by name).
+const moveForWire = (move) => ({
+  from: move.from,
+  to: move.to,
+  promotion: move.promotion || undefined,
+  duck: move.duckSquare || undefined,
+  lan: move.lan || undefined,
+})
+
+// Plays a move that came from the other player.
+function playWireMove(game, move) {
+  if (game instanceof ChaosGame && move.lan) return game.move(move.lan)
+  return game.move({ from: move.from, to: move.to, promotion: move.promotion, duck: move.duck })
 }
 
 // A FEN the board drawing understands: without a Crazyhouse pocket or promoted-piece marks,
@@ -94,6 +113,9 @@ function pressClock(clock, color, incrementMs = 0) {
 // button, move list, review buttons or game-over pop-up (the result shows under the board).
 // `playerTitle` is the player's title (like Master), shown as a badge by their name, and
 // `playerStars` the tier stars they have earned, shown small next to their avatar.
+// `online` makes it a game against another player (see OnlineGame.jsx): the game from
+// online.js (its moves, server clock, status, `myColor`, `opponent`) plus `api` (online.js)
+// and `onResync()` for when this screen got out of step with the server.
 // `local` turns it into a game for two people on one device (Play local), with their
 // names like { w: 'Emma', b: 'Noah' } and no bot: the board turns to whoever is to move,
 // and in Fog of War a cover hides the board while the device is passed over.
@@ -113,13 +135,19 @@ export default function Game({
   playerStars = [],
   peeks = 0,
   local = null,
+  online = null,
 }) {
   const player = usePlayer() // the player's name and avatar (from their account)
   const devTools = useDevTools() // admins only: the auto-win buttons
   // chess.js holds the real game (rules, history), also in Fog of War, which only hides
   // squares. `fen` is a text snapshot of the position that we keep in React state, so
   // the screen re-draws after every move.
-  const [game, setGame] = useState(() => createGame(variant))
+  const [game, setGame] = useState(() => {
+    const fresh = createGame(variant, online?.seed)
+    // Online: replay the moves played so far (when joining or rejoining a game).
+    for (const move of online?.moves ?? []) playWireMove(fresh, move)
+    return fresh
+  })
   const fog = variant === 'fog'
   // Chaos Chess and Dice Chess both roll a rule each turn (see chaos/).
   const chaos = variant === 'chaos' || variant === 'dice'
@@ -131,11 +159,15 @@ export default function Game({
   const [fen, setFen] = useState(game.fen())
   // Whose pieces can be moved (and are shown at the bottom): the player's, or in a local
   // game whoever is to move.
-  const playerColor = local ? game.turn() : startColor
+  const playerColor = online ? online.myColor : local ? game.turn() : startColor
   const [selected, setSelected] = useState(null)
   const [clock, setClock] = useState(() => freshClock(minutes))
+  // Online, the server keeps the clocks; after our own move we press our clock here until
+  // the server's answer arrives (`from` is the server clock it was pressed on).
+  const [pressed, setPressed] = useState(null)
+  const shownClock = online ? (pressed?.from === online.clock ? pressed.clock : online.clock) : clock
   const [now, setNow] = useState(() => Date.now())
-  const [speech, setSpeech] = useState(() => (local ? null : pickLine(bot, 'start')))
+  const [speech, setSpeech] = useState(() => (local || online ? null : pickLine(bot, 'start')))
   // Local Fog of War: the board is covered after each move until the next player is ready.
   const [covered, setCovered] = useState(false)
   const [dialogClosed, setDialogClosed] = useState(false)
@@ -177,9 +209,10 @@ export default function Game({
   // and the clocks stop once the game is decided on the board or you resign.
   const finishedOnBoard = boardResult(game, playerColor)
   const stopped = finishedOnBoard || resigned || autoWon
-  const elapsed = stopped ? 0 : Math.max(0, now - clock.turnStart)
+  const onlineOver = online?.status === 'finished'
+  const elapsed = stopped || onlineOver ? 0 : Math.max(0, now - shownClock.turnStart)
   const timeLeft = timed
-    ? { w: clock.w - (turn === 'w' ? elapsed : 0), b: clock.b - (turn === 'b' ? elapsed : 0) }
+    ? { w: shownClock.w - (turn === 'w' ? elapsed : 0), b: shownClock.b - (turn === 'b' ? elapsed : 0) }
     : { w: Infinity, b: Infinity }
 
   // The game is over by checkmate/draw on the board, by resigning, or because a clock hit zero.
@@ -187,14 +220,16 @@ export default function Game({
   const flagged = timeLeft[turn] <= 0
   const result = useMemo(
     () =>
-      local
+      online
+        ? onlineResult(game, online, playerColor)
+        : local
         ? localResult(game, local, resigned, flagged)
         : (boardResult(game, playerColor) ??
           (autoWon ? { outcome: 'win', reason: 'Auto-win (developer button).' } : null) ??
           (resigned ? { outcome: 'loss', reason: 'You resigned.' } : null) ??
           (flagged ? timeoutResult(game, turn, playerColor) : null)),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `game` changes in place; `fen` tells us when
-    [game, fen, playerColor, resigned, autoWon, flagged, turn, local],
+    [game, fen, playerColor, resigned, autoWon, flagged, turn, local, online],
   )
   const gameOver = result !== null
   const clockRunning = timed && !gameOver
@@ -313,7 +348,7 @@ export default function Game({
   // Whenever the position changes and it's the bot's turn, let the bot move.
   // (Not during a lesson: then the coach's moves come from the script.)
   useEffect(() => {
-    if (local || gameOver || inLesson || game.turn() !== botColor) return
+    if (local || online || gameOver || inLesson || game.turn() !== botColor) return
     let cancelled = false // set if a new game starts, time runs out or you leave while the bot is thinking
 
     async function playBotMove() {
@@ -383,7 +418,7 @@ export default function Game({
     return () => {
       cancelled = true
     }
-  }, [fen, playerColor, botColor, botTimeLeft, clockMs, incrementMs, game, gameOver, inLesson, bot, fog, chaos, fairy, variant, local])
+  }, [fen, playerColor, botColor, botTimeLeft, clockMs, incrementMs, game, gameOver, inLesson, bot, fog, chaos, fairy, variant, local, online])
 
   // Tries to play the player's move. Returns true if it was legal.
   // A pawn reaching the last rank first opens the promotion picker, unless
@@ -427,6 +462,11 @@ export default function Game({
 
   // After the player's move: press the clock, let the bot react, redraw.
   function finishPlayerMove(move) {
+    if (online) {
+      sendOnlineMove(move)
+      setFen(game.fen())
+      return
+    }
     setClock((c) => pressClock(c, playerColor, incrementMs))
     if (local) {
       // Local Fog of War: hide the board until the next player has the device.
@@ -440,6 +480,16 @@ export default function Game({
       setReplyPending(true)
     }
     setFen(game.fen())
+  }
+
+  // Online: sends our move to the server (with the result, if it ended the game). If the
+  // server refuses it (we were out of step), the game is loaded again from the server.
+  async function sendOnlineMove(move) {
+    setPressed({ from: online.clock, clock: pressClock(online.clock, playerColor, incrementMs) })
+    const ended = boardResult(game, 'w')
+    const result = ended ? { winner: ended.outcome === 'draw' ? null : ended.outcome === 'win' ? 'w' : 'b', reason: 'board' } : null
+    const error = await online.api.playMove(online.id, game.history().length - 1, moveForWire(move), result)
+    if (error) online.onResync(error)
   }
 
   function continueLesson() {
@@ -518,6 +568,11 @@ export default function Game({
   }
 
   function resign() {
+    if (online) {
+      setConfirming(null)
+      online.api.resignGame(online.id)
+      return
+    }
     // Stop the clock where it is: the time spent on this move is taken off.
     setClock((c) => pressClock(c, game.turn()))
     setResigned(true)
@@ -532,6 +587,48 @@ export default function Game({
     if (gameOver || inLesson) onExit()
     else setConfirming('leave')
   }
+
+  // Online: the other player's moves arrive with `online.moves`. Play the ones this board
+  // hasn't got yet, then any premove we queued in the meantime.
+  const onlinePlies = online?.moves.length ?? 0
+  useEffect(() => {
+    if (online) playArrivedMoves()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only new moves matter
+  }, [onlinePlies])
+
+  function playArrivedMoves() {
+    const before = game.history().length
+    try {
+      for (const move of online.moves.slice(before)) playWireMove(game, move)
+    } catch (error) {
+      online.onResync(error.message)
+      return
+    }
+    if (game.history().length === before) return
+    setViewPly(null) // jump back to the live position so you see the new move
+    setFen(game.fen())
+    const queued = premoveRef.current
+    if (queued && game.turn() === playerColor && !game.isGameOver()) {
+      premoveRef.current = null
+      setPremoveState(null)
+      try {
+        finishPlayerMove(game.move({ ...queued, promotion: 'q' }))
+      } catch {
+        // The premove isn't legal in the new position, so it's dropped.
+      }
+    }
+  }
+
+  // Online: when the clock of the player to move runs out, ask the server to end the game
+  // (it checks with its own time). Once per turn.
+  const claimedRef = useRef(-1)
+  useEffect(() => {
+    if (!online || !online.timed || onlineOver || !flagged || claimedRef.current === onlinePlies) return
+    claimedRef.current = onlinePlies
+    const timeout = timeoutResult(game, turn, 'w')
+    const winner = turn === 'w' ? 'b' : 'w'
+    online.api.claimTimeout(online.id, timeout.outcome === 'draw' ? { winner: null, reason: 'time-draw' } : { winner, reason: 'time' })
+  }, [online, onlineOver, flagged, onlinePlies, game, turn])
 
   // Starts a new game against the same bot, with the same colour.
   function newGame() {
@@ -560,7 +657,9 @@ export default function Game({
     setFen(fresh.fen())
   }
 
-  const botLine = local ? null : result ? endLine(bot, result, game) : speech
+  const botLine = local || online ? null : result ? endLine(bot, result, game) : speech
+  // The other side's name: the bot's, the other local player's, or the online opponent's.
+  const opponentName = local ? local[botColor] : online ? online.opponent.name : bot.name
   // Local games: how each player looks (a plain avatar with their name), and the other side.
   const look = (color) => ({ id: color, name: local[color], color: LOCAL_COLORS[color], flag: '', country: '' })
 
@@ -647,17 +746,17 @@ export default function Game({
       </button>
 
       <header className="player-bar opponent-bar">
-        <Avatar bot={local ? look(botColor) : bot} />
+        <Avatar bot={local ? look(botColor) : online ? online.opponent : bot} />
         <div className="player-info">
-          {local ? (
-            <div className="opponent-name">{local[botColor]}</div>
+          {local || online ? (
+            <div className="opponent-name">{opponentName}</div>
           ) : (
             <div className="opponent-name">
               <TitleBadge title={titleById(bot.chessTitle)} /> {bot.name} <span className="rating">({shownRating(bot)})</span>
               {botThinking && <span className="thinking"> thinking…</span>}
             </div>
           )}
-          {!inLesson && !local && <div className="speech">“{botLine}”</div>}
+          {!inLesson && botLine && <div className="speech">“{botLine}”</div>}
           {fairy?.pockets ? (
             <Pocket pieces={game.pocket(botColor)} color={botColor} />
           ) : (
@@ -676,7 +775,7 @@ export default function Game({
           {fairy.checkCounter && game.checksLeft() && (
             <p className="check-counter">
               Checks given: <strong>{local ? local[playerColor] : 'You'} {3 - game.checksLeft()[playerColor]}/3</strong> ·{' '}
-              {local ? local[botColor] : bot.name.split(' ')[0]} {3 - game.checksLeft()[botColor]}/3
+              {opponentName.split(' ')[0]} {3 - game.checksLeft()[botColor]}/3
             </p>
           )}
           {fairy.pieces && (
@@ -698,7 +797,7 @@ export default function Game({
         <ChaosPanel
           rule={game.currentRule()}
           yourTurn={turn === playerColor}
-          botName={local ? local[botColor] : bot.name.split(' ')[0]}
+          botName={opponentName.split(' ')[0]}
           hasPowers={game.moves({ verbose: true }).some((m) => m.special)}
           dice={variant === 'dice'}
         />
@@ -789,7 +888,7 @@ export default function Game({
                   ? '⚠️ Your king is in check!'
                   : local
                     ? localStatusText(game, result, local)
-                    : statusText(game, result, playerColor, bot)}
+                    : statusText(game, result, playerColor, opponentName)}
           </p>
           {fairy?.pockets ? (
             <Pocket
@@ -822,14 +921,43 @@ export default function Game({
         <button aria-label="Latest move" onClick={() => setViewPly(null)} disabled={!viewing}>
           »
         </button>
+        {online && (
+          <button
+            className="draw-offer"
+            onClick={() => online.api.offerDraw(online.id)}
+            disabled={gameOver || online.drawOffer === playerColor}
+            title="Offer a draw"
+          >
+            ½
+          </button>
+        )}
         <button className="resign" onClick={() => setConfirming('resign')} disabled={gameOver || inLesson}>
           Resign
         </button>
         <SettingsButton />
       </div>
 
-      {/* Only for admins (and not in local games, which have no bot to beat). */}
-      {devTools && !local && (
+      {/* Online: a draw offer from the other player, or ours waiting for an answer. */}
+      {online && !gameOver && online.drawOffer && (
+        <div className="draw-banner">
+          {online.drawOffer === playerColor ? (
+            <span>You offered a draw. Waiting for {opponentName}…</span>
+          ) : (
+            <>
+              <span>{opponentName} offers a draw.</span>
+              <button className="friend-button primary" onClick={() => online.api.answerDraw(online.id, true)}>
+                Accept
+              </button>
+              <button className="friend-button" onClick={() => online.api.answerDraw(online.id, false)}>
+                Decline
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Only for admins (and not in local or online games, which have no bot to beat). */}
+      {devTools && !local && !online && (
         <button className="dev-autowin" onClick={autoWin} disabled={gameOver}>
           ⚡ Auto-win (developer)
         </button>
@@ -854,8 +982,14 @@ export default function Game({
       {confirming === 'leave' && (
         <ConfirmDialog
           title="Leave the game?"
-          text={local ? 'The game ends here, without a winner.' : 'Leaving counts as resigning.'}
-          confirmLabel={local ? 'Leave' : 'Resign and leave'}
+          text={
+            local
+              ? 'The game ends here, without a winner.'
+              : online
+                ? 'The game goes on and your clock keeps running. You can come back to it from the main menu.'
+                : 'Leaving counts as resigning.'
+          }
+          confirmLabel={local || online ? 'Leave' : 'Resign and leave'}
           onConfirm={onExit}
           onCancel={() => setConfirming(null)}
         />
@@ -882,7 +1016,7 @@ export default function Game({
           bot={bot}
           botLine={botLine}
           heading={local ? (result.winner ? `${local[result.winner]} wins!` : 'Draw') : null}
-          onTryAgain={newGame}
+          onTryAgain={online ? null : newGame}
           onClose={() => setDialogClosed(true)}
           onMenu={onExit}
           menuLabel={exitLabel}
@@ -949,6 +1083,26 @@ function squareStyles(game, selected, premove, isPlayersTurn, showTargets = true
   return styles
 }
 
+// Why an online game ended, from my side (`outcome` is 'win', 'loss' or 'draw').
+const ONLINE_REASONS = {
+  resigned: (outcome) => (outcome === 'win' ? 'Your opponent resigned.' : 'You resigned.'),
+  agreed: () => 'Draw agreed.',
+  time: (outcome) => (outcome === 'win' ? "Your opponent's time ran out." : 'Your time ran out.'),
+  'time-draw': () => 'Time ran out, but the other side has no pieces left to checkmate with.',
+}
+
+// The result of an online game from my side (`me` is my colour): the server's, once it says
+// the game is over, or the board's (both screens see the same position, so it agrees).
+function onlineResult(game, online, me) {
+  if (online.status === 'finished' && online.result) {
+    const { winner, reason } = online.result
+    const outcome = winner === null ? 'draw' : winner === me ? 'win' : 'loss'
+    const text = reason === 'board' ? (boardResult(game, me)?.reason ?? 'The game is over.') : (ONLINE_REASONS[reason]?.(outcome) ?? 'The game is over.')
+    return { outcome, reason: text }
+  }
+  return boardResult(game, me)
+}
+
 // Local games: for example "Emma to move", "Emma to move. Check!" or "Noah wins!".
 function localStatusText(game, result, names) {
   if (result) return result.winner ? `${names[result.winner]} wins!` : 'Draw.'
@@ -977,9 +1131,9 @@ function localResult(game, names, resigned, flagged) {
   return null
 }
 
-function statusText(game, result, playerColor, bot) {
-  if (result) return { win: 'You won!', loss: `${bot.name} won.`, draw: 'Draw.' }[result.outcome]
-  const whose = game.turn() === playerColor ? 'Your move' : `${bot.name} to move`
+function statusText(game, result, playerColor, opponentName) {
+  if (result) return { win: 'You won!', loss: `${opponentName} won.`, draw: 'Draw.' }[result.outcome]
+  const whose = game.turn() === playerColor ? 'Your move' : `${opponentName} to move`
   return game.inCheck() ? `${whose}. Check!` : whose
 }
 

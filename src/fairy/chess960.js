@@ -2,9 +2,10 @@
 // two rules, which give 960 possible setups: the bishops stand on opposite colours, and
 // the king stands somewhere between the two rooks. Black mirrors White.
 
-const pickRandom = (list) => list[Math.floor(Math.random() * list.length)]
-
-export function randomChess960Fen() {
+// `random` gives the random numbers (an online game passes a seeded one, so both players
+// get the same start).
+export function randomChess960Fen(random = Math.random) {
+  const pickRandom = (list) => list[Math.floor(random() * list.length)]
   const row = Array(8).fill(null)
   const emptyFiles = () => row.flatMap((piece, file) => (piece ? [] : [file]))
   row[pickRandom([0, 2, 4, 6])] = 'b' // one bishop on a dark square...

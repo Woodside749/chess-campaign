@@ -2,11 +2,11 @@ import { useEffect, useState } from 'react'
 import * as friendsApi from './friends.js'
 import Avatar from './Avatar.jsx'
 import PlayerActions from './PlayerActions.jsx'
+import { useInvite } from './onlineContext.js'
 
 // The Friends screen (the "Play with friends" tile): find players by username and send
 // them a friend request, answer requests, see your friends with their character and
-// username, and block or report players (the ⋯ button on every player). Inviting to a game
-// comes later (the buttons are there, greyed out).
+// username, invite them to a game, and block or report players (the ⋯ button on every player).
 // `api` is friends.js; a test can pass a pretend one.
 export default function Friends({ account, onBack, api = friendsApi }) {
   const myId = account.user?.id
@@ -138,7 +138,7 @@ export default function Friends({ account, onBack, api = friendsApi }) {
                       Add friend
                     </button>
                   )}
-                  <InviteButton />
+                  <InviteButton player={player} />
                 </FriendRow>
               )
             })}
@@ -177,7 +177,7 @@ export default function Friends({ account, onBack, api = friendsApi }) {
           <ul className="friend-list">
             {lists.friends.map(({ id, player }) => (
               <FriendRow key={id} player={player} onMore={() => setMenuFor({ player, friendshipId: id })}>
-                <InviteButton />
+                <InviteButton player={player} />
               </FriendRow>
             ))}
           </ul>
@@ -254,10 +254,11 @@ function FriendRow({ player, note, onMore, children }) {
   )
 }
 
-// Inviting to a game needs games between players, which come later.
-function InviteButton() {
+// Opens the "Invite to game" window for a player.
+function InviteButton({ player }) {
+  const invite = useInvite()
   return (
-    <button className="friend-button" disabled title="Coming soon: games between players">
+    <button className="friend-button" disabled={!invite} onClick={() => invite(player)}>
       Invite to game
     </button>
   )

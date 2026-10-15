@@ -1,3 +1,5 @@
+import { FAIRY_VARIANTS } from './fairy/variants.js'
+
 // The game modes menu: every way of playing, against any bot, outside the campaign.
 // The time controls come first, then the variants (each with a 10-minute clock unless
 // it says otherwise).
@@ -49,4 +51,25 @@ export const fixedTime = (mode) => mode.minutes !== undefined || mode.timed === 
 export function clockFor(mode, minutes = DEFAULT_MINUTES) {
   if (fixedTime(mode)) return { timed: mode.timed ?? true, minutes: mode.minutes ?? DEFAULT_MINUTES, increment: mode.increment }
   return { timed: minutes !== null, minutes: minutes ?? DEFAULT_MINUTES, increment: 0 }
+}
+
+// The settings an invite sends: { mode, variant, timed, minutes, increment, color }.
+export function inviteSettings(mode, setup, minutes, color) {
+  const clock = clockFor(mode, minutes)
+  return {
+    mode: mode.id,
+    variant: mode.setups ? setup : (mode.variant ?? null),
+    timed: clock.timed,
+    minutes: clock.minutes,
+    increment: clock.increment ?? 0,
+    color,
+  }
+}
+
+// How an invite reads, like "Fairy Chess (Eastern army) · 10 min".
+export function describeInvite(settings) {
+  const mode = modeById(settings.mode)
+  const setup = mode?.setups ? ` (${FAIRY_VARIANTS[settings.variant]?.title ?? settings.variant})` : ''
+  const time = !settings.timed ? 'no clock' : `${settings.minutes} min${settings.increment ? ` + ${settings.increment} s` : ''}`
+  return `${mode?.title ?? settings.mode}${setup} · ${time}`
 }

@@ -2,9 +2,10 @@ import { useState } from 'react'
 import { REPORT_REASONS } from './friends.js'
 import Avatar from './Avatar.jsx'
 import ConfirmDialog from './ConfirmDialog.jsx'
+import { useInvite } from './onlineContext.js'
 
 // The menu for another player (the ⋯ button on the Friends screen, a friend's card on the
-// profile page, or a name in the chat): Invite to game (coming later), the friend button
+// profile page, or a name in the chat): Invite to game, the friend button
 // (Add friend, Request sent, Accept, or Remove friend), Block and Report, each with its own
 // "are you sure?" or form.
 // `player` is the other player and `api` friends.js. How we are connected is either
@@ -25,6 +26,7 @@ export default function PlayerActions({
   reportDetails = '',
 }) {
   const link = relation ?? (friendshipId ? { kind: 'friend', id: friendshipId } : null)
+  const invite = useInvite()
   const [step, setStep] = useState('menu') // 'menu', 'remove', 'block' or 'report'
   const [problem, setProblem] = useState(null)
 
@@ -87,8 +89,14 @@ export default function PlayerActions({
         <h2>{player.name}</h2>
         {problem && <p className="account-message error">{problem}</p>}
         <div className="dialog-buttons">
-          {/* Games between players come later. */}
-          <button className="primary" disabled title="Coming soon: games between players">
+          <button
+            className="primary"
+            disabled={!invite}
+            onClick={() => {
+              onClose()
+              invite(player)
+            }}
+          >
             Invite to game
           </button>
           {link?.kind === 'none' && (

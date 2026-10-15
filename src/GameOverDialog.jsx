@@ -1,7 +1,8 @@
 const TITLES = { win: 'You won!', loss: 'You lost', draw: 'Draw' }
 
 // The pop-up shown when a game ends. `heading` replaces the usual title (a local game:
-// "Emma wins!"); then there is no bot to quote, and playing again comes first.
+// "Emma wins!"); then there is no bot to quote, and playing again comes first. Without
+// `onTryAgain` (online games) there is no Play again button.
 export default function GameOverDialog({ result, bot, botLine, heading = null, onTryAgain, onClose, onMenu, menuLabel = 'Back to menu' }) {
   return (
     <div className="overlay">
@@ -21,22 +22,26 @@ export default function GameOverDialog({ result, bot, botLine, heading = null, o
             <button className="primary" onClick={onMenu} autoFocus>
               {menuLabel}
             </button>
-            <button className="secondary" onClick={onTryAgain}>
-              Play again
-            </button>
+            {onTryAgain && (
+              <button className="secondary" onClick={onTryAgain}>
+                Play again
+              </button>
+            )}
             <button className="secondary" onClick={onClose}>
               View board
             </button>
           </div>
         ) : (
           <div className="dialog-buttons">
-            <button className="primary" onClick={onTryAgain} autoFocus>
-              {result.outcome === 'loss' && !heading ? 'Try again' : 'Play again'}
-            </button>
+            {onTryAgain && (
+              <button className="primary" onClick={onTryAgain} autoFocus>
+                {result.outcome === 'loss' && !heading ? 'Try again' : 'Play again'}
+              </button>
+            )}
             <button className="secondary" onClick={onClose}>
               View board
             </button>
-            <button className="secondary" onClick={onMenu}>
+            <button className={onTryAgain ? 'secondary' : 'primary'} onClick={onMenu} autoFocus={!onTryAgain}>
               {menuLabel}
             </button>
           </div>

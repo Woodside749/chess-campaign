@@ -11,9 +11,11 @@ import { rollRule } from './chaosRules.js'
 
 export class ChaosGame {
   // `roll` picks each turn's rule and the moves it allows: Chaos Chess (rollRule) by
-  // default, or Dice Chess (rollPiece in diceRules.js).
-  constructor(fen, roll = rollRule) {
+  // default, or Dice Chess (rollPiece in diceRules.js). `random` gives the random numbers
+  // (an online game passes a seeded one, so both players roll the same).
+  constructor(fen, roll = rollRule, random = Math.random) {
     this.roll = roll
+    this.random = random
     this.position = new Chess(fen)
     this.startFen = this.position.fen()
     this.moveList = []
@@ -24,7 +26,7 @@ export class ChaosGame {
 
   // Rolls the rule for the side to move, and works out the moves it allows.
   startTurn() {
-    const { rule, moves } = this.roll(this.position)
+    const { rule, moves } = this.roll(this.position, this.random)
     this.rule = rule
     this.legal = moves
   }

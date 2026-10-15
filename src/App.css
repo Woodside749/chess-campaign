@@ -3220,3 +3220,123 @@ button.friend-strip-card:hover {
 .chat-starter:hover {
   border-color: var(--accent);
 }
+
+/* ---------- Online games ---------- */
+
+/* The ½ button: offer a draw. */
+.review-nav .draw-offer {
+  flex: none;
+  width: 44px;
+}
+
+.draw-banner {
+  grid-area: dev;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+  padding: 10px 12px;
+  font-size: 14px;
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+}
+
+.draw-banner span {
+  flex: 1;
+}
+
+/* The online notices (invites, waiting, rejoin) in the bottom left corner of every screen
+   (the bottom right is the chat's message box on the main menu). */
+.online-hub {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 90;
+  width: min(380px, calc(100vw - 32px));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hub-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+  animation: pop-in 0.25s ease-out;
+}
+
+.hub-card.invite {
+  border-color: #43a047;
+}
+
+.hub-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 14px;
+}
+
+.hub-text span {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.hub-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+/* The invite window. */
+.dialog.invite-dialog {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.dialog.invite-dialog h2 {
+  margin: 8px 0 16px;
+}
+
+.dialog.invite-dialog .account-field,
+.dialog.invite-dialog .account-hint,
+.dialog.invite-dialog .dialog-buttons {
+  width: 100%;
+}
+
+.dialog.invite-dialog .profile-select {
+  max-width: none;
+}
+
+.choice-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.choice-pills button {
+  padding: 7px 12px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.choice-pills button.selected {
+  color: white;
+  background: #43a047;
+  border-color: #43a047;
+}

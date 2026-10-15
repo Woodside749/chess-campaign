@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { BOTS } from './bots.js'
 import { EVENTS } from './career.js'
 import { LESSONS } from './lessons.js'
@@ -29,6 +29,11 @@ import Profile from './Profile.jsx'
 import Friends from './Friends.jsx'
 import { PlayerContext, playerLook, playerTitle, tierStars, useDevTools } from './player.js'
 import { useAccount } from './useAccount.js'
+import { InviteContext } from './onlineContext.js'
+import { sendInvite } from './online.js'
+import OnlineGame from './OnlineGame.jsx'
+import OnlineHub from './OnlineHub.jsx'
+import InviteDialog from './InviteDialog.jsx'
 import './App.css'
 
 // The puzzle screen (with its puzzle collection) is only downloaded when first opened.
@@ -39,16 +44,36 @@ const PuzzleTrial = lazy(() => import('./puzzles/PuzzleTrial.jsx'))
 // menu (every bot), a tournament's bracket, a puzzle trial, a simul, or a game. It also keeps the career progress.
 export default function App() {
   const account = useAccount() // who is logged in (null when nobody)
+  const myId = account.user?.id
+  // Games between players: the one being played (its id), and who is being invited.
+  const [onlineGameId, setOnlineGameId] = useState(null)
+  const [inviting, setInviting] = useState(null) // a player card, while the invite window is open
+  const openGame = useCallback((id) => setOnlineGameId(id), [])
   return (
-    // Every screen can show the player's name and avatar (usePlayer in player.js).
+    // Every screen can show the player's name and avatar (usePlayer in player.js), and open
+    // the "Invite to game" window for another player (logged in only).
     <PlayerContext.Provider value={playerLook(account)}>
-      <Screens account={account} />
+      <InviteContext.Provider value={myId ? setInviting : null}>
+        <Screens account={account} onlineGameId={onlineGameId} onLeaveOnlineGame={() => setOnlineGameId(null)} />
+        <OnlineHub account={account} inGame={onlineGameId !== null} onOpenGame={openGame} />
+        {inviting && (
+          <InviteDialog
+            player={inviting}
+            onSend={async (settings) => {
+              const { error } = await sendInvite(myId, inviting.id, settings)
+              if (!error) setInviting(null)
+              return error ?? null
+            }}
+            onClose={() => setInviting(null)}
+          />
+        )}
+      </InviteContext.Provider>
     </PlayerContext.Provider>
   )
 }
 
 // Picks the screen to show (see App above).
-function Screens({ account }) {
+function Screens({ account, onlineGameId, onLeaveOnlineGame }) {
   // 'menu' (the main menu), 'home' (the chess campaign), 'dev', 'achievements', or an event id
   const [screen, setScreen] = useState('menu')
   const [colorChoice, setColorChoice] = useState('w') // developer menu: 'w', 'b' or 'random'
@@ -183,6 +208,10 @@ function Screens({ account }) {
     // Two players with the same name would be confusing ("Emma wins!"), so tell them apart.
     if (names.w === names.b) names.b += ' (Black)'
     setMatch({ bot: null, color: 'w', ...clockFor(mode, localChoice.minutes), variant, lesson: null, local: names })
+  }
+
+  if (onlineGameId !== null) {
+    return <OnlineGame key={onlineGameId} gameId={onlineGameId} account={account} progress={progress} onExit={onLeaveOnlineGame} />
   }
 
   if (puzzleRun) {
