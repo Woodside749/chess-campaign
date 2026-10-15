@@ -21,7 +21,7 @@ function ChatIntro() {
           <span aria-hidden="true">🎲</span> Find people who want to play the same game mode as you
         </li>
         <li>
-          <span aria-hidden="true">✉️</span> Agree on a game and invite each other (coming soon)
+          <span aria-hidden="true">✉️</span> Agree on a game, then tap a name to invite them
         </li>
       </ul>
       <p className="chat-intro-rules">Messages disappear after an hour. No links, and be kind.</p>
