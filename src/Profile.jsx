@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from './supabase.js'
 import { STAR_TIERS, maxStars, starsWon } from './career.js'
 import { achievementsFor } from './achievements.js'
@@ -6,6 +6,7 @@ import { playerTitle, tierStars, usePlayer } from './player.js'
 import { roundsWon } from './progress.js'
 import { COUNTRIES } from './countries.js'
 import { USERNAME_RULE, usernameProblem } from './usernames.js'
+import * as friendsApi from './friends.js'
 import Avatar from './Avatar.jsx'
 import CharacterCreator from './CharacterCreator.jsx'
 import TitleBadge from './TitleBadge.jsx'
@@ -14,7 +15,8 @@ import StarBadges from './StarBadges.jsx'
 
 // The player's profile (only when logged in): how they look to others, their title and
 // stars, a few numbers, and the settings for their avatar, flag and username.
-export default function Profile({ progress, account, onBack, onOpenFriends }) {
+// (`api` is friends.js; a test can pass a pretend one.)
+export default function Profile({ progress, account, onBack, onOpenFriends, api = friendsApi }) {
   const player = usePlayer()
   const { user, profile, updateProfile } = account
   const title = playerTitle(progress)
@@ -82,15 +84,13 @@ export default function Profile({ progress, account, onBack, onOpenFriends }) {
         </div>
       </header>
 
-      <button className="profile-friends-button" onClick={onOpenFriends}>
-        👥 Friends
-      </button>
-
       <ul className="profile-stats">
         <Stat value={`${stars} / ${allStars}`} label="Campaign stars" />
         <Stat value={`${achievements.filter((a) => a.got).length} / ${achievements.length}`} label="Achievements" />
         <Stat value={modeWins} label="Game mode trophies" />
       </ul>
+
+      <FriendStrip myId={user.id} onOpenFriends={onOpenFriends} api={api} />
 
       <section className="profile-section">
         <h2>Country</h2>
@@ -174,6 +174,55 @@ function DeleteAccountButton() {
         </div>
       )}
     </>
+  )
+}
+
+// The player's friends in a row that scrolls sideways: each friend's character with their
+// username below. The last card opens the Friends screen (search, requests), and shows how
+// many requests are waiting.
+function FriendStrip({ myId, onOpenFriends, api }) {
+  const [lists, setLists] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+    const load = () =>
+      api.loadFriendships(myId).then(({ lists: loaded }) => {
+        if (!cancelled && loaded) setLists(loaded)
+      })
+    load()
+    const stop = api.watchFriendships(myId, load)
+    return () => {
+      cancelled = true
+      stop()
+    }
+  }, [myId, api])
+
+  const requests = lists?.incoming.length ?? 0
+  return (
+    <section className="profile-section">
+      <h2>Friends{lists ? ` (${lists.friends.length})` : ''}</h2>
+      <ul className="friend-strip">
+        {lists?.friends.map(({ id, player }) => (
+          <li key={id} className="friend-strip-card">
+            <Avatar bot={player} size={64} />
+            <span className="friend-strip-name">{player.name}</span>
+          </li>
+        ))}
+        <li>
+          <button className="friend-strip-card add" onClick={onOpenFriends}>
+            <span className="friend-strip-plus" aria-hidden="true">
+              +
+            </span>
+            <span className="friend-strip-name">Find friends</span>
+            {requests > 0 && (
+              <span className="friend-strip-badge">
+                {requests} request{requests === 1 ? '' : 's'}
+              </span>
+            )}
+          </button>
+        </li>
+      </ul>
+    </section>
   )
 }
 
