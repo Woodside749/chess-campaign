@@ -99,6 +99,11 @@ const HAIRSTYLES = {
       path('M 66.8,48 C 68,40 67,34.5 63.5,31.5 C 63.5,37 64,42 64.2,48 Z', c),
     ],
   }),
+  // No hair at all, just a little shine on top of the head. (The hair colour still sets
+  // the eyebrows and beard.)
+  bald: () => ({
+    front: [path('M 42,27.5 Q 47,25.5 53,26.5', 'none', { stroke: '#ffffff', strokeWidth: 2.2, strokeLinecap: 'round', opacity: 0.3 })],
+  }),
   afro: (c) => ({
     back: [h('circle', { cx: 50, cy: 38, r: 26, fill: c })],
     front: [path('M 34,40 C 35,30 43,27 50,27 C 57,27 65,30 66,40 C 62,34 56,32 50,32 C 44,32 38,34 34,40 Z', c)],
@@ -321,7 +326,7 @@ function person(look) {
   const hairColor = HAIR[look.hairColor] ?? look.hairColor
   const style = HAIRSTYLES[look.hair](look.hair === 'hijab' ? look.scarf : hairColor)
   const brows = BROWS[look.expression ?? 'happy']
-  const browColor = look.hair === 'hijab' || look.hair === 'balding' ? shade(HAIR[look.browColor ?? 'darkBrown'], 1) : shade(hairColor, 0.8)
+  const browColor = ['hijab', 'balding', 'bald'].includes(look.hair) ? shade(HAIR[look.browColor ?? 'darkBrown'], 1) : shade(hairColor, 0.8)
   const extras = (look.extras ?? []).flatMap((name) => {
     const [kind, arg] = name.split(':')
     return EXTRAS[kind](arg ? `#${arg}` : skin)
@@ -582,6 +587,7 @@ export const CREATOR_OPTIONS = {
     ['messy', 'Spiky'],
     ['curlyShort', 'Short curls'],
     ['balding', 'Bald top'],
+    ['bald', 'Bald'],
     ['pixie', 'Pixie'],
     ['bob', 'Bob'],
     ['long', 'Long'],
