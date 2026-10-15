@@ -1749,8 +1749,9 @@ ul.fairy-legend li {
   background: #d64545;
 }
 
-.menu-tile.purple {
-  background: #8a55d4;
+.menu-tile.yellow {
+  background: #f2c94c;
+  color: #3d2e00;
 }
 
 /* The global chat (GlobalChat.jsx). */

@@ -95,8 +95,7 @@ export default function Home({ progress, onOpenEvent, onOpenAchievements, onBack
         </button>
         <h1>Chess Campaign</h1>
         <p>
-          Travel a world tour of chess clubs, tournaments and rivals. Every opponent has their own
-          style, and every event moves your campaign forward.
+          Start your chess career, conquer the chess world and become the World Champion.
         </p>
         <div className="player-card">
           <div className="avatar-with-stars">

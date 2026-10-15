@@ -46,7 +46,7 @@ export default function MainMenu({ progress, account, onOpenCampaign, onOpenGame
             text="Every mode against any bot: blitz, fog, ducks, chaos and more."
             onClick={onOpenGameModes}
           />
-          <MenuTile color="purple" icon="🧙" title="Start your fantasy chess campaign" soon />
+          <MenuTile color="yellow" icon="🧙" title="Start your fantasy chess campaign" soon />
         </div>
       </section>
 
