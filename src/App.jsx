@@ -49,12 +49,31 @@ export default function App() {
   const [onlineGameId, setOnlineGameId] = useState(null)
   const [inviting, setInviting] = useState(null) // a player card, while the invite window is open
   const openGame = useCallback((id) => setOnlineGameId(id), [])
+  // Which screen is shown, and what is picked in the game modes menu. Kept up here so the
+  // invite window can open the Simul with the invited friend already on a board.
+  const [screen, setScreen] = useState('menu')
+  const [modesChoice, setModesChoice] = useState({
+    modeId: 'unlimited',
+    color: 'w',
+    setup: 'archchess',
+    simulCount: 3,
+    simulBoards: [],
+    minutes: 10,
+  })
   return (
     // Every screen can show the player's name and avatar (usePlayer in player.js), and open
     // the "Invite to game" window for another player (logged in only).
     <PlayerContext.Provider value={playerLook(account)}>
       <InviteContext.Provider value={myId ? setInviting : null}>
-        <Screens account={account} onlineGameId={onlineGameId} onLeaveOnlineGame={() => setOnlineGameId(null)} />
+        <Screens
+          account={account}
+          screen={screen}
+          setScreen={setScreen}
+          modesChoice={modesChoice}
+          setModesChoice={setModesChoice}
+          onlineGameId={onlineGameId}
+          onLeaveOnlineGame={() => setOnlineGameId(null)}
+        />
         <OnlineHub account={account} inGame={onlineGameId !== null} onOpenGame={openGame} />
         {inviting && (
           <InviteDialog
@@ -63,6 +82,13 @@ export default function App() {
               const { error } = await sendInvite(myId, inviting.id, settings)
               if (!error) setInviting(null)
               return error ?? null
+            }}
+            onSetUpSimul={() => {
+              // A simul needs more than one invite: set it up in Game modes, with this friend
+              // already on the first board.
+              setModesChoice((choice) => ({ ...choice, modeId: 'simul', simulBoards: [{ kind: 'friend', player: inviting }] }))
+              setScreen('modes')
+              setInviting(null)
             }}
             onClose={() => setInviting(null)}
           />
@@ -73,24 +99,15 @@ export default function App() {
 }
 
 // Picks the screen to show (see App above).
-function Screens({ account, onlineGameId, onLeaveOnlineGame }) {
-  // 'menu' (the main menu), 'home' (the chess campaign), 'dev', 'achievements', or an event id
-  const [screen, setScreen] = useState('menu')
+// `screen` is 'menu' (the main menu), 'home' (the chess campaign), 'dev', 'achievements',
+// 'modes', 'local', 'profile', 'friends', or an event id.
+function Screens({ account, screen, setScreen, modesChoice, setModesChoice, onlineGameId, onLeaveOnlineGame }) {
   const [colorChoice, setColorChoice] = useState('w') // developer menu: 'w', 'b' or 'random'
   const [match, setMatch] = useState(null) // the game being played, or null
   const [puzzleRun, setPuzzleRun] = useState(null) // the puzzle trial being played: { event, round }
   // The simul being played: { event, round } in the campaign, or { round, minutes, gameMode }
   // (round = { title, opponents, needed }) from the game modes menu.
   const [simulRun, setSimulRun] = useState(null)
-  // What is picked in the game modes menu (kept here, so it is still there after a game).
-  const [modesChoice, setModesChoice] = useState({
-    modeId: 'unlimited',
-    color: 'w',
-    setup: 'archchess',
-    simulCount: 3,
-    simulBoards: [],
-    minutes: 10,
-  })
   // What is picked in the Play local menu: the mode, fairy setup and the two names.
   const [localChoice, setLocalChoice] = useState({ modeId: 'unlimited', setup: 'archchess', names: { w: '', b: '' }, minutes: 10 })
   const [progress, setProgress] = useState(loadProgress)
@@ -130,7 +147,7 @@ function Screens({ account, onlineGameId, onLeaveOnlineGame }) {
     return () => {
       cancelled = true
     }
-  }, [userId])
+  }, [userId, setScreen])
 
   // A game from the developer menu: any bot, with clocks.
   function playBot(bot) {
