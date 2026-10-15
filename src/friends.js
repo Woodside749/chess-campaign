@@ -106,7 +106,6 @@ export async function unblockPlayer(myId, otherId) {
 // Why a player can be reported (the database only accepts these).
 export const REPORT_REASONS = [
   ['username', 'Offensive username'],
-  ['character', 'Inappropriate character'],
   ['harassment', 'Harassment or bullying'],
   ['cheating', 'Cheating'],
   ['other', 'Something else'],

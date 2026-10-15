@@ -83,7 +83,7 @@ create table public.reports (
   id bigint generated always as identity primary key,
   reporter uuid not null references public.profiles (id) on delete cascade,
   reported uuid not null references public.profiles (id) on delete cascade,
-  reason text not null check (reason in ('username', 'character', 'harassment', 'cheating', 'other')),
+  reason text not null check (reason in ('username', 'harassment', 'cheating', 'other')),
   details text check (char_length(details) <= 500),
   status text not null default 'open' check (status in ('open', 'done')),
   created_at timestamptz not null default now(),
