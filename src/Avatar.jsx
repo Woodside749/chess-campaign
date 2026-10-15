@@ -1,9 +1,11 @@
-import { portraitFor } from './portraits.js'
+import { characterPortrait, portraitFor } from './portraits.js'
 
-// A round avatar with the bot's drawn portrait (see portraits.js) and country flag. Anyone
-// without a portrait (the player, players in a local game) gets their first initial.
+// A round avatar with a drawn portrait (see portraits.js) and country flag: a bot's own
+// portrait, or the character a player made in the character creator (`bot.character`).
+// Anyone without one (a player with no character yet, players in a local game) gets their
+// first initial.
 export default function Avatar({ bot, size = 44 }) {
-  const portrait = portraitFor(bot.id, bot.color)
+  const portrait = bot.character ? characterPortrait(bot.character, bot.id) : portraitFor(bot.id, bot.color)
   return (
     <div className="avatar" style={{ background: bot.color, width: size, height: size, fontSize: size * 0.45 }}>
       {portrait ?? bot.name[0].toUpperCase()}

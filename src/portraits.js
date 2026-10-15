@@ -544,10 +544,17 @@ export function portraitFor(id, background) {
   } else if (LOOKS[id]) {
     const look = LOOKS[id]
     const contrasted = { ...look, shirt: standOut(look.shirt, background, id), scarf: standOut(look.scarf, background, id) }
-    const zoomed = person(contrasted).map((part, i) => cloneElement(part, { key: i }))
-    parts = [h('g', { transform: 'translate(50 60) scale(1.2) translate(-50 -60)' }, ...zoomed)]
+    parts = [closeUp(person(contrasted))]
   }
-  if (!parts) return null
+  return parts ? framed(parts, id) : null
+}
+
+// A person shown a little closer up than drawn, so the face fills the circle.
+const closeUp = (parts) =>
+  h('g', { transform: 'translate(50 60) scale(1.2) translate(-50 -60)' }, ...parts.map((part, i) => cloneElement(part, { key: i })))
+
+// The finished <svg>: the parts, cut to a circle.
+function framed(parts, id) {
   const clip = `portrait-clip-${id}`
   return h(
     'svg',
@@ -556,3 +563,140 @@ export function portraitFor(id, background) {
     h('g', { clipPath: `url(#${clip})` }, ...parts.map((part, i) => cloneElement(part, { key: i }))),
   )
 }
+
+// ---------- Players' own characters ----------
+// Players build their character in the character creator (CharacterCreator.jsx) from the
+// same parts as the bots. It is saved with their profile as a small object like
+// { skin: 3, hair: 'long', hairColor: 'brown', beard: 'none', expression: 'happy',
+//   glasses: 'none', extras: ['earrings'], clothes: 'hoodie', shirt: '#3a74b3', scarf: '#2c8c8c' }.
+
+// Everything a player can pick, in the order the creator shows it.
+export const CREATOR_OPTIONS = {
+  skin: Object.keys(SKIN).map(Number),
+  hair: [
+    ['short', 'Short'],
+    ['buzz', 'Buzz cut'],
+    ['sidePart', 'Side part'],
+    ['swept', 'Swept'],
+    ['slicked', 'Slicked back'],
+    ['messy', 'Spiky'],
+    ['curlyShort', 'Short curls'],
+    ['balding', 'Bald top'],
+    ['pixie', 'Pixie'],
+    ['bob', 'Bob'],
+    ['long', 'Long'],
+    ['longBangs', 'Long with bangs'],
+    ['longWavy', 'Long and wavy'],
+    ['curlyLong', 'Long curls'],
+    ['afro', 'Afro'],
+    ['bun', 'Bun'],
+    ['ponytail', 'Ponytail'],
+    ['braids', 'Braids'],
+    ['hijab', 'Headscarf'],
+  ],
+  hairColor: Object.keys(HAIR),
+  beard: [
+    ['none', 'None'],
+    ['stubble', 'Stubble'],
+    ['shortBeard', 'Short beard'],
+    ['beard', 'Full beard'],
+    ['goatee', 'Goatee'],
+    ['mustache', 'Mustache'],
+  ],
+  expression: [
+    ['happy', 'Happy'],
+    ['grin', 'Grin'],
+    ['smirk', 'Smirk'],
+    ['calm', 'Calm'],
+    ['stern', 'Serious'],
+  ],
+  glasses: [
+    ['none', 'None'],
+    ['glasses', 'Round'],
+    ['squareGlasses', 'Square'],
+  ],
+  extras: [
+    ['earrings', 'Earrings'],
+    ['hoops', 'Hoops'],
+    ['freckles', 'Freckles'],
+    ['blush', 'Rosy cheeks'],
+    ['headset', 'Headset'],
+    ['flatCap', 'Cap'],
+    ['flower', 'Flower'],
+  ],
+  clothes: [
+    ['plain', 'T-shirt'],
+    ['collar', 'Shirt'],
+    ['sweater', 'Sweater'],
+    ['hoodie', 'Hoodie'],
+    ['suit', 'Suit'],
+  ],
+  // Clothes and headscarf colours.
+  colors: ['#d64545', '#e07b39', '#d9a441', '#43a047', '#2f5d45', '#2c8c8c', '#3a74b3', '#26324a', '#5e4687', '#c2549c', '#7d2a36', '#a9572f', '#55595f', '#f1ede4', '#1e1e1e'],
+}
+
+const DEFAULT_CHARACTER = {
+  skin: 3,
+  hair: 'short',
+  hairColor: 'brown',
+  beard: 'none',
+  expression: 'happy',
+  glasses: 'none',
+  extras: [],
+  clothes: 'hoodie',
+  shirt: '#3a74b3',
+  scarf: '#2c8c8c',
+}
+
+const ids = (list) => list.map((option) => (Array.isArray(option) ? option[0] : option))
+const pick = (value, allowed, fallback) => (allowed.includes(value) ? value : fallback)
+
+// A saved character, with anything unknown replaced by the default: characters come from
+// the database, so only values from CREATOR_OPTIONS are ever drawn.
+export function cleanCharacter(saved) {
+  const c = saved && typeof saved === 'object' ? saved : {}
+  const extras = Array.isArray(c.extras) ? c.extras : []
+  return {
+    skin: pick(c.skin, CREATOR_OPTIONS.skin, DEFAULT_CHARACTER.skin),
+    hair: pick(c.hair, ids(CREATOR_OPTIONS.hair), DEFAULT_CHARACTER.hair),
+    hairColor: pick(c.hairColor, CREATOR_OPTIONS.hairColor, DEFAULT_CHARACTER.hairColor),
+    beard: pick(c.beard, ids(CREATOR_OPTIONS.beard), 'none'),
+    expression: pick(c.expression, ids(CREATOR_OPTIONS.expression), 'happy'),
+    glasses: pick(c.glasses, ids(CREATOR_OPTIONS.glasses), 'none'),
+    extras: ids(CREATOR_OPTIONS.extras).filter((extra) => extras.includes(extra)),
+    clothes: pick(c.clothes, ids(CREATOR_OPTIONS.clothes), DEFAULT_CHARACTER.clothes),
+    shirt: pick(c.shirt, CREATOR_OPTIONS.colors, DEFAULT_CHARACTER.shirt),
+    scarf: pick(c.scarf, CREATOR_OPTIONS.colors, DEFAULT_CHARACTER.scarf),
+  }
+}
+
+// A random character (the creator's 🎲 button).
+export function randomCharacter() {
+  const any = (list) => list[Math.floor(Math.random() * list.length)]
+  return cleanCharacter({
+    skin: any(CREATOR_OPTIONS.skin),
+    hair: any(ids(CREATOR_OPTIONS.hair)),
+    hairColor: any(CREATOR_OPTIONS.hairColor),
+    beard: Math.random() < 0.6 ? 'none' : any(ids(CREATOR_OPTIONS.beard)),
+    expression: any(ids(CREATOR_OPTIONS.expression)),
+    glasses: Math.random() < 0.7 ? 'none' : any(ids(CREATOR_OPTIONS.glasses)),
+    extras: ids(CREATOR_OPTIONS.extras).filter(() => Math.random() < 0.15),
+    clothes: any(ids(CREATOR_OPTIONS.clothes)),
+    shirt: any(CREATOR_OPTIONS.colors),
+    scarf: any(CREATOR_OPTIONS.colors),
+  })
+}
+
+// The portrait of a player's character (see cleanCharacter), as an <svg>.
+export function characterPortrait(character, id = 'you') {
+  const c = cleanCharacter(character)
+  const look = {
+    ...c,
+    browColor: c.hairColor,
+    extras: [...(c.glasses === 'none' ? [] : [c.glasses]), ...c.extras],
+  }
+  return framed([closeUp(person(look))], id)
+}
+
+// The skin tones and hair colours, for the creator's colour buttons.
+export { SKIN as SKIN_TONES, HAIR as HAIR_COLORS }

@@ -1,7 +1,7 @@
 import { BOTS } from './bots.js'
 import { buildBracket } from './bracket.js'
-import { titleById } from './player.js'
-import { portraitFor } from './portraits.js'
+import { titleById, usePlayer } from './player.js'
+import { characterPortrait, portraitFor } from './portraits.js'
 
 // Sizes of the drawing, in SVG units. The drawing scales to fit its container.
 const BOX_W = 150
@@ -21,8 +21,9 @@ const columnTitles = (roundCount) => [
 // Bots with a `chessTitle` get the same badge.
 export default function Bracket({ event, roundsWon, playerTitle }) {
   const { rounds, champion } = buildBracket(event, roundsWon)
+  const player = usePlayer() // their character, if they have made one
   const person = (id) => {
-    if (id === 'you') return { name: 'You', color: 'var(--accent)', flag: '', title: playerTitle }
+    if (id === 'you') return { id, name: 'You', color: 'var(--accent)', flag: '', title: playerTitle, character: player.character }
     const bot = BOTS[id]
     return bot ? { ...bot, title: titleById(bot.chessTitle) } : event.classmates[id]
   }
@@ -104,7 +105,7 @@ function PlayerBox({ x, y, person, isYou, won, lost, trophy }) {
     )
   }
   const classes = ['bracket-box', isYou && 'you', won && 'won'].filter(Boolean).join(' ')
-  const portrait = portraitFor(person.id, person.color)
+  const portrait = person.character ? characterPortrait(person.character) : portraitFor(person.id, person.color)
   return (
     <g opacity={lost ? 0.4 : 1}>
       <rect className={classes} x={x} y={top} width={BOX_W} height={BOX_H} rx={6} />

@@ -2247,7 +2247,7 @@ ul.fairy-legend li {
 }
 
 .profile-screen {
-  width: min(640px, 100%);
+  width: min(780px, 100%);
   margin: 0 auto;
   padding: 24px 16px 48px;
 }
@@ -2557,4 +2557,136 @@ ul.fairy-legend li {
 .fairy-piece-picture.dark {
   background: #b58863;
   border-radius: 0 8px 8px 0;
+}
+
+/* ---------- Character creator (profile page) ---------- */
+
+.creator {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+/* The big preview stays in view while scrolling through the choices. */
+.creator-preview {
+  position: sticky;
+  top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.creator-big {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+}
+
+.creator-random,
+.creator-undo {
+  padding: 9px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.creator-undo {
+  font-size: 14px;
+  color: var(--muted);
+  background: none;
+  border: none;
+}
+
+.creator-save:disabled {
+  opacity: 0.55;
+  cursor: default;
+  filter: none;
+}
+
+.creator-options h3 {
+  margin: 16px 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.creator-options h3:first-child {
+  margin-top: 0;
+}
+
+.creator-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+  gap: 8px;
+}
+
+.creator-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px 6px;
+  font: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.creator-tile:hover {
+  border-color: var(--muted);
+}
+
+.creator-tile.selected {
+  border-color: var(--accent);
+}
+
+.creator-tile-picture {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+}
+
+.creator-tile-label {
+  font-size: 12px;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.creator-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.creator-swatches .swatch {
+  width: 30px;
+  height: 30px;
+}
+
+/* Phones: the preview on top (not sticky), the choices below. */
+@media (max-width: 600px) {
+  .creator {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .creator-preview {
+    position: static;
+    align-items: center;
+  }
+
+  .creator-preview button {
+    width: 180px;
+  }
+}
+
+/* A thin outline, so dark colours (like black hair) still show on the dark page. */
+.creator-swatches .swatch:not(.selected) {
+  box-shadow: 0 0 0 1px var(--border);
 }

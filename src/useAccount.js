@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react'
 import { supabase } from './supabase.js'
 
 // Who is logged in: `user` is the Supabase user (with .email), or null when nobody is, and
-// `profile` their row in the profiles table ({ username, avatar_color, country,
-// created_at, is_admin }), or null until it has loaded. `recovering` is true after the player opens
+// `profile` their row in the profiles table ({ username, avatar_color, avatar (their
+// character), country, created_at, is_admin }), or null until it has loaded. `recovering` is true after the player opens
 // the "reset your password" link from the email, until they have chosen a new password.
 export function useAccount() {
   const [user, setUser] = useState(null)
@@ -27,7 +27,7 @@ export function useAccount() {
     let cancelled = false
     supabase
       .from('profiles')
-      .select('username, avatar_color, country, created_at, is_admin')
+      .select('username, avatar_color, avatar, country, created_at, is_admin')
       .eq('id', userId)
       .maybeSingle()
       .then(({ data, error }) => {

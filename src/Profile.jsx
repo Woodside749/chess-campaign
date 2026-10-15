@@ -7,14 +7,10 @@ import { roundsWon } from './progress.js'
 import { COUNTRIES } from './countries.js'
 import { USERNAME_RULE, usernameProblem } from './usernames.js'
 import Avatar from './Avatar.jsx'
+import CharacterCreator from './CharacterCreator.jsx'
 import TitleBadge from './TitleBadge.jsx'
 import StarBadges from './StarBadges.jsx'
 
-// The colours a player can pick for their avatar.
-const AVATAR_COLORS = [
-  '#6f8f4e', '#43a047', '#2e7d6b', '#3f8fc4', '#5b6fd6', '#8a55d4',
-  '#c2549c', '#d64545', '#e07b39', '#c9a227', '#7a6a58', '#5f6b75',
-]
 
 // The player's profile (only when logged in): how they look to others, their title and
 // stars, a few numbers, and the settings for their avatar, flag and username.
@@ -67,20 +63,12 @@ export default function Profile({ progress, account, onBack }) {
       </ul>
 
       <section className="profile-section">
-        <h2>Avatar colour</h2>
-        <div className="color-swatches" role="radiogroup" aria-label="Avatar colour">
-          {AVATAR_COLORS.map((color) => (
-            <button
-              key={color}
-              role="radio"
-              aria-checked={player.color === color}
-              aria-label={color}
-              className={player.color === color ? 'swatch selected' : 'swatch'}
-              style={{ background: color }}
-              onClick={() => save({ avatar_color: color })}
-            />
-          ))}
-        </div>
+        <h2>Your character</h2>
+        <CharacterCreator
+          character={profile?.avatar}
+          background={player.color}
+          onSave={(avatar, color) => updateProfile({ avatar, avatar_color: color })}
+        />
 
         <h2>Country</h2>
         <select

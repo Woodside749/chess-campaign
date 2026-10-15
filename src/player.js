@@ -21,6 +21,8 @@ export function playerLook(account) {
     flag: flagOf(profile?.country),
     country: countryName(profile?.country),
     admin: Boolean(profile?.is_admin),
+    // The character they made in the character creator (null until they have made one).
+    character: profile?.avatar ?? null,
   }
 }
 
