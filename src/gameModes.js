@@ -37,3 +37,16 @@ export const GAME_MODES = [
 ]
 
 export const modeById = (id) => GAME_MODES.find((mode) => mode.id === id)
+
+// The clocks a player can pick for a mode (minutes each; null = no clock). 10 is the default.
+export const TIME_CHOICES = [1, 3, 5, 10, 30, null]
+export const DEFAULT_MINUTES = 10
+
+// Modes whose time is the mode itself (No time, Rapid, Blitz, Bullet): no time choice there.
+export const fixedTime = (mode) => mode.minutes !== undefined || mode.timed === false
+
+// The clock for a game of `mode` with the picked `minutes`: { timed, minutes, increment }.
+export function clockFor(mode, minutes = DEFAULT_MINUTES) {
+  if (fixedTime(mode)) return { timed: mode.timed ?? true, minutes: mode.minutes ?? DEFAULT_MINUTES, increment: mode.increment }
+  return { timed: minutes !== null, minutes: minutes ?? DEFAULT_MINUTES, increment: 0 }
+}

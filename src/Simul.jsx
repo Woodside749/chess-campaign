@@ -13,7 +13,8 @@ const showPoints = (points) => String(points).replace('.5', '½').replace(/^0½/
 // board. `onFinish(passed)` is called once, when all three games are over, and
 // `onGameResult(botId, outcome)` (optional) after each board's game.
 // The same bot may play on more than one board.
-export default function Simul({ round, minutes, onFinish, onGameResult, onExit }) {
+// `timed` false plays without clocks (the game modes menu's "No time").
+export default function Simul({ round, timed = true, minutes, onFinish, onGameResult, onExit }) {
   const [results, setResults] = useState({}) // board number → 'win', 'loss' or 'draw'
   const [attempt, setAttempt] = useState(0) // a new number starts three fresh games
   const [confirmingLeave, setConfirmingLeave] = useState(false)
@@ -61,7 +62,7 @@ export default function Simul({ round, minutes, onFinish, onGameResult, onExit }
             compact
             bot={BOTS[id]}
             startColor="w"
-            timed
+            timed={timed}
             minutes={minutes}
             onResult={(result) => {
               setResults((r) => ({ ...r, [board]: result.outcome }))

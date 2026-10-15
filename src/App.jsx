@@ -24,6 +24,7 @@ import Simul from './Simul.jsx'
 import Achievements from './Achievements.jsx'
 import MainMenu from './MainMenu.jsx'
 import GameModes from './GameModes.jsx'
+import { clockFor } from './gameModes.js'
 import Profile from './Profile.jsx'
 import Friends from './Friends.jsx'
 import { PlayerContext, playerLook, playerTitle, tierStars, useDevTools } from './player.js'
@@ -57,9 +58,9 @@ function Screens({ account }) {
   // (round = { title, opponents, needed }) from the game modes menu.
   const [simulRun, setSimulRun] = useState(null)
   // What is picked in the game modes menu (kept here, so it is still there after a game).
-  const [modesChoice, setModesChoice] = useState({ modeId: 'unlimited', color: 'w', setup: 'archchess', simulBots: [] })
+  const [modesChoice, setModesChoice] = useState({ modeId: 'unlimited', color: 'w', setup: 'archchess', simulBots: [], minutes: 10 })
   // What is picked in the Play local menu: the mode, fairy setup and the two names.
-  const [localChoice, setLocalChoice] = useState({ modeId: 'unlimited', setup: 'archchess', simulBots: [], names: { w: '', b: '' } })
+  const [localChoice, setLocalChoice] = useState({ modeId: 'unlimited', setup: 'archchess', simulBots: [], names: { w: '', b: '' }, minutes: 10 })
   const [progress, setProgress] = useState(loadProgress)
   const userId = account.user?.id ?? null
   const devTools = useDevTools() // admins only: the developer menu
@@ -171,16 +172,7 @@ function Screens({ account }) {
     const variant = mode.setups ? modesChoice.setup : (mode.variant ?? null)
     // Fairy chess and the other engine variants need their rules library loaded first.
     if (isFairyVariant(variant)) await loadFairy()
-    setMatch({
-      bot,
-      color,
-      timed: mode.timed ?? true,
-      minutes: mode.minutes ?? 10,
-      increment: mode.increment,
-      variant,
-      lesson: null,
-      gameMode: mode.id,
-    })
+    setMatch({ bot, color, ...clockFor(mode, modesChoice.minutes), variant, lesson: null, gameMode: mode.id })
   }
 
   // A local game: two people on one device (Play local), in any mode but the Simul.
@@ -190,16 +182,7 @@ function Screens({ account }) {
     const names = { w: localChoice.names.w.trim() || 'White', b: localChoice.names.b.trim() || 'Black' }
     // Two players with the same name would be confusing ("Emma wins!"), so tell them apart.
     if (names.w === names.b) names.b += ' (Black)'
-    setMatch({
-      bot: null,
-      color: 'w',
-      timed: mode.timed ?? true,
-      minutes: mode.minutes ?? 10,
-      increment: mode.increment,
-      variant,
-      lesson: null,
-      local: names,
-    })
+    setMatch({ bot: null, color: 'w', ...clockFor(mode, localChoice.minutes), variant, lesson: null, local: names })
   }
 
   if (puzzleRun) {
@@ -220,6 +203,7 @@ function Screens({ account }) {
     return (
       <Simul
         round={simulRun.round}
+        timed={simulRun.timed}
         minutes={simulRun.minutes}
         onFinish={() => {}}
         onGameResult={(botId, outcome) => outcome === 'win' && saveModeWin(simulRun.gameMode, botId)}
@@ -324,7 +308,9 @@ function Screens({ account }) {
         choice={modesChoice}
         onChoice={setModesChoice}
         onPlay={playGameMode}
-        onPlaySimul={(mode, opponents) => setSimulRun({ round: { title: 'Simul', opponents, needed: 2 }, minutes: 10, gameMode: mode.id })}
+        onPlaySimul={(mode, opponents) =>
+          setSimulRun({ round: { title: 'Simul', opponents, needed: 2 }, ...clockFor(mode, modesChoice.minutes), gameMode: mode.id })
+        }
         onBack={() => setScreen('menu')}
       />
     )

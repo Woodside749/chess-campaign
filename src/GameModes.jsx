@@ -1,5 +1,5 @@
 import { BOTS } from './bots.js'
-import { GAME_MODES, modeById } from './gameModes.js'
+import { GAME_MODES, TIME_CHOICES, fixedTime, modeById } from './gameModes.js'
 import { FAIRY_VARIANTS } from './fairy/variants.js'
 import { modeWins } from './progress.js'
 import { BotList, ColorChoice } from './BotPicker.jsx'
@@ -79,10 +79,12 @@ export default function GameModes({ progress, choice, onChoice, onPlay, onPlaySi
           </div>
         )}
 
+        {!fixedTime(mode) && <TimeChoice value={choice.minutes} onChange={(minutes) => set({ minutes })} />}
+
         {local ? (
           <LocalStart names={choice.names} onNames={(names) => set({ names })} onStart={() => onPlayLocal(mode)} />
         ) : mode.simul ? (
-          <SimulPicks bots={choice.simulBots} onRemove={(i) => set({ simulBots: choice.simulBots.filter((_, j) => j !== i) })} onStart={() => onPlaySimul(mode, choice.simulBots)} />
+          <SimulPicks minutes={choice.minutes} bots={choice.simulBots} onRemove={(i) => set({ simulBots: choice.simulBots.filter((_, j) => j !== i) })} onStart={() => onPlaySimul(mode, choice.simulBots)} />
         ) : (
           <ColorChoice value={choice.color} onChange={(color) => set({ color })} />
         )}
@@ -98,6 +100,26 @@ export default function GameModes({ progress, choice, onChoice, onPlay, onPlaySi
         )}
       </section>
     </main>
+  )
+}
+
+// The clock for this game: 1, 3, 5, 10 or 30 minutes each, or no clock.
+function TimeChoice({ value, onChange }) {
+  return (
+    <div className="color-choice time-choice" role="radiogroup" aria-label="Time">
+      <span>Time</span>
+      {TIME_CHOICES.map((minutes) => (
+        <button
+          key={minutes ?? 'none'}
+          role="radio"
+          aria-checked={value === minutes}
+          className={value === minutes ? 'selected' : ''}
+          onClick={() => onChange(minutes)}
+        >
+          {minutes === null ? 'No time' : `${minutes} min`}
+        </button>
+      ))}
+    </div>
   )
 }
 
@@ -124,10 +146,12 @@ function LocalStart({ names, onNames, onStart }) {
 }
 
 // The simul's three chosen opponents (tap one to take it out again), and the start button.
-function SimulPicks({ bots, onRemove, onStart }) {
+function SimulPicks({ minutes, bots, onRemove, onStart }) {
   return (
     <div className="simul-picks">
-      <p className="mode-text">You play White on all three boards, with 10 minutes each. Pick three bots below.</p>
+      <p className="mode-text">
+        You play White on all three boards, {minutes === null ? 'with no clock' : `with ${minutes} minutes each`}. Pick three bots below.
+      </p>
       <div className="simul-slots">
         {[0, 1, 2].map((i) =>
           bots[i] ? (
