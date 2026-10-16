@@ -200,7 +200,8 @@ function DeleteAccountButton() {
 }
 
 // The player's online rating in every game mode (Play online), in two rows that slide
-// sideways. Modes not played yet show the starting rating, 1200.
+// sideways: the modes played first (highest rating first, so the best are on the left),
+// then the rest, which show the starting rating, 1200.
 function RatingStrip({ myId, api = onlineApi }) {
   const [ratings, setRatings] = useState({})
   useEffect(() => {
@@ -214,7 +215,7 @@ function RatingStrip({ myId, api = onlineApi }) {
     <section className="profile-section">
       <h2>Online ratings</h2>
       <ul className="rating-strip">
-        {GAME_MODES.filter((mode) => !mode.simul).map((mode) => (
+        {sortedModes(ratings).map((mode) => (
           <li key={mode.id} className="rating-card">
             <span className="rating-card-mode">
               <Icon icon={mode.icon} /> {mode.title}
@@ -228,6 +229,13 @@ function RatingStrip({ myId, api = onlineApi }) {
       </ul>
     </section>
   )
+}
+
+// The online modes in the order the ratings show them (see RatingStrip).
+function sortedModes(ratings) {
+  const modes = GAME_MODES.filter((mode) => !mode.simul)
+  const played = modes.filter((mode) => ratings[mode.id]).sort((a, b) => ratings[b.id].rating - ratings[a.id].rating)
+  return [...played, ...modes.filter((mode) => !ratings[mode.id])]
 }
 
 // The player's friends in a row that scrolls sideways: each friend's character with their
