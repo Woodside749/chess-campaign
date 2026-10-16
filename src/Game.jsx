@@ -777,7 +777,12 @@ export default function Game({
           ) : (
             <div className="opponent-name">
               <TitleBadge title={titleById(bot.chessTitle)} /> {bot.name} <span className="rating">({shownRating(bot)})</span>
-              {botThinking && <span className="thinking"> thinking…</span>}
+              {/* Always there (only hidden), so on a phone, where it can wrap onto a second
+                  line, the board doesn't move down every time the bot starts thinking. */}
+              <span className={botThinking ? 'thinking' : 'thinking hidden'} aria-hidden={!botThinking}>
+                {' '}
+                thinking…
+              </span>
             </div>
           )}
           {!inLesson && botLine && <div className="speech">“{botLine}”</div>}

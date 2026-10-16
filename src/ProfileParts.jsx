@@ -153,7 +153,8 @@ export function AchievementList({ progress }) {
   )
 }
 
-// The achievements in a window over the profile (from the Achievements box).
+// The achievements in a window over the profile (from the Achievements box). Clicking
+// outside it, or the ✕, closes it.
 function AchievementsDialog({ name, progress, onClose }) {
   return (
     <div className="overlay" onClick={onClose}>
@@ -164,12 +165,14 @@ function AchievementsDialog({ name, progress, onClose }) {
         aria-label={`${name}'s achievements`}
         onClick={(e) => e.stopPropagation()}
       >
-        <h2>Achievements</h2>
-        <AchievementList progress={progress} />
-        <div className="dialog-buttons">
-          <button className="primary" onClick={onClose}>
-            Close
+        <div className="achievements-dialog-head">
+          <h2>Achievements</h2>
+          <button className="dialog-close" onClick={onClose} aria-label="Close">
+            ✕
           </button>
+        </div>
+        <div className="achievements-dialog-list">
+          <AchievementList progress={progress} />
         </div>
       </div>
     </div>

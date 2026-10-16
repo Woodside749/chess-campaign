@@ -50,6 +50,10 @@
   font-size: 14px;
 }
 
+.thinking.hidden {
+  visibility: hidden;
+}
+
 .speech {
   color: var(--muted);
   font-size: 14px;
@@ -3725,15 +3729,52 @@ button.profile-stat:hover {
   border-color: var(--muted);
 }
 
-/* The achievements window: wider than other windows, and it scrolls if the list is long. */
+/* The achievements window: wider than other windows; the list scrolls under the heading
+   (with its ✕) if it is long. */
 .dialog.achievements-dialog {
   width: min(520px, 100%);
   max-height: calc(100dvh - 32px);
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 18px 18px 20px;
   text-align: left;
 }
 
+.achievements-dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
 .dialog.achievements-dialog h2 {
+  margin: 0 0 0 4px;
   font-size: 24px;
-  margin-bottom: 14px;
+}
+
+.achievements-dialog-list {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* A round ✕ in a window's top corner. */
+.dialog-close {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  font-size: 18px;
+  color: var(--muted);
+  background: none;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.dialog-close:hover {
+  color: var(--text);
+  background: var(--border);
 }
