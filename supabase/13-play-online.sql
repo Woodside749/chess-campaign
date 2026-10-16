@@ -25,12 +25,12 @@ alter table public.games
   add column black_change integer;
 
 -- How much a rating can move in one game: a lot in a player's first games in a mode (while
--- their real level is still being found), then less and less, towards ±8 against an equal
--- opponent (K = 16) after about 40 games.
+-- their real level is still being found): ±100 against an equal opponent in the first game,
+-- then quickly less (±59, ±36, ±23 …), and ±8 (K = 16) from the 10th game on.
 create function public.rating_k(games integer) returns numeric
 language sql immutable set search_path = ''
 as $$
-  select 16 + 64 * power(0.9, games);
+  select 16 + 184 * power(0.55, games);
 $$;
 
 -- When a rated game ends (not aborted), both ratings change (Elo: the expected score against

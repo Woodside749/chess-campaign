@@ -186,7 +186,7 @@ export default function PlayOnline({ account, onBack, onOpenGame, api = onlineAp
           </button>
         )}
         <p className="mode-text online-note">
-          Online games are rated: you start at 1200 in every mode. Your first games move your rating a lot, then less and less.
+          Online games are rated: you start at 1200 in every mode. Your first games move your rating a lot (up to ±100), then less and less, until ±8 from your 10th game.
         </p>
       </section>
     </main>
