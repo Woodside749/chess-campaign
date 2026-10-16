@@ -172,6 +172,8 @@ export default function PuzzleTrial({ trial, onFinish, onExit }) {
             squareStyles: styles,
             arrows,
             animationDurationInMs: 200,
+            // Like in games: a small wobble while tapping is a tap, not a drag.
+            dragActivationDistance: 8,
           }}
         />
       </div>

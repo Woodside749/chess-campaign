@@ -40,6 +40,10 @@ import PromotionPicker from './PromotionPicker.jsx'
 const START_TIME_MS = 10 * 60 * 1000 // 10 minutes each, unless the event says otherwise
 
 // Local games: the avatar colours of the two players.
+// A piece only starts being dragged once the finger (or mouse) has moved this far. Below
+// that it's a tap (select the piece, then tap where it goes), so a finger that wobbles a
+// little while tapping doesn't lift the piece and drop it back.
+const DRAG_START_PX = 8
 const LOCAL_COLORS = { w: '#a39e94', b: '#4a4844' }
 
 // Clock state: time left for each side when its turn began, and when the current
@@ -715,6 +719,7 @@ export default function Game({
               canDragPiece: ({ piece }) => !gameOver && piece.pieceType[0] === playerColor,
               squareStyles: squareStyles(game, selected, premove, isPlayersTurn),
               animationDurationInMs: 200,
+              dragActivationDistance: DRAG_START_PX,
             }}
           />
           {pendingPromotion && !gameOver && (
@@ -876,6 +881,7 @@ export default function Game({
             ),
             arrows: viewing ? [] : lessonArrows,
             animationDurationInMs: 200,
+            dragActivationDistance: DRAG_START_PX,
           }}
         />
         {pendingPromotion && !gameOver && (
