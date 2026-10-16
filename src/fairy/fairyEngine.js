@@ -13,7 +13,11 @@ const START_TIMEOUT_MS = 20_000
 // has got stuck, so the bot plays a backup move and the engine is started afresh next time.
 // The deep searches of the Legend bots can take several seconds, so they get longer.
 const searchTimeoutMs = (depth = 8) => (depth > 10 ? 30_000 : 8000)
+// After this many stuck searches the engine isn't tried again until the page is reloaded
+// (the backup brain plays every move, instead of the bot losing seconds each time).
+const MAX_STUCK = 2
 let loading = null
+let stuck = 0
 
 // The shared fairy engine (a promise, because loading takes a moment). If it fails or is
 // too slow to start, every later call fails straight away (so the bots use the backup brain
@@ -52,8 +56,11 @@ export async function fairyEngineFor(variant) {
         searchTimeoutMs(options?.depth),
         'Fairy-Stockfish got stuck',
       ).catch((error) => {
-        // Throw the stuck engine away, so the next move starts a fresh one.
-        loading = null
+        // Throw the stuck engine away, so the next move starts a fresh one (or, after a
+        // few times, none at all).
+        stuck += 1
+        loading = stuck >= MAX_STUCK ? Promise.reject(new Error('Fairy-Stockfish keeps getting stuck')) : null
+        loading?.catch(() => {})
         throw error
       }),
   }
