@@ -1,5 +1,6 @@
 import { supabase } from './supabase.js'
 import { PUBLIC_PROFILE, REPORT_REASONS, playerCard } from './friends.js'
+import { fairyEngineStatus } from './fairy/fairyEngine.js'
 
 // Bug reports and feature ideas from players (table `feedback`, see supabase/12-feedback.sql),
 // and what the admin page reads: those, and the player reports (table `reports`, see
@@ -9,15 +10,19 @@ import { PUBLIC_PROFILE, REPORT_REASONS, playerCard } from './friends.js'
 export const MAX_LENGTH = 1000
 
 // Sends a bug report (`kind` 'bug') or a feature idea ('idea'). `context` (bugs) says where
-// the player was; the browser and device are added here.
+// the player was; the browser and device are added here, and how the fairy engine has done.
 export async function sendFeedback(myId, kind, message, context = '') {
   const text = message.trim()
   if (!text) return 'Please write a few words first.'
-  const where = kind === 'bug' ? `${context} · ${navigator.userAgent}`.slice(0, 500) : null
+  const where =
+    kind === 'bug'
+      ? [context, fairyEngineStatus(), navigator.userAgent].filter(Boolean).join(' · ').slice(0, 500)
+      : null
   const { error } = await supabase
     .from('feedback')
     .insert({ author: myId, kind, message: text.slice(0, MAX_LENGTH), context: where })
-  if (error?.message.includes('a lot of feedback')) return 'You have sent a lot of feedback this hour. Please try again later.'
+  if (error?.message.includes('a lot of feedback'))
+    return 'You have sent a lot of feedback this hour. Please try again later.'
   return error?.message ?? null
 }
 
@@ -49,7 +54,9 @@ export async function loadFeedback(kind, status) {
 export async function loadReports(status) {
   const { data, error } = await supabase
     .from('reports')
-    .select(`id, reason, details, created_at, reporter:reporter (${PUBLIC_PROFILE}), reported:reported (${PUBLIC_PROFILE})`)
+    .select(
+      `id, reason, details, created_at, reporter:reporter (${PUBLIC_PROFILE}), reported:reported (${PUBLIC_PROFILE})`,
+    )
     .eq('status', status)
     .order('created_at', { ascending: false })
     .limit(200)

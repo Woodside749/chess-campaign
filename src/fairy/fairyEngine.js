@@ -18,12 +18,28 @@ const searchTimeoutMs = (depth = 8) => (depth > 10 ? 30_000 : 8000)
 const MAX_STUCK = 2
 let loading = null
 let stuck = 0
+// What has happened to the engine during this visit (for bug reports, see fairyEngineStatus).
+const events = []
+const note = (event) => events.push(event) > 5 && events.shift()
+
+// A short line about the fairy engine for bug reports, like "fairy engine: started 1.2 s;
+// stuck (Fairy-Stockfish got stuck)", or '' if no fairy game has been played.
+export function fairyEngineStatus() {
+  return events.length ? `fairy engine: ${events.join('; ')}` : ''
+}
 
 // The shared fairy engine (a promise, because loading takes a moment). If it fails or is
 // too slow to start, every later call fails straight away (so the bots use the backup brain
 // without waiting again).
 function sharedFairyEngine() {
-  loading ??= withTimeout(startFairyEngine(), START_TIMEOUT_MS, 'Fairy-Stockfish took too long to start')
+  if (!loading) {
+    const started = performance.now()
+    loading = withTimeout(startFairyEngine(), START_TIMEOUT_MS, 'Fairy-Stockfish took too long to start')
+    loading.then(
+      () => note(`started ${((performance.now() - started) / 1000).toFixed(1)} s`),
+      (error) => note(`failed to start (${error.message})`),
+    )
+  }
   return loading
 }
 
@@ -59,6 +75,7 @@ export async function fairyEngineFor(variant) {
         // Throw the stuck engine away, so the next move starts a fresh one (or, after a
         // few times, none at all).
         stuck += 1
+        note(`stuck (${error.message})`)
         loading = stuck >= MAX_STUCK ? Promise.reject(new Error('Fairy-Stockfish keeps getting stuck')) : null
         loading?.catch(() => {})
         throw error
