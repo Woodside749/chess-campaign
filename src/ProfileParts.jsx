@@ -42,8 +42,10 @@ export function ProfileHeader({ player, progress, since, avatar, children }) {
   )
 }
 
-// Campaign stars, achievements and game mode trophies.
-export function ProfileStats({ progress }) {
+// Campaign stars, achievements and game mode trophies. The Achievements box opens the
+// list in a window. `name` is whose profile it is (for that window).
+export function ProfileStats({ name, progress }) {
+  const [showAchievements, setShowAchievements] = useState(false)
   const wonIn = (eventId) => roundsWon(progress, eventId)
   const stars = STAR_TIERS.reduce((sum, tier) => sum + starsWon(wonIn, tier.section), 0)
   const allStars = STAR_TIERS.reduce((sum, tier) => sum + maxStars(tier.section), 0)
@@ -52,17 +54,35 @@ export function ProfileStats({ progress }) {
   return (
     <ul className="profile-stats">
       <Stat value={`${stars} / ${allStars}`} label="Campaign stars" />
-      <Stat value={`${achievements.filter((a) => a.got).length} / ${achievements.length}`} label="Achievements" />
+      <Stat
+        value={`${achievements.filter((a) => a.got).length} / ${achievements.length}`}
+        label="Achievements"
+        onClick={() => setShowAchievements(true)}
+      />
       <Stat value={modeWins} label="Game mode trophies" />
+      {showAchievements && (
+        <AchievementsDialog name={name} progress={progress} onClose={() => setShowAchievements(false)} />
+      )}
     </ul>
   )
 }
 
-function Stat({ value, label }) {
+// One number on the profile; with `onClick` it's a button (and shows a ›).
+function Stat({ value, label, onClick }) {
+  if (!onClick) {
+    return (
+      <li className="profile-stat">
+        <strong>{value}</strong>
+        <span>{label}</span>
+      </li>
+    )
+  }
   return (
-    <li className="profile-stat">
-      <strong>{value}</strong>
-      <span>{label}</span>
+    <li className="profile-stat-item">
+      <button className="profile-stat" onClick={onClick}>
+        <strong>{value}</strong>
+        <span>{label} ›</span>
+      </button>
     </li>
   )
 }
@@ -108,25 +128,50 @@ function sortedModes(ratings) {
   return [...played, ...modes.filter((mode) => !ratings[mode.id])]
 }
 
-// Every achievement as a small badge: earned ones in colour (first), the rest faded.
-// Hovering (or a long press) shows what it is for.
-export function AchievementBadges({ progress }) {
-  const achievements = achievementsFor(progress)
-  const sorted = [...achievements.filter((a) => a.got), ...achievements.filter((a) => !a.got)]
+// The list of achievements: earned ones in colour, the rest greyed out with what to do.
+export function AchievementList({ progress }) {
   return (
-    <section className="profile-section">
-      <h2>Achievements</h2>
-      <ul className="achievement-badges">
-        {sorted.map((achievement) => (
-          <li key={achievement.id} className={achievement.got ? 'got' : ''} title={achievement.text}>
-            <span className="achievement-badge-icon" aria-hidden="true">
-              {achievement.star ? <StarIcon color={achievement.star} size={20} /> : achievement.icon}
-            </span>
-            {achievement.name}
-            {!achievement.got && <span className="visually-hidden"> (not yet)</span>}
-          </li>
-        ))}
-      </ul>
-    </section>
+    <ul className="achievement-list">
+      {achievementsFor(progress).map((achievement) => (
+        <li key={achievement.id} className={`achievement${achievement.got ? ' got' : ''}`}>
+          <span className="achievement-icon" aria-hidden="true">
+            {!achievement.got ? (
+              '🔒'
+            ) : achievement.star ? (
+              <StarIcon color={achievement.star} size={30} />
+            ) : (
+              achievement.icon
+            )}
+          </span>
+          <div>
+            <div className="achievement-name">{achievement.name}</div>
+            <div className="achievement-text">{achievement.text}</div>
+          </div>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+// The achievements in a window over the profile (from the Achievements box).
+function AchievementsDialog({ name, progress, onClose }) {
+  return (
+    <div className="overlay" onClick={onClose}>
+      <div
+        className="dialog achievements-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-label={`${name}'s achievements`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2>Achievements</h2>
+        <AchievementList progress={progress} />
+        <div className="dialog-buttons">
+          <button className="primary" onClick={onClose}>
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
   )
 }

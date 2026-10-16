@@ -86,7 +86,7 @@ export default function Profile({ progress, account, onBack, onOpenFriends, onOp
         {!profile?.avatar && <p className="profile-hint">Tap your picture to create your character.</p>}
       </ProfileHeader>
 
-      <ProfileStats progress={progress} />
+      <ProfileStats name={player.name} progress={progress} />
 
       <RatingStrip playerId={user.id} />
 

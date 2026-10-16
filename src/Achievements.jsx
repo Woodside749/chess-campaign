@@ -3,9 +3,10 @@ import { playerTitle, tierStars, usePlayer } from './player.js'
 import Avatar from './Avatar.jsx'
 import TitleBadge from './TitleBadge.jsx'
 import StarBadges from './StarBadges.jsx'
-import StarIcon from './StarIcon.jsx'
+import { AchievementList } from './ProfileParts.jsx'
 
-// The player's achievements: earned ones in colour, the rest greyed out with what to do.
+// The player's achievements (from the campaign): earned ones in colour, the rest greyed out
+// with what to do.
 export default function Achievements({ progress, onBack }) {
   const achievements = achievementsFor(progress)
   const title = playerTitle(progress)
@@ -31,19 +32,7 @@ export default function Achievements({ progress, onBack }) {
           </p>
         </div>
       </header>
-      <ul className="achievement-list">
-        {achievements.map((achievement) => (
-          <li key={achievement.id} className={`achievement${achievement.got ? ' got' : ''}`}>
-            <span className="achievement-icon" aria-hidden="true">
-              {!achievement.got ? '🔒' : achievement.star ? <StarIcon color={achievement.star} size={30} /> : achievement.icon}
-            </span>
-            <div>
-              <div className="achievement-name">{achievement.name}</div>
-              <div className="achievement-text">{achievement.text}</div>
-            </div>
-          </li>
-        ))}
-      </ul>
+      <AchievementList progress={progress} />
     </main>
   )
 }

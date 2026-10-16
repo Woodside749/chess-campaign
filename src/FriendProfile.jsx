@@ -3,11 +3,11 @@ import * as friendsApi from './friends.js'
 import Avatar from './Avatar.jsx'
 import PlayerActions from './PlayerActions.jsx'
 import { useInvite } from './onlineContext.js'
-import { AchievementBadges, ProfileHeader, ProfileStats, RatingStrip } from './ProfileParts.jsx'
+import { ProfileHeader, ProfileStats, RatingStrip } from './ProfileParts.jsx'
 
 // A friend's profile (clicking a friend on the Friends screen or the profile page): like the
-// top of your own profile, with their title and stars, numbers, online ratings,
-// achievements and friends. Invite to game, and ⋯ for remove, block and report.
+// top of your own profile, with their title and stars, numbers (the Achievements box opens
+// the list), online ratings and friends. Invite to game, and ⋯ for remove, block and report.
 // Their friends can be clicked too: one who is also your friend opens their profile,
 // anyone else the player menu (Add friend …). `back` names the screen ← goes back to.
 // `api` is friends.js; a test can pass a pretend one.
@@ -95,9 +95,8 @@ export default function FriendProfile({ friend, friendshipId, myId, back, onBack
           </ProfileHeader>
           {notice && <p className="account-message">{notice}</p>}
 
-          <ProfileStats progress={profile.progress} />
+          <ProfileStats name={shown.player.name} progress={profile.progress} />
           <RatingStrip playerId={shown.player.id} />
-          <AchievementBadges progress={profile.progress} />
 
           <section className="profile-section">
             <h2>Friends ({profile.friends.length})</h2>
