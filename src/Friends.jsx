@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react'
 import * as friendsApi from './friends.js'
 import Avatar from './Avatar.jsx'
 import PlayerActions from './PlayerActions.jsx'
+import FriendProfile from './FriendProfile.jsx'
 import { useInvite } from './onlineContext.js'
 
 // The Friends screen (the "Play with friends" tile): find players by username and send
 // them a friend request, answer requests, see your friends with their character and
-// username, invite them to a game, and block or report players (the ⋯ button on every player).
+// username (click one to see their profile), invite them to a game, and block or report
+// players (the ⋯ button on every player).
 // `api` is friends.js; a test can pass a pretend one.
 export default function Friends({ account, onBack, api = friendsApi }) {
   const myId = account.user?.id
@@ -20,6 +22,8 @@ export default function Friends({ account, onBack, api = friendsApi }) {
   const [busy, setBusy] = useState(null) // the id of the player or friendship being changed
   // The ⋯ menu for a player (remove, block, report; see PlayerActions).
   const [menuFor, setMenuFor] = useState(null) // { player, friendshipId? }
+  // A friend whose profile is open: { player, friendshipId }.
+  const [viewing, setViewing] = useState(null)
 
   // Load the friendships and blocks, and the friendships again whenever one changes (live).
   useEffect(() => {
@@ -83,6 +87,23 @@ export default function Friends({ account, onBack, api = friendsApi }) {
         <h1>Friends</h1>
         <p className="friends-empty">Log in (top right on the main menu) to find friends and play with them.</p>
       </main>
+    )
+  }
+
+  if (viewing) {
+    return (
+      <FriendProfile
+        friend={viewing.player}
+        friendshipId={viewing.friendshipId}
+        myId={myId}
+        back="Friends"
+        api={api}
+        onBack={async (message) => {
+          setViewing(null)
+          // After a change on their profile (like removing them), the lists load again.
+          if (message) await afterAction(message)
+        }}
+      />
     )
   }
 
@@ -176,7 +197,12 @@ export default function Friends({ account, onBack, api = friendsApi }) {
         ) : (
           <ul className="friend-list">
             {lists.friends.map(({ id, player }) => (
-              <FriendRow key={id} player={player} onMore={() => setMenuFor({ player, friendshipId: id })}>
+              <FriendRow
+                key={id}
+                player={player}
+                onOpen={() => setViewing({ player, friendshipId: id })}
+                onMore={() => setMenuFor({ player, friendshipId: id })}
+              >
                 <InviteButton player={player} />
               </FriendRow>
             ))}
@@ -233,15 +259,27 @@ export default function Friends({ account, onBack, api = friendsApi }) {
 }
 
 // One player in a list: their character, username and flag, buttons on the right, and the
-// ⋯ button (if `onMore`) for removing, blocking and reporting.
-function FriendRow({ player, note, onMore, children }) {
-  return (
-    <li className="friend-row">
+// ⋯ button (if `onMore`) for removing, blocking and reporting. With `onOpen` (friends),
+// the picture and name open the player's profile.
+function FriendRow({ player, note, onOpen, onMore, children }) {
+  const who = (
+    <>
       <Avatar bot={player} size={48} />
       <div className="friend-name">
         <strong>{player.name}</strong>
         {note && <span>{note}</span>}
       </div>
+    </>
+  )
+  return (
+    <li className="friend-row">
+      {onOpen ? (
+        <button className="friend-open" onClick={onOpen} title={`See ${player.name}'s profile`}>
+          {who}
+        </button>
+      ) : (
+        who
+      )}
       <div className="friend-actions">
         {children}
         {onMore && (

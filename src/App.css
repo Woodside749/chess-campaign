@@ -3668,3 +3668,66 @@ button.friend-strip-card:hover {
   width: 18px;
   height: 18px;
 }
+
+/* ---------- A friend's profile ---------- */
+
+/* On the Friends screen a friend's picture and name open their profile. */
+.friend-open {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.friend-open:hover .friend-name strong {
+  text-decoration: underline;
+}
+
+.friend-profile-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+/* Achievements as small badges: earned ones in colour, the rest faded. */
+.achievement-badges {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.achievement-badges li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px 6px 8px;
+  font-size: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  opacity: 0.4;
+  filter: grayscale(1);
+}
+
+.achievement-badges li.got {
+  opacity: 1;
+  filter: none;
+  font-weight: 600;
+}
+
+.achievement-badge-icon {
+  display: flex;
+  font-size: 18px;
+  line-height: 1;
+}

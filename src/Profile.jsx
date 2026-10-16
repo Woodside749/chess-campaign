@@ -1,22 +1,14 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabase.js'
-import { STAR_TIERS, maxStars, starsWon } from './career.js'
-import { achievementsFor } from './achievements.js'
-import { playerTitle, tierStars, usePlayer } from './player.js'
-import { roundsWon } from './progress.js'
+import { usePlayer } from './player.js'
 import { COUNTRIES } from './countries.js'
 import { USERNAME_RULE, usernameProblem } from './usernames.js'
 import * as friendsApi from './friends.js'
-import * as onlineApi from './online.js'
-import { GAME_MODES } from './gameModes.js'
-import Icon from './Icon.jsx'
 import Avatar from './Avatar.jsx'
 import CharacterCreator from './CharacterCreator.jsx'
-import PlayerActions from './PlayerActions.jsx'
+import FriendProfile from './FriendProfile.jsx'
 import { useFeedback } from './feedbackContext.js'
-import TitleBadge from './TitleBadge.jsx'
-import StarBadges from './StarBadges.jsx'
-
+import { ProfileHeader, ProfileStats, RatingStrip } from './ProfileParts.jsx'
 
 // The player's profile (only when logged in): how they look to others, their title and
 // stars, a few numbers, and the settings for their avatar, flag and username.
@@ -25,16 +17,13 @@ export default function Profile({ progress, account, onBack, onOpenFriends, onOp
   const player = usePlayer()
   const openFeedback = useFeedback()
   const { user, profile, updateProfile } = account
-  const title = playerTitle(progress)
-  const wonIn = (eventId) => roundsWon(progress, eventId)
-  const stars = STAR_TIERS.reduce((sum, tier) => sum + starsWon(wonIn, tier.section), 0)
-  const allStars = STAR_TIERS.reduce((sum, tier) => sum + maxStars(tier.section), 0)
-  const achievements = achievementsFor(progress)
-  const modeWins = Object.values(progress.modeWins ?? {}).reduce((sum, bots) => sum + bots.length, 0)
   const since = profile?.created_at ?? user.created_at
   const [message, setMessage] = useState(null) // { text, error }
   // The character editor opens on its own screen when the profile picture is clicked.
   const [editing, setEditing] = useState(false)
+  // A friend whose profile is open (clicked in the friends row): { player, friendshipId }.
+  const [viewing, setViewing] = useState(null)
+  const [friendNotice, setFriendNotice] = useState(null)
 
   async function save(changes, success) {
     const problem = await updateProfile(changes)
@@ -57,15 +46,34 @@ export default function Profile({ progress, account, onBack, onOpenFriends, onOp
     )
   }
 
+  if (viewing) {
+    return (
+      <FriendProfile
+        friend={viewing.player}
+        friendshipId={viewing.friendshipId}
+        myId={user.id}
+        back="Profile"
+        api={api}
+        onBack={(message) => {
+          setViewing(null)
+          setFriendNotice(message ?? null)
+        }}
+      />
+    )
+  }
+
   return (
     <main className="profile-screen">
       <button className="back" onClick={onBack}>
         ← Main menu
       </button>
 
-      <header className="profile-header">
-        <div className="avatar-with-stars">
-          {/* Clicking the picture opens the character editor. */}
+      <ProfileHeader
+        player={player}
+        progress={progress}
+        since={since}
+        avatar={
+          // Clicking the picture opens the character editor.
           <button className="avatar-edit" onClick={() => setEditing(true)} title="Edit your character">
             <Avatar bot={player} size={88} />
             <span className="avatar-edit-badge" aria-hidden="true">
@@ -73,32 +81,22 @@ export default function Profile({ progress, account, onBack, onOpenFriends, onOp
             </span>
             <span className="visually-hidden">Edit your character</span>
           </button>
-          <StarBadges stars={tierStars(progress)} size={18} />
-        </div>
-        <div className="profile-who">
-          <h1>
-            <TitleBadge title={title} /> {player.name}
-          </h1>
-          <p className="profile-sub">
-            {title ? title.name : 'No title yet'}
-            {player.country && ` · ${player.flag} ${player.country}`}
-          </p>
-          <p className="profile-sub">
-            Playing since {new Date(since).toLocaleDateString('en', { month: 'long', year: 'numeric' })}
-          </p>
-          {!profile?.avatar && <p className="profile-hint">Tap your picture to create your character.</p>}
-        </div>
-      </header>
+        }
+      >
+        {!profile?.avatar && <p className="profile-hint">Tap your picture to create your character.</p>}
+      </ProfileHeader>
 
-      <ul className="profile-stats">
-        <Stat value={`${stars} / ${allStars}`} label="Campaign stars" />
-        <Stat value={`${achievements.filter((a) => a.got).length} / ${achievements.length}`} label="Achievements" />
-        <Stat value={modeWins} label="Game mode trophies" />
-      </ul>
+      <ProfileStats progress={progress} />
 
-      <RatingStrip myId={user.id} />
+      <RatingStrip playerId={user.id} />
 
-      <FriendStrip myId={user.id} onOpenFriends={onOpenFriends} api={api} />
+      <FriendStrip
+        myId={user.id}
+        onOpenFriends={onOpenFriends}
+        onOpenFriend={setViewing}
+        notice={friendNotice}
+        api={api}
+      />
 
       <section className="profile-section">
         <h2>Country</h2>
@@ -116,7 +114,10 @@ export default function Profile({ progress, account, onBack, onOpenFriends, onOp
         </select>
 
         <h2>Username</h2>
-        <UsernameForm current={player.name} onSave={(username) => save({ username }, `Your username is now ${username}.`)} />
+        <UsernameForm
+          current={player.name}
+          onSave={(username) => save({ username }, `Your username is now ${username}.`)}
+        />
 
         {message && <p className={message.error ? 'account-message error' : 'account-message'}>{message.text}</p>}
       </section>
@@ -180,8 +181,7 @@ function DeleteAccountButton() {
           <div className="dialog account" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
             <h2>Delete your account?</h2>
             <p className="account-message">
-              Your account, username, profile and all your saved progress are deleted for good. This can't be
-              undone.
+              Your account, username, profile and all your saved progress are deleted for good. This can't be undone.
             </p>
             {problem && <p className="account-message error">{problem}</p>}
             <div className="dialog-buttons">
@@ -199,54 +199,12 @@ function DeleteAccountButton() {
   )
 }
 
-// The player's online rating in every game mode (Play online), in two rows that slide
-// sideways: the modes played first (highest rating first, so the best are on the left),
-// then the rest, which show the starting rating, 1200.
-function RatingStrip({ myId, api = onlineApi }) {
-  const [ratings, setRatings] = useState({})
-  useEffect(() => {
-    let cancelled = false
-    api.loadRatings(myId).then(({ ratings: loaded }) => !cancelled && loaded && setRatings(loaded))
-    return () => {
-      cancelled = true
-    }
-  }, [myId, api])
-  return (
-    <section className="profile-section">
-      <h2>Online ratings</h2>
-      <ul className="rating-strip">
-        {sortedModes(ratings).map((mode) => (
-          <li key={mode.id} className="rating-card">
-            <span className="rating-card-mode">
-              <Icon icon={mode.icon} /> {mode.title}
-            </span>
-            <strong>{ratings[mode.id]?.rating ?? api.START_RATING}</strong>
-            <span className="rating-card-games">
-              {ratings[mode.id] ? `${ratings[mode.id].games} game${ratings[mode.id].games === 1 ? '' : 's'}` : 'Not played yet'}
-            </span>
-          </li>
-        ))}
-      </ul>
-    </section>
-  )
-}
-
-// The online modes in the order the ratings show them (see RatingStrip).
-function sortedModes(ratings) {
-  const modes = GAME_MODES.filter((mode) => !mode.simul)
-  const played = modes.filter((mode) => ratings[mode.id]).sort((a, b) => ratings[b.id].rating - ratings[a.id].rating)
-  return [...played, ...modes.filter((mode) => !ratings[mode.id])]
-}
-
 // The player's friends in a row that scrolls sideways: each friend's character with their
-// username below. Clicking a friend opens the same menu as on the Friends screen (invite,
-// remove, block, report). The last card opens the Friends screen (search, requests), and
-// shows how many requests are waiting.
-function FriendStrip({ myId, onOpenFriends, api }) {
+// username below. Clicking a friend opens their profile (`onOpenFriend({ player,
+// friendshipId })`). The last card opens the Friends screen (search, requests), and shows
+// how many requests are waiting. `notice` is a message to show, like after removing a friend.
+function FriendStrip({ myId, onOpenFriends, onOpenFriend, notice, api }) {
   const [lists, setLists] = useState(null)
-  const [menuFor, setMenuFor] = useState(null) // { player, friendshipId }
-  const [notice, setNotice] = useState(null)
-  const [round, setRound] = useState(0) // bumped to load again after a change
 
   useEffect(() => {
     let cancelled = false
@@ -260,7 +218,7 @@ function FriendStrip({ myId, onOpenFriends, api }) {
       cancelled = true
       stop()
     }
-  }, [myId, api, round])
+  }, [myId, api])
 
   const requests = lists?.incoming.length ?? 0
   return (
@@ -269,7 +227,7 @@ function FriendStrip({ myId, onOpenFriends, api }) {
       <ul className="friend-strip">
         {lists?.friends.map(({ id, player }) => (
           <li key={id}>
-            <button className="friend-strip-card" onClick={() => setMenuFor({ player, friendshipId: id })}>
+            <button className="friend-strip-card" onClick={() => onOpenFriend({ player, friendshipId: id })}>
               <Avatar bot={player} size={64} />
               <span className="friend-strip-name">{player.name}</span>
             </button>
@@ -290,30 +248,7 @@ function FriendStrip({ myId, onOpenFriends, api }) {
         </li>
       </ul>
       {notice && <p className="account-message">{notice}</p>}
-      {menuFor && (
-        <PlayerActions
-          player={menuFor.player}
-          friendshipId={menuFor.friendshipId}
-          myId={myId}
-          api={api}
-          onDone={(message) => {
-            setMenuFor(null)
-            setNotice(message)
-            setRound((n) => n + 1)
-          }}
-          onClose={() => setMenuFor(null)}
-        />
-      )}
     </section>
-  )
-}
-
-function Stat({ value, label }) {
-  return (
-    <li className="profile-stat">
-      <strong>{value}</strong>
-      <span>{label}</span>
-    </li>
   )
 }
 

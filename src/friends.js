@@ -119,3 +119,19 @@ export async function reportPlayer(myId, otherId, reason, details) {
     .insert({ reporter: myId, reported: otherId, reason, details: details.trim().slice(0, 500) || null })
   return error?.message ?? null
 }
+
+// ---------- Friends' profiles (see supabase/15-friend-profiles.sql) ----------
+
+// A friend's profile: { since (a Date), progress (like progress.js), friends: [player cards] }.
+// Only works for my friends.
+export async function loadFriendProfile(friendId) {
+  const { data, error } = await supabase.rpc('friend_profile', { friend: friendId })
+  if (error) return { error: error.message }
+  return {
+    profile: {
+      since: new Date(data.since),
+      progress: { tournaments: {}, modeWins: {}, ...data.progress },
+      friends: data.friends.map(playerCard),
+    },
+  }
+}
