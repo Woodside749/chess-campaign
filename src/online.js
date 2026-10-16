@@ -81,7 +81,8 @@ export function watchInvites(myId, onChange) {
 // ---------- Games ----------
 
 const GAME_FIELDS = `id, mode, variant, timed, base_ms, increment_ms, seed, moves, white_ms, black_ms,
-  turn_started_at, status, result, draw_offer, white:white (${PUBLIC_PROFILE}), black:black (${PUBLIC_PROFILE})`
+  turn_started_at, status, result, draw_offer, rated, white_rating, black_rating, white_change, black_change,
+  white:white (${PUBLIC_PROFILE}), black:black (${PUBLIC_PROFILE})`
 
 // A game as the game screen uses it, from my side: { id, mode, variant, timed, minutes,
 // increment, seed, moves, clock: { w, b, turnStart }, status, result, drawOffer, myColor,
@@ -103,6 +104,11 @@ function fromRow(row, myId) {
     drawOffer: row.draw_offer,
     myColor,
     opponent: playerCard(myColor === 'w' ? row.black : row.white),
+    // Rated games (Play online): both ratings before the game, and my change once it's over.
+    rated: row.rated,
+    myRating: myColor === 'w' ? row.white_rating : row.black_rating,
+    opponentRating: myColor === 'w' ? row.black_rating : row.white_rating,
+    myChange: myColor === 'w' ? row.white_change : row.black_change,
   }
 }
 
@@ -110,7 +116,19 @@ export async function loadGame(id, myId) {
   const { data, error } = await supabase.from('games').select(GAME_FIELDS).eq('id', id).maybeSingle()
   if (error) return { error: error.message }
   if (!data) return { error: 'This game was not found.' }
-  return { game: fromRow(data, myId) }
+  const game = fromRow(data, myId)
+  // A rated game still going: show both players' current ratings in this mode.
+  if (game.rated && game.myRating === null) {
+    const { data: ratings } = await supabase
+      .from('ratings')
+      .select('player, rating')
+      .eq('mode', game.mode)
+      .in('player', [data.white.id, data.black.id])
+    const ratingOf = (id) => ratings?.find((r) => r.player === id)?.rating ?? START_RATING
+    game.myRating = ratingOf(myId)
+    game.opponentRating = ratingOf(game.opponent.id)
+  }
+  return { game }
 }
 
 // My games still going (to rejoin them), newest first.
@@ -135,6 +153,33 @@ export function watchGame(id, onChange) {
 }
 
 const call = async (name, args) => (await supabase.rpc(name, args)).error?.message ?? null
+
+// Before move 2, either player can call the game off (no rating change).
+export const abortGame = (id) => call('abort_game', { game_id: id })
+
+// ---------- Play online (see supabase/13-play-online.sql) ----------
+
+// Every player starts at this rating in every game mode.
+export const START_RATING = 1200
+
+// My ratings: { [modeId]: { rating, games } } (modes I haven't played aren't listed).
+export async function loadRatings(playerId) {
+  const { data, error } = await supabase.from('ratings').select('mode, rating, games').eq('player', playerId)
+  if (error) return { error: error.message }
+  return { ratings: Object.fromEntries(data.map((row) => [row.mode, { rating: row.rating, games: row.games }])) }
+}
+
+// Looks for an opponent with these settings ({ mode, variant, timed, minutes, increment }).
+// Returns { gameId } once matched, or {} (ask again in a few seconds: that also keeps the
+// search going).
+export async function findGame(settings) {
+  const { mode, variant, timed, minutes, increment } = settings
+  const { data, error } = await supabase.rpc('find_game', { mode, variant, timed, minutes, increment })
+  if (error) return { error: error.message }
+  return data ? { gameId: data } : {}
+}
+
+export const stopSearching = () => call('stop_searching', {})
 
 // `ply` is how many moves were played before this one; `result` ({ winner, reason }) is
 // set when the move ends the game.

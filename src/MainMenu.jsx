@@ -6,9 +6,19 @@ import AccountButton from './Account.jsx'
 import GlobalChat from './GlobalChat.jsx'
 
 // The main menu, the first screen of the game: big tiles on the left (the chess campaign,
-// the game modes, play local and friends work so far, the rest are coming soon) and the
+// the game modes, play local, friends and play online work so far; the fantasy campaign is
+// coming soon) and the
 // global chat on the right (GlobalChat.jsx).
-export default function MainMenu({ progress, account, onOpenCampaign, onOpenGameModes, onOpenProfile, onOpenLocal, onOpenFriends }) {
+export default function MainMenu({
+  progress,
+  account,
+  onOpenCampaign,
+  onOpenGameModes,
+  onOpenProfile,
+  onOpenLocal,
+  onOpenFriends,
+  onOpenOnline,
+}) {
   const wonIn = (eventId) => roundsWon(progress, eventId)
   const started = Object.keys(progress.tournaments).length > 0
   const stars = STAR_TIERS.reduce((sum, tier) => sum + starsWon(wonIn, tier.section), 0)
@@ -27,7 +37,13 @@ export default function MainMenu({ progress, account, onOpenCampaign, onOpenGame
         <div className="menu-grid">
           <MenuTile color="dark-green" size="small" icon="👥" title="Play with friends" onClick={onOpenFriends} />
           <MenuTile color="dark-green" size="small" icon="🤝" title="Play local" onClick={onOpenLocal} />
-          <MenuTile color="green" icon="🌐" title="Play online" text="Find an opponent and play a game." soon />
+          <MenuTile
+            color="green"
+            icon="🌐"
+            title="Play online"
+            text="Rated games against players near your level, in every mode."
+            onClick={onOpenOnline}
+          />
           <MenuTile
             color="light-blue"
             icon="♟️"

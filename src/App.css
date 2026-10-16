@@ -3522,3 +3522,123 @@ button.friend-strip-card:hover {
 .admin-item .friend-button {
   margin-top: 10px;
 }
+
+/* ---------- Play online and ratings ---------- */
+
+/* Green, like the Play online tile on the main menu. */
+.online-modes,
+.online-screen {
+  --accent: #43a047;
+}
+
+.mode-rating {
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.75;
+}
+
+.online-rating {
+  margin: -6px 0 16px;
+  color: var(--muted);
+}
+
+.online-rating strong {
+  color: var(--text);
+  font-size: 18px;
+}
+
+.online-find {
+  min-width: 220px;
+  padding: 14px 28px;
+  font-size: 17px;
+}
+
+.online-note {
+  margin-top: 14px;
+  font-size: 14px;
+}
+
+.online-searching {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+}
+
+.online-searching div {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.online-searching span {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.online-spinner {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* The game-over window's rating change for rated games. */
+.rating-line {
+  margin: -6px 0 14px;
+  font-weight: 700;
+}
+
+/* The profile's ratings: two rows that slide sideways. */
+.rating-strip {
+  list-style: none;
+  margin: 0;
+  padding: 2px 2px 10px;
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(2, auto);
+  grid-auto-columns: 150px;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.rating-card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.rating-card-mode {
+  overflow: hidden;
+  font-size: 13px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--muted);
+}
+
+.rating-card strong {
+  font-size: 22px;
+}
+
+.rating-card-games {
+  font-size: 12px;
+  color: var(--muted);
+}

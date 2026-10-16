@@ -687,7 +687,9 @@ export default function Game({
           <Avatar bot={online ? online.opponent : bot} size={36} />
           <div className="player-info">
             {online ? (
-              <div className="opponent-name">{opponentName}</div>
+              <div className="opponent-name">
+                {opponentName} {online?.rated && <span className="rating">({online.opponentRating})</span>}
+              </div>
             ) : (
               <div className="opponent-name">
                 <TitleBadge title={titleById(bot.chessTitle)} /> {bot.name} <span className="rating">({shownRating(bot)})</span>
@@ -759,7 +761,9 @@ export default function Game({
         <Avatar bot={local ? look(botColor) : online ? online.opponent : bot} />
         <div className="player-info">
           {local || online ? (
-            <div className="opponent-name">{opponentName}</div>
+            <div className="opponent-name">
+              {opponentName} {online?.rated && <span className="rating">({online.opponentRating})</span>}
+            </div>
           ) : (
             <div className="opponent-name">
               <TitleBadge title={titleById(bot.chessTitle)} /> {bot.name} <span className="rating">({shownRating(bot)})</span>
@@ -881,7 +885,14 @@ export default function Game({
         </div>
         <div className="player-info">
           <div className="opponent-name">
-            {local ? local[playerColor] : <><TitleBadge title={playerTitle} /> {player.name}</>}
+            {local ? (
+              local[playerColor]
+            ) : (
+              <>
+                <TitleBadge title={playerTitle} /> {player.name}{' '}
+                {online?.rated && <span className="rating">({online.myRating})</span>}
+              </>
+            )}
           </div>
           <p className="status">
             {viewing
@@ -941,9 +952,16 @@ export default function Game({
             ½
           </button>
         )}
-        <button className="resign" onClick={() => setConfirming('resign')} disabled={gameOver || inLesson}>
-          Resign
-        </button>
+        {/* Online, before move 2 the game can be called off instead (no rating change). */}
+        {online && !gameOver && plyCount < 2 ? (
+          <button className="resign" onClick={() => online.api.abortGame(online.id)}>
+            Abort
+          </button>
+        ) : (
+          <button className="resign" onClick={() => setConfirming('resign')} disabled={gameOver || inLesson}>
+            Resign
+          </button>
+        )}
         <SettingsButton
           context={`Game: ${variant ?? 'chess'} against ${opponentName}${online ? ' (online)' : local ? ' (local)' : ''}, move ${plyCount}`}
         />
@@ -1027,7 +1045,20 @@ export default function Game({
           result={result}
           bot={bot}
           botLine={botLine}
-          heading={local ? (result.winner ? `${local[result.winner]} wins!` : 'Draw') : null}
+          heading={
+            local
+              ? result.winner
+                ? `${local[result.winner]} wins!`
+                : 'Draw'
+              : online?.result?.reason === 'aborted'
+                ? 'Game aborted'
+                : null
+          }
+          ratingLine={
+            online?.rated && online.myChange !== null
+              ? `Your rating: ${online.myRating} → ${online.myRating + online.myChange} (${online.myChange >= 0 ? '+' : ''}${online.myChange})`
+              : null
+          }
           onTryAgain={online ? null : newGame}
           onClose={() => setDialogClosed(true)}
           onMenu={onExit}
@@ -1101,6 +1132,7 @@ const ONLINE_REASONS = {
   agreed: () => 'Draw agreed.',
   time: (outcome) => (outcome === 'win' ? "Your opponent's time ran out." : 'Your time ran out.'),
   'time-draw': () => 'Time ran out, but the other side has no pieces left to checkmate with.',
+  aborted: () => 'Called off before the game really started. Ratings are unchanged.',
 }
 
 // The result of an online game from my side (`me` is my colour): the server's, once it says

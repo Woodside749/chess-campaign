@@ -7,6 +7,9 @@ import { roundsWon } from './progress.js'
 import { COUNTRIES } from './countries.js'
 import { USERNAME_RULE, usernameProblem } from './usernames.js'
 import * as friendsApi from './friends.js'
+import * as onlineApi from './online.js'
+import { GAME_MODES } from './gameModes.js'
+import Icon from './Icon.jsx'
 import Avatar from './Avatar.jsx'
 import CharacterCreator from './CharacterCreator.jsx'
 import PlayerActions from './PlayerActions.jsx'
@@ -92,6 +95,8 @@ export default function Profile({ progress, account, onBack, onOpenFriends, onOp
         <Stat value={`${achievements.filter((a) => a.got).length} / ${achievements.length}`} label="Achievements" />
         <Stat value={modeWins} label="Game mode trophies" />
       </ul>
+
+      <RatingStrip myId={user.id} />
 
       <FriendStrip myId={user.id} onOpenFriends={onOpenFriends} api={api} />
 
@@ -191,6 +196,37 @@ function DeleteAccountButton() {
         </div>
       )}
     </>
+  )
+}
+
+// The player's online rating in every game mode (Play online), in two rows that slide
+// sideways. Modes not played yet show the starting rating, 1200.
+function RatingStrip({ myId, api = onlineApi }) {
+  const [ratings, setRatings] = useState({})
+  useEffect(() => {
+    let cancelled = false
+    api.loadRatings(myId).then(({ ratings: loaded }) => !cancelled && loaded && setRatings(loaded))
+    return () => {
+      cancelled = true
+    }
+  }, [myId, api])
+  return (
+    <section className="profile-section">
+      <h2>Online ratings</h2>
+      <ul className="rating-strip">
+        {GAME_MODES.filter((mode) => !mode.simul).map((mode) => (
+          <li key={mode.id} className="rating-card">
+            <span className="rating-card-mode">
+              <Icon icon={mode.icon} /> {mode.title}
+            </span>
+            <strong>{ratings[mode.id]?.rating ?? api.START_RATING}</strong>
+            <span className="rating-card-games">
+              {ratings[mode.id] ? `${ratings[mode.id].games} game${ratings[mode.id].games === 1 ? '' : 's'}` : 'Not played yet'}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }
 

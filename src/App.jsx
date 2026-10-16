@@ -27,6 +27,7 @@ import GameModes from './GameModes.jsx'
 import { clockFor } from './gameModes.js'
 import Profile from './Profile.jsx'
 import Friends from './Friends.jsx'
+import PlayOnline from './PlayOnline.jsx'
 import { PlayerContext, playerLook, playerTitle, tierStars, useDevTools } from './player.js'
 import { useAccount } from './useAccount.js'
 import { InviteContext } from './onlineContext.js'
@@ -80,6 +81,7 @@ export default function App() {
             setModesChoice={setModesChoice}
             onlineGameId={onlineGameId}
             onLeaveOnlineGame={() => setOnlineGameId(null)}
+            onOpenGame={openGame}
           />
           <OnlineHub account={account} inGame={onlineGameId !== null} onOpenGame={openGame} />
           {inviting && (
@@ -121,7 +123,7 @@ export default function App() {
 // Picks the screen to show (see App above).
 // `screen` is 'menu' (the main menu), 'home' (the chess campaign), 'dev', 'achievements',
 // 'modes', 'local', 'profile', 'friends', or an event id.
-function Screens({ account, screen, setScreen, modesChoice, setModesChoice, onlineGameId, onLeaveOnlineGame }) {
+function Screens({ account, screen, setScreen, modesChoice, setModesChoice, onlineGameId, onLeaveOnlineGame, onOpenGame }) {
   const [colorChoice, setColorChoice] = useState('w') // developer menu: 'w', 'b' or 'random'
   const [match, setMatch] = useState(null) // the game being played, or null
   const [puzzleRun, setPuzzleRun] = useState(null) // the puzzle trial being played: { event, round }
@@ -387,6 +389,7 @@ function Screens({ account, screen, setScreen, modesChoice, setModesChoice, onli
         onOpenProfile={() => setScreen('profile')}
         onOpenLocal={() => setScreen('local')}
         onOpenFriends={() => setScreen('friends')}
+        onOpenOnline={() => setScreen('online')}
       />
     )
   }
@@ -403,6 +406,9 @@ function Screens({ account, screen, setScreen, modesChoice, setModesChoice, onli
   }
   if (screen === 'admin' && devTools && account.user) {
     return <AdminPanel onBack={() => setScreen('profile')} />
+  }
+  if (screen === 'online') {
+    return <PlayOnline account={account} onBack={() => setScreen('menu')} onOpenGame={onOpenGame} />
   }
   if (screen === 'friends') {
     return <Friends account={account} onBack={() => setScreen('menu')} />
