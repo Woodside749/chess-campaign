@@ -1677,8 +1677,7 @@ ul.fairy-legend li {
   padding: 20px 22px;
   border: none;
   border-radius: 18px;
-  /* Dark text on every tile (each tile colour is light enough for it to read well). */
-  color: #141414;
+  color: white;
   font: inherit;
   text-align: left;
   cursor: pointer;
@@ -1734,14 +1733,14 @@ ul.fairy-legend li {
   right: 14px;
   padding: 3px 10px;
   border-radius: 999px;
-  color: white;
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(0, 0, 0, 0.25);
   font-size: 12px;
   font-weight: 700;
 }
 
 .menu-tile.light-blue {
   background: #7cc6ec;
+  color: #0e2f45;
 }
 
 .menu-tile.green {
@@ -1749,8 +1748,7 @@ ul.fairy-legend li {
 }
 
 .menu-tile.dark-green {
-  /* The darkest green that black text still reads well on. */
-  background: #3b923f;
+  background: #2e6b31;
 }
 
 .menu-tile.red {
@@ -1759,6 +1757,7 @@ ul.fairy-legend li {
 
 .menu-tile.yellow {
   background: #ddb22e;
+  color: #3d2e00;
 }
 
 /* The global chat (GlobalChat.jsx). */
