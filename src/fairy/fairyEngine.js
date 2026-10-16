@@ -1,5 +1,5 @@
-// Fairy-Stockfish, the engine the bots think with in fairy chess. It is loaded once,
-// the first time a fairy game needs it, and taught our variants from variants.ini.
+// Fairy-Stockfish, the engine the bots think with in fairy chess. It is loaded once, when
+// the first fairy game opens (warmUpFairyEngine), and taught our variants from variants.ini.
 // It is wrapped in the same Engine class as normal Stockfish (see engine.js), so the
 // bot brain can use either one in the same way.
 import { Engine } from '../engine.js'
@@ -7,8 +7,11 @@ import variantsIni from './variants.ini?raw'
 
 const SCRIPT_URL = '/fairy-stockfish/stockfish.js'
 // If the engine hasn't started after this long (a slow download, or a browser where it
-// stalls), the bots use the simple backup brain instead.
-const START_TIMEOUT_MS = 20_000
+// stalls), the bots use the simple backup brain for the rest of the visit.
+const START_TIMEOUT_MS = 60_000
+// A bot waits at most this long for a starting engine; then the backup brain plays that
+// move, and the engine is used from the first move after it is ready.
+const MOVE_WAIT_MS = 3000
 // A search normally takes well under a second. One that hasn't answered after this long
 // has got stuck, so the bot plays a backup move and the engine is started afresh next time.
 // The deep searches of the Legend bots can take several seconds, so they get longer.
@@ -18,6 +21,8 @@ const searchTimeoutMs = (depth = 8) => (depth > 10 ? 30_000 : 8000)
 const MAX_STUCK = 2
 let loading = null
 let stuck = 0
+// The step of starting up the engine has reached (says where it hangs, for bug reports).
+let startStep = 'not started'
 // What has happened to the engine during this visit (for bug reports, see fairyEngineStatus).
 const events = []
 const note = (event) => events.push(event) > 5 && events.shift()
@@ -34,7 +39,11 @@ export function fairyEngineStatus() {
 function sharedFairyEngine() {
   if (!loading) {
     const started = performance.now()
-    loading = withTimeout(startFairyEngine(), START_TIMEOUT_MS, 'Fairy-Stockfish took too long to start')
+    loading = withTimeout(startFairyEngine(), START_TIMEOUT_MS, 'Fairy-Stockfish took too long to start').catch(
+      (error) => {
+        throw new Error(`${error.message} (at: ${startStep})`)
+      },
+    )
     loading.then(
       () => note(`started ${((performance.now() - started) / 1000).toFixed(1)} s`),
       (error) => note(`failed to start (${error.message})`),
@@ -43,12 +52,21 @@ function sharedFairyEngine() {
   return loading
 }
 
+// Starts the engine as soon as a fairy game opens, so it is (usually) ready before the bot's
+// first move.
+export function warmUpFairyEngine() {
+  sharedFairyEngine().catch(() => {})
+}
+
 async function startFairyEngine() {
   // Fairy-Stockfish uses several threads, which needs a cross-origin isolated page.
   if (!window.crossOriginIsolated) throw new Error('Fairy-Stockfish needs a cross-origin isolated page')
+  startStep = 'loading the script'
   await loadScript(SCRIPT_URL)
   // The script defines a global Stockfish() that starts the engine.
+  startStep = 'starting the engine'
   const stockfish = await window.Stockfish()
+  startStep = 'talking to the engine'
   // Our variants.ini goes into the engine's own small file system.
   stockfish.FS.writeFile('/variants.ini', variantsIni)
   // A stand-in for a Web Worker, so the normal Engine class can talk to it.
@@ -56,15 +74,18 @@ async function startFairyEngine() {
   stockfish.addMessageListener((line) => worker.onmessage?.({ data: line }))
   const engine = new Engine(worker)
   await engine.ready
+  startStep = 'loading the variants'
   engine.send('setoption name VariantPath value /variants.ini')
   await engine.request('isready', (line) => line === 'readyok')
+  startStep = 'ready'
   return engine
 }
 
 // An engine for one variant: like the normal engine, but every analysis is in `variant`.
-// Throws if Fairy-Stockfish can't run in this browser.
+// Throws if Fairy-Stockfish can't run in this browser, or is still starting after a few
+// seconds (then the bot's backup brain plays this move).
 export async function fairyEngineFor(variant) {
-  const engine = await sharedFairyEngine()
+  const engine = await withTimeout(sharedFairyEngine(), MOVE_WAIT_MS, 'Fairy-Stockfish is still starting')
   return {
     analyse: (fen, options) =>
       withTimeout(

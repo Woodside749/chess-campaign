@@ -6,7 +6,7 @@ import { chooseBotMove, thinkTimeMs } from './botBrain.js'
 import { visibleSquares } from './fogChess.js'
 import { chooseFogMove, createFogMemory } from './fogBot.js'
 import { FairyGame, boardFen, withoutDuck } from './fairy/FairyGame.js'
-import { fairyEngineFor } from './fairy/fairyEngine.js'
+import { fairyEngineFor, warmUpFairyEngine } from './fairy/fairyEngine.js'
 import { simpleFairyMove } from './fairy/simpleFairyBot.js'
 import { allPieces } from './fairy/fairyPieces.js'
 import { fairyRules } from './fairy/loadFairy.js'
@@ -350,6 +350,13 @@ export default function Game({
     const timer = setTimeout(() => setPeeking(false), PEEK_MS)
     return () => clearTimeout(timer)
   }, [peeking])
+
+  // A fairy game against a bot starts Fairy-Stockfish straight away, so it is usually ready
+  // by the bot's first move (starting can take a few seconds on a phone).
+  const botUsesFairyEngine = Boolean(fairy && !fairy.chess960 && !local && !online)
+  useEffect(() => {
+    if (botUsesFairyEngine) warmUpFairyEngine()
+  }, [botUsesFairyEngine])
 
   // Whenever the position changes and it's the bot's turn, let the bot move.
   // (Not during a lesson: then the coach's moves come from the script.)
