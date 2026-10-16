@@ -2,18 +2,31 @@ import { useEffect, useRef, useState } from 'react'
 import * as onlineApi from './online.js'
 import { GAME_MODES, TIME_CHOICES, fixedTime, inviteSettings, modeById } from './gameModes.js'
 import { FAIRY_VARIANTS } from './fairy/variants.js'
+import { BOTS, shownRating } from './bots.js'
+import Avatar from './Avatar.jsx'
 import Icon from './Icon.jsx'
 
 // Every mode can be played online, except the Simul.
 const ONLINE_MODES = GAME_MODES.filter((mode) => !mode.simul)
 // How often a search asks the server again (which also keeps the search alive).
 const SEARCH_EVERY_MS = 2500
+// After this long without a match, a bot is suggested instead.
+const SUGGEST_BOT_AFTER_S = 10
+
+// The bot closest to a rating (not the final bosses).
+const botNear = (rating) =>
+  Object.values(BOTS)
+    .filter((bot) => bot.group !== 'boss')
+    .reduce((best, bot) => (Math.abs(bot.rating - rating) < Math.abs(best.rating - rating) ? bot : best))
 
 // Play online: rated games against other players. Pick a mode (with your rating in each),
 // the Fairy setup and the time, then Find opponent: the server pairs you with the player
 // searching the same mode and clock whose rating is closest. When a game is found it opens
-// like a game with friends (`onOpenGame(id)`). `api` is online.js; a test can pass a pretend one.
-export default function PlayOnline({ account, onBack, onOpenGame, api = onlineApi }) {
+// like a game with friends (`onOpenGame(id)`). If nobody is found for a while, a bot near the
+// player's rating is suggested (`onPlayBot(mode, bot, picks)`), or another bot in Game modes
+// (`onChooseBot(mode, picks)`); picks are { setup, minutes }.
+// `api` is online.js; a test can pass a pretend one.
+export default function PlayOnline({ account, onBack, onOpenGame, onPlayBot, onChooseBot, api = onlineApi }) {
   const myId = account.user?.id
   const [modeId, setModeId] = useState('blitz')
   const [setup, setSetup] = useState('archchess')
@@ -71,6 +84,12 @@ export default function PlayOnline({ account, onBack, onOpenGame, api = onlineAp
     searchingRef.current = false
     setSearching(null)
     api.stopSearching()
+  }
+
+  // Nobody to play: stop searching and play a bot in the same mode instead.
+  function playBot(bot) {
+    cancel()
+    onPlayBot(mode, bot, { setup, minutes })
   }
 
   const ratingIn = (id) => ratings[id]?.rating ?? api.START_RATING
@@ -173,7 +192,30 @@ export default function PlayOnline({ account, onBack, onOpenGame, api = onlineAp
               Cancel
             </button>
           </div>
-        ) : (
+        ) : null}
+        {searching && waited >= SUGGEST_BOT_AFTER_S && (
+          <div className="online-bot-suggestion">
+            <p>
+              Nobody else is looking for a <strong>{mode.title}</strong> game right now. Play a bot while you wait?
+            </p>
+            <div className="online-bot-buttons">
+              <button className="friend-button primary" onClick={() => playBot(botNear(ratingIn(mode.id)))}>
+                <Avatar bot={{ ...botNear(ratingIn(mode.id)), flag: '' }} size={26} />
+                Play {botNear(ratingIn(mode.id)).name} ({shownRating(botNear(ratingIn(mode.id)))})
+              </button>
+              <button
+                className="friend-button"
+                onClick={() => {
+                  cancel()
+                  onChooseBot(mode, { setup, minutes })
+                }}
+              >
+                Choose another bot
+              </button>
+            </div>
+          </div>
+        )}
+        {!searching && (
           <button
             className="event-play online-find"
             onClick={() => {
@@ -185,9 +227,6 @@ export default function PlayOnline({ account, onBack, onOpenGame, api = onlineAp
             Find opponent
           </button>
         )}
-        <p className="mode-text online-note">
-          Online games are rated: you start at 1200 in every mode. Your first games move your rating a lot (up to ±100), then less and less, until ±8 from your 10th game.
-        </p>
       </section>
     </main>
   )

@@ -3554,9 +3554,29 @@ button.friend-strip-card:hover {
   font-size: 17px;
 }
 
-.online-note {
-  margin-top: 14px;
-  font-size: 14px;
+.online-bot-suggestion {
+  margin-top: 10px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  animation: pop-in 0.25s ease-out;
+}
+
+.online-bot-suggestion p {
+  margin: 0 0 10px;
+}
+
+.online-bot-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.online-bot-buttons .friend-button.primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .online-searching {

@@ -242,13 +242,15 @@ function Screens({ account, screen, setScreen, modesChoice, setModesChoice, onli
   }
 
   // A game from the game modes menu: any bot, in any mode.
-  async function playGameMode(mode, bot) {
-    const pick = modesChoice.color
+  // `picks` ({ color, setup, minutes }) are the game modes menu's, or Play online's when it
+  // suggests a bot (`fromOnline`) because nobody else is searching.
+  async function playGameMode(mode, bot, picks = modesChoice, fromOnline = false) {
+    const pick = picks.color ?? 'random'
     const color = pick === 'random' ? (Math.random() < 0.5 ? 'w' : 'b') : pick
-    const variant = mode.setups ? modesChoice.setup : (mode.variant ?? null)
+    const variant = mode.setups ? picks.setup : (mode.variant ?? null)
     // Fairy chess and the other engine variants need their rules library loaded first.
     if (isFairyVariant(variant)) await loadFairy()
-    setMatch({ bot, color, ...clockFor(mode, modesChoice.minutes), variant, lesson: null, gameMode: mode.id })
+    setMatch({ bot, color, ...clockFor(mode, picks.minutes), variant, lesson: null, gameMode: mode.id, fromOnline })
   }
 
   // A simul from the game modes menu. Friends on its boards get an invite to play that board
@@ -354,8 +356,10 @@ function Screens({ account, screen, setScreen, modesChoice, setModesChoice, onli
         exitLabel={
           match.tournament
             ? 'Back to bracket'
-            : match.gameMode
-              ? 'Back to game modes'
+            : match.fromOnline
+              ? 'Back to Play online'
+              : match.gameMode
+                ? 'Back to game modes'
               : match.local
                 ? 'Back to play local'
                 : 'Back to menu'
@@ -408,7 +412,18 @@ function Screens({ account, screen, setScreen, modesChoice, setModesChoice, onli
     return <AdminPanel onBack={() => setScreen('profile')} />
   }
   if (screen === 'online') {
-    return <PlayOnline account={account} onBack={() => setScreen('menu')} onOpenGame={onOpenGame} />
+    return (
+      <PlayOnline
+        account={account}
+        onBack={() => setScreen('menu')}
+        onOpenGame={onOpenGame}
+        onPlayBot={(mode, bot, picks) => playGameMode(mode, bot, picks, true)}
+        onChooseBot={(mode, picks) => {
+          setModesChoice((choice) => ({ ...choice, modeId: mode.id, setup: picks.setup, minutes: picks.minutes }))
+          setScreen('modes')
+        }}
+      />
+    )
   }
   if (screen === 'friends') {
     return <Friends account={account} onBack={() => setScreen('menu')} />
