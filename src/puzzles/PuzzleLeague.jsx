@@ -1,4 +1,5 @@
 import RoundStars from '../RoundStars.jsx'
+import Icon from '../Icon.jsx'
 
 // The Puzzle Trials league: three trials of rising difficulty. Like a tournament, a trial
 // unlocks when the one before it is passed, and passed trials can be played again.
@@ -8,7 +9,7 @@ export default function PuzzleLeague({ event, roundsWon, onPlayTrial, onBack }) 
     <main className="tournament-screen campaign-theme">
       <section className="puzzle-intro">
         <div className="puzzle-intro-icon" aria-hidden="true">
-          🧩
+          <Icon icon="color:puzzle" />
         </div>
         <h2>How it works</h2>
         <ul>

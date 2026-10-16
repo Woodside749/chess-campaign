@@ -1,4 +1,5 @@
 import { BOTS, shownRating } from './bots.js'
+import Icon from './Icon.jsx'
 import Avatar from './Avatar.jsx'
 import RoundStars from './RoundStars.jsx'
 import TitleBadge from './TitleBadge.jsx'
@@ -12,7 +13,7 @@ export default function SimulLeague({ event, roundsWon, onPlayRound, onBack }) {
     <main className="tournament-screen campaign-theme">
       <section className="puzzle-intro">
         <div className="puzzle-intro-icon" aria-hidden="true">
-          🎭
+          <Icon icon="color:simul" />
         </div>
         <h2>How it works</h2>
         <ul>
