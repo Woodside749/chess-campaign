@@ -372,7 +372,7 @@ export default function Game({
         // Fairy chess and the other engine variants: Fairy-Stockfish thinks. Opening books
         // are left out (they are for normal chess), and personality traits that make no
         // sense in the variant are dropped (see ignoreTraits). If Fairy-Stockfish can't
-        // start in this browser, a simple backup brain plays instead.
+        // start in this browser, or gets stuck on a move, a simple backup brain plays instead.
         const engine = await fairyEngineFor(fairy.rules ?? variant).catch((error) => {
           console.warn(`${error.message}; using the simple fairy bot instead.`)
           return null
@@ -385,7 +385,12 @@ export default function Game({
           style: withoutTraits(bot.style, fairy.ignoreTraits),
           ...(fairy.strengthCurve ? { strength: strengthForRating(fairy.strengthCurve, bot.rating) } : {}),
         }
-        choice = engine ? await chooseBotMove(game, variantBot, botTimeLeft, engine, clockMs) : simpleFairyMove(game, bot)
+        choice = engine
+          ? await chooseBotMove(game, variantBot, botTimeLeft, engine, clockMs).catch((error) => {
+              console.warn(`${error.message}; the simple fairy bot plays this move.`)
+              return simpleFairyMove(game, bot)
+            })
+          : simpleFairyMove(game, bot)
       } else {
         choice = await chooseBotMove(game, bot, botTimeLeft, undefined, clockMs)
       }

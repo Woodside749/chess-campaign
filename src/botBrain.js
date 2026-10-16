@@ -6,6 +6,9 @@ import { botSettings } from './botStrength.js'
 // On average the bot spends this fraction of its remaining time on a move
 // (before its own `speed` is applied). Lower makes bots think longer.
 const TIME_DIVISOR = 70
+// ...but on average never more than this, so with a long clock (or none) the bots keep a
+// lively pace instead of using all their time.
+const MAX_AVERAGE_THINK_MS = 5000
 // The clock length these timings are tuned for. Shorter games (blitz, bullet) scale
 // them down, so a 1-minute bot doesn't panic after a few moves.
 const STANDARD_CLOCK_MS = 10 * 60 * 1000
@@ -35,10 +38,12 @@ export function thinkTimeMs(game, bot, timeLeftMs, clockMs = STANDARD_CLOCK_MS, 
   if (game.moves().length === 1) return randomBetween(300, 800) * pace
   // The first few moves are quick, like a human playing a familiar opening.
   if (game.history().length < 8) return randomBetween(600, 2000) * pace
-  // Otherwise a share of the remaining time plus the increment (as humans use it), made
-  // random between 0.4x and 1.6x. Fast players (speed below 1) move quicker, slow players
-  // take longer. A normal move never takes more than half the time that is left.
-  const think = (timeLeftMs / TIME_DIVISOR + incrementMs) * randomBetween(0.4, 1.6) * bot.speed
+  // Otherwise a share of the remaining time (at most 5 seconds) plus the increment (as
+  // humans use it), made random between 0.4x and 1.6x. Fast players (speed below 1) move
+  // quicker, slow players take longer. A normal move never takes more than half the time
+  // that is left.
+  const think =
+    (Math.min(timeLeftMs / TIME_DIVISOR, MAX_AVERAGE_THINK_MS) + incrementMs) * randomBetween(0.4, 1.6) * bot.speed
   let ms = Math.min(think, timeLeftMs / 2)
   // Now and then a long think, which isn't held back by the clock: a bot that is already
   // very short of time can freeze and lose on time, like a human.
@@ -117,9 +122,7 @@ export function styleBonus(game, move, bot) {
 function openingBookMove(game, bot) {
   const lines = bot.openings?.[game.turn()] ?? []
   const played = game.history()
-  const matching = lines.filter(
-    (line) => line.length > played.length && played.every((san, i) => line[i] === san),
-  )
+  const matching = lines.filter((line) => line.length > played.length && played.every((san, i) => line[i] === san))
   if (matching.length === 0) return null
   const next = pickRandom(matching)[played.length]
   // Only play it if it's legal, in case the game didn't start from the normal position.

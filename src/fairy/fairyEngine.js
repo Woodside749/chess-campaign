@@ -6,35 +6,66 @@ import { Engine } from '../engine.js'
 import variantsIni from './variants.ini?raw'
 
 const SCRIPT_URL = '/fairy-stockfish/stockfish.js'
+// If the engine hasn't started after this long (a slow download, or a browser where it
+// stalls), the bots use the simple backup brain instead.
+const START_TIMEOUT_MS = 20_000
+// A search normally takes well under a second. One that hasn't answered after this long
+// has got stuck, so the bot plays a backup move and the engine is started afresh next time.
+// The deep searches of the Legend bots can take several seconds, so they get longer.
+const searchTimeoutMs = (depth = 8) => (depth > 10 ? 30_000 : 8000)
 let loading = null
 
-// The shared fairy engine (a promise, because loading takes a moment).
+// The shared fairy engine (a promise, because loading takes a moment). If it fails or is
+// too slow to start, every later call fails straight away (so the bots use the backup brain
+// without waiting again).
 function sharedFairyEngine() {
-  loading ??= (async () => {
-    // Fairy-Stockfish uses several threads, which needs a cross-origin isolated page.
-    if (!window.crossOriginIsolated) throw new Error('Fairy-Stockfish needs a cross-origin isolated page')
-    await loadScript(SCRIPT_URL)
-    // The script defines a global Stockfish() that starts the engine.
-    const stockfish = await window.Stockfish()
-    // Our variants.ini goes into the engine's own small file system.
-    stockfish.FS.writeFile('/variants.ini', variantsIni)
-    // A stand-in for a Web Worker, so the normal Engine class can talk to it.
-    const worker = { onmessage: null, postMessage: (command) => stockfish.postMessage(command) }
-    stockfish.addMessageListener((line) => worker.onmessage?.({ data: line }))
-    const engine = new Engine(worker)
-    await engine.ready
-    engine.send('setoption name VariantPath value /variants.ini')
-    await engine.request('isready', (line) => line === 'readyok')
-    return engine
-  })()
+  loading ??= withTimeout(startFairyEngine(), START_TIMEOUT_MS, 'Fairy-Stockfish took too long to start')
   return loading
+}
+
+async function startFairyEngine() {
+  // Fairy-Stockfish uses several threads, which needs a cross-origin isolated page.
+  if (!window.crossOriginIsolated) throw new Error('Fairy-Stockfish needs a cross-origin isolated page')
+  await loadScript(SCRIPT_URL)
+  // The script defines a global Stockfish() that starts the engine.
+  const stockfish = await window.Stockfish()
+  // Our variants.ini goes into the engine's own small file system.
+  stockfish.FS.writeFile('/variants.ini', variantsIni)
+  // A stand-in for a Web Worker, so the normal Engine class can talk to it.
+  const worker = { onmessage: null, postMessage: (command) => stockfish.postMessage(command) }
+  stockfish.addMessageListener((line) => worker.onmessage?.({ data: line }))
+  const engine = new Engine(worker)
+  await engine.ready
+  engine.send('setoption name VariantPath value /variants.ini')
+  await engine.request('isready', (line) => line === 'readyok')
+  return engine
 }
 
 // An engine for one variant: like the normal engine, but every analysis is in `variant`.
 // Throws if Fairy-Stockfish can't run in this browser.
 export async function fairyEngineFor(variant) {
   const engine = await sharedFairyEngine()
-  return { analyse: (fen, options) => engine.analyse(fen, { ...options, variant }) }
+  return {
+    analyse: (fen, options) =>
+      withTimeout(
+        engine.analyse(fen, { ...options, variant }),
+        searchTimeoutMs(options?.depth),
+        'Fairy-Stockfish got stuck',
+      ).catch((error) => {
+        // Throw the stuck engine away, so the next move starts a fresh one.
+        loading = null
+        throw error
+      }),
+  }
+}
+
+// Rejects with `message` if `promise` hasn't settled after `ms`.
+function withTimeout(promise, ms, message) {
+  let timer
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(message)), ms)
+  })
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer))
 }
 
 function loadScript(src) {
