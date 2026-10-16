@@ -1739,8 +1739,8 @@ ul.fairy-legend li {
 }
 
 .menu-tile.light-blue {
-  /* A deeper version of the campaign's light blue, so white text reads like on the others. */
-  background: #2f86c0;
+  background: #7cc6ec;
+  color: #0e2f45;
 }
 
 .menu-tile.green {
@@ -1756,8 +1756,8 @@ ul.fairy-legend li {
 }
 
 .menu-tile.yellow {
-  /* A deep golden yellow, so white text reads like on the others. */
-  background: #a87b0d;
+  background: #ddb22e;
+  color: #3d2e00;
 }
 
 /* The global chat (GlobalChat.jsx). */
