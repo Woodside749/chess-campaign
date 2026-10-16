@@ -3662,3 +3662,9 @@ button.friend-strip-card:hover {
   font-size: 12px;
   color: var(--muted);
 }
+
+/* Our line icons (lineIcons.js) are a bit bigger than the text in the mode lists. */
+.mode-icon .line-icon {
+  width: 18px;
+  height: 18px;
+}

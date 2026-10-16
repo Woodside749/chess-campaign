@@ -2,6 +2,7 @@ import { STAR_TIERS, starsWon } from './career.js'
 import { playerTitle } from './player.js'
 import { roundsWon } from './progress.js'
 import SettingsButton from './Settings.jsx'
+import Icon from './Icon.jsx'
 import AccountButton from './Account.jsx'
 import GlobalChat from './GlobalChat.jsx'
 
@@ -35,18 +36,18 @@ export default function MainMenu({
           </div>
         </div>
         <div className="menu-grid">
-          <MenuTile color="dark-green" size="small" icon="👥" title="Play with friends" onClick={onOpenFriends} />
-          <MenuTile color="dark-green" size="small" icon="🤝" title="Play local" onClick={onOpenLocal} />
+          <MenuTile color="dark-green" size="small" icon="line:friends" title="Play with friends" onClick={onOpenFriends} />
+          <MenuTile color="dark-green" size="small" icon="line:local" title="Play local" onClick={onOpenLocal} />
           <MenuTile
             color="green"
-            icon="🌐"
+            icon="line:online"
             title="Play online"
             text="Rated games against players near your level, in every mode."
             onClick={onOpenOnline}
           />
           <MenuTile
             color="light-blue"
-            icon="♟️"
+            icon="line:campaign"
             title={started ? 'Continue your chess campaign' : 'Start your chess campaign'}
             text={
               started
@@ -57,12 +58,12 @@ export default function MainMenu({
           />
           <MenuTile
             color="red"
-            icon="🎲"
+            icon="line:modes"
             title="Game modes"
             text="Every mode against any bot: blitz, fog, ducks, chaos and more."
             onClick={onOpenGameModes}
           />
-          <MenuTile color="yellow" icon="🧙" title="Start your fantasy chess campaign" soon />
+          <MenuTile color="yellow" icon="line:fantasy" title="Start your fantasy chess campaign" soon />
         </div>
       </section>
 
@@ -76,7 +77,7 @@ function MenuTile({ color, size = 'big', icon, title, text, soon, onClick }) {
   return (
     <button className={`menu-tile ${color} ${size}`} onClick={onClick} disabled={soon}>
       <span className="menu-tile-icon" aria-hidden="true">
-        {icon}
+        <Icon icon={icon} />
       </span>
       <span className="menu-tile-title">{title}</span>
       {text && size === 'big' && <span className="menu-tile-text">{text}</span>}
