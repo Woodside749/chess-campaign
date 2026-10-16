@@ -1,21 +1,24 @@
 import { useState } from 'react'
 import { getVolume, playSound, setVolume } from './sounds.js'
+import { useFeedback } from './feedbackContext.js'
 
-// The ⚙️ button that opens the settings (on the main menu and in every game). For now the
-// only setting is the volume: slide it to 0 to turn the sound off.
-export default function SettingsButton() {
+// The ⚙️ button that opens the settings (on the main menu and in every game): the volume
+// (slide it to 0 to turn the sound off), and the buttons to report a bug or suggest a
+// feature. `context` says where the player is, for bug reports (like "Main menu").
+export default function SettingsButton({ context = '' }) {
   const [open, setOpen] = useState(false)
   return (
     <>
       <button className="settings-button" aria-label="Settings" title="Settings" onClick={() => setOpen(true)}>
         ⚙️
       </button>
-      {open && <SettingsDialog onClose={() => setOpen(false)} />}
+      {open && <SettingsDialog context={context} onClose={() => setOpen(false)} />}
     </>
   )
 }
 
-function SettingsDialog({ onClose }) {
+function SettingsDialog({ context, onClose }) {
+  const openFeedback = useFeedback()
   const [volume, setVolumeState] = useState(getVolume)
   const percent = Math.round(volume * 100)
 
@@ -46,6 +49,24 @@ function SettingsDialog({ onClose }) {
           />
         </label>
         <div className="dialog-buttons">
+          <button
+            className="secondary"
+            onClick={() => {
+              onClose()
+              openFeedback('bug', context)
+            }}
+          >
+            🐞 Report a bug
+          </button>
+          <button
+            className="secondary"
+            onClick={() => {
+              onClose()
+              openFeedback('idea', context)
+            }}
+          >
+            💡 Suggest a feature
+          </button>
           <button className="primary" onClick={onClose} autoFocus>
             Done
           </button>

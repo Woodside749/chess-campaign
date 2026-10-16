@@ -21,7 +21,7 @@ export default function MainMenu({ progress, account, onOpenCampaign, onOpenGame
           <h1 className="menu-title">Chess Campaign</h1>
           <div className="menu-buttons">
             <AccountButton account={account} onOpenProfile={onOpenProfile} />
-            <SettingsButton />
+            <SettingsButton context="Main menu" />
           </div>
         </div>
         <div className="menu-grid">

@@ -3387,3 +3387,138 @@ button.friend-strip-card:hover {
   flex-wrap: wrap;
   gap: 8px;
 }
+
+/* ---------- Feedback and the admin page ---------- */
+
+/* A button that looks like the links next to it (Report a bug, Suggest a feature). */
+.link-button {
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-decoration: underline;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.link-button:hover {
+  color: var(--text);
+}
+
+.dialog.feedback-dialog {
+  width: min(440px, 100%);
+}
+
+.feedback-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.feedback-tabs button {
+  flex: 1;
+  padding: 9px 8px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.feedback-tabs button.selected {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+.dialog.feedback-dialog .account-hint {
+  margin: 0 0 12px;
+}
+
+.admin-screen {
+  width: min(760px, 100%);
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+.admin-screen h1 {
+  margin: 12px 0 16px;
+  font-size: 30px;
+}
+
+.admin-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.admin-tabs button {
+  padding: 9px 14px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.admin-tabs button.selected {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+.admin-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-item {
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.admin-item-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-item-head time {
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.admin-reason {
+  margin: 10px 0 0;
+  font-weight: 600;
+}
+
+.admin-message {
+  margin: 8px 0 0;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.admin-context {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.admin-item .friend-button {
+  margin-top: 10px;
+}

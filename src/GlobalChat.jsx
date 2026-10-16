@@ -4,6 +4,7 @@ import * as friendsApi from './friends.js'
 import { usePlayer } from './player.js'
 import Avatar from './Avatar.jsx'
 import PlayerActions from './PlayerActions.jsx'
+import { useFeedback } from './feedbackContext.js'
 
 // Ready-made first messages for an empty chat.
 const STARTERS = ['Anyone up for a blitz game?', 'Looking for friends to play with!', 'Who plays Duck Chess?']
@@ -36,6 +37,7 @@ function ChatIntro() {
 export default function GlobalChat({ account, chat = chatApi, friends = friendsApi }) {
   const myId = account.user?.id
   const admin = usePlayer().admin
+  const openFeedback = useFeedback()
   const [messages, setMessages] = useState(null) // null while loading
   const [draft, setDraft] = useState('')
   const [problem, setProblem] = useState(null)
@@ -187,7 +189,14 @@ export default function GlobalChat({ account, chat = chatApi, friends = friendsA
       )}
 
       <p className="menu-links">
-        <a href="/privacy.html">Privacy</a> · <a href="/credits.html">Credits</a>
+        <a href="/privacy.html">Privacy</a> · <a href="/credits.html">Credits</a> ·{' '}
+        <button className="link-button" onClick={() => openFeedback('bug', 'Main menu')}>
+          Report a bug
+        </button>{' '}
+        ·{' '}
+        <button className="link-button" onClick={() => openFeedback('idea', 'Main menu')}>
+          Suggest a feature
+        </button>
       </p>
 
       {menuFor && (

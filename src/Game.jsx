@@ -944,7 +944,9 @@ export default function Game({
         <button className="resign" onClick={() => setConfirming('resign')} disabled={gameOver || inLesson}>
           Resign
         </button>
-        <SettingsButton />
+        <SettingsButton
+          context={`Game: ${variant ?? 'chess'} against ${opponentName}${online ? ' (online)' : local ? ' (local)' : ''}, move ${plyCount}`}
+        />
       </div>
 
       {/* Online: a draw offer from the other player, or ours waiting for an answer. */}

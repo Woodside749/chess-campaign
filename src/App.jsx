@@ -34,6 +34,9 @@ import { sendInvite } from './online.js'
 import OnlineGame from './OnlineGame.jsx'
 import OnlineHub from './OnlineHub.jsx'
 import InviteDialog from './InviteDialog.jsx'
+import FeedbackDialog from './FeedbackDialog.jsx'
+import AdminPanel from './AdminPanel.jsx'
+import { FeedbackContext } from './feedbackContext.js'
 import './App.css'
 
 // The puzzle screen (with its puzzle collection) is only downloaded when first opened.
@@ -48,6 +51,9 @@ export default function App() {
   // Games between players: the one being played (its id), and who is being invited.
   const [onlineGameId, setOnlineGameId] = useState(null)
   const [inviting, setInviting] = useState(null) // a player card, while the invite window is open
+  // The feedback window (bug report or idea), while open: { kind, context }.
+  const [feedback, setFeedback] = useState(null)
+  const openFeedback = useCallback((kind, context) => setFeedback({ kind, context }), [])
   const openGame = useCallback((id) => setOnlineGameId(id), [])
   // Which screen is shown, and what is picked in the game modes menu. Kept up here so the
   // invite window can open the Simul with the invited friend already on a board.
@@ -64,36 +70,50 @@ export default function App() {
     // Every screen can show the player's name and avatar (usePlayer in player.js), and open
     // the "Invite to game" window for another player (logged in only).
     <PlayerContext.Provider value={playerLook(account)}>
-      <InviteContext.Provider value={myId ? setInviting : null}>
-        <Screens
-          account={account}
-          screen={screen}
-          setScreen={setScreen}
-          modesChoice={modesChoice}
-          setModesChoice={setModesChoice}
-          onlineGameId={onlineGameId}
-          onLeaveOnlineGame={() => setOnlineGameId(null)}
-        />
-        <OnlineHub account={account} inGame={onlineGameId !== null} onOpenGame={openGame} />
-        {inviting && (
-          <InviteDialog
-            player={inviting}
-            onSend={async (settings) => {
-              const { error } = await sendInvite(myId, inviting.id, settings)
-              if (!error) setInviting(null)
-              return error ?? null
-            }}
-            onSetUpSimul={() => {
-              // A simul needs more than one invite: set it up in Game modes, with this friend
-              // already on the first board.
-              setModesChoice((choice) => ({ ...choice, modeId: 'simul', simulBoards: [{ kind: 'friend', player: inviting }] }))
-              setScreen('modes')
-              setInviting(null)
-            }}
-            onClose={() => setInviting(null)}
+      <FeedbackContext.Provider value={openFeedback}>
+        <InviteContext.Provider value={myId ? setInviting : null}>
+          <Screens
+            account={account}
+            screen={screen}
+            setScreen={setScreen}
+            modesChoice={modesChoice}
+            setModesChoice={setModesChoice}
+            onlineGameId={onlineGameId}
+            onLeaveOnlineGame={() => setOnlineGameId(null)}
+          />
+          <OnlineHub account={account} inGame={onlineGameId !== null} onOpenGame={openGame} />
+          {inviting && (
+            <InviteDialog
+              player={inviting}
+              onSend={async (settings) => {
+                const { error } = await sendInvite(myId, inviting.id, settings)
+                if (!error) setInviting(null)
+                return error ?? null
+              }}
+              onSetUpSimul={() => {
+                // A simul needs more than one invite: set it up in Game modes, with this friend
+                // already on the first board.
+                setModesChoice((choice) => ({
+                  ...choice,
+                  modeId: 'simul',
+                  simulBoards: [{ kind: 'friend', player: inviting }],
+                }))
+                setScreen('modes')
+                setInviting(null)
+              }}
+              onClose={() => setInviting(null)}
+            />
+          )}
+        </InviteContext.Provider>
+        {feedback && (
+          <FeedbackDialog
+            myId={myId}
+            kind={feedback.kind}
+            context={feedback.context}
+            onClose={() => setFeedback(null)}
           />
         )}
-      </InviteContext.Provider>
+      </FeedbackContext.Provider>
     </PlayerContext.Provider>
   )
 }
@@ -109,7 +129,12 @@ function Screens({ account, screen, setScreen, modesChoice, setModesChoice, onli
   // (round = { title, opponents, needed }) from the game modes menu.
   const [simulRun, setSimulRun] = useState(null)
   // What is picked in the Play local menu: the mode, fairy setup and the two names.
-  const [localChoice, setLocalChoice] = useState({ modeId: 'unlimited', setup: 'archchess', names: { w: '', b: '' }, minutes: 10 })
+  const [localChoice, setLocalChoice] = useState({
+    modeId: 'unlimited',
+    setup: 'archchess',
+    names: { w: '', b: '' },
+    minutes: 10,
+  })
   const [progress, setProgress] = useState(loadProgress)
   const userId = account.user?.id ?? null
   const devTools = useDevTools() // admins only: the developer menu
@@ -228,7 +253,14 @@ function Screens({ account, screen, setScreen, modesChoice, setModesChoice, onli
   // online (normal chess, they play Black); the boards with bots start at once.
   async function startSimul(mode, boards) {
     const clock = clockFor(mode, modesChoice.minutes)
-    const settings = { mode: 'simul', variant: null, timed: clock.timed, minutes: clock.minutes, increment: clock.increment ?? 0, color: 'w' }
+    const settings = {
+      mode: 'simul',
+      variant: null,
+      timed: clock.timed,
+      minutes: clock.minutes,
+      increment: clock.increment ?? 0,
+      color: 'w',
+    }
     const invited = await Promise.all(
       boards.map(async (board) => {
         if (board.kind !== 'friend') return board
@@ -250,7 +282,15 @@ function Screens({ account, screen, setScreen, modesChoice, setModesChoice, onli
   }
 
   if (onlineGameId !== null) {
-    return <OnlineGame key={onlineGameId} gameId={onlineGameId} account={account} progress={progress} onExit={onLeaveOnlineGame} />
+    return (
+      <OnlineGame
+        key={onlineGameId}
+        gameId={onlineGameId}
+        account={account}
+        progress={progress}
+        onExit={onLeaveOnlineGame}
+      />
+    )
   }
 
   if (puzzleRun) {
@@ -352,8 +392,17 @@ function Screens({ account, screen, setScreen, modesChoice, setModesChoice, onli
   }
   if (screen === 'profile' && account.user) {
     return (
-      <Profile progress={progress} account={account} onBack={() => setScreen('menu')} onOpenFriends={() => setScreen('friends')} />
+      <Profile
+        progress={progress}
+        account={account}
+        onBack={() => setScreen('menu')}
+        onOpenFriends={() => setScreen('friends')}
+        onOpenAdmin={() => setScreen('admin')}
+      />
     )
+  }
+  if (screen === 'admin' && devTools && account.user) {
+    return <AdminPanel onBack={() => setScreen('profile')} />
   }
   if (screen === 'friends') {
     return <Friends account={account} onBack={() => setScreen('menu')} />

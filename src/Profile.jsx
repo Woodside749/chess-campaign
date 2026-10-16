@@ -10,6 +10,7 @@ import * as friendsApi from './friends.js'
 import Avatar from './Avatar.jsx'
 import CharacterCreator from './CharacterCreator.jsx'
 import PlayerActions from './PlayerActions.jsx'
+import { useFeedback } from './feedbackContext.js'
 import TitleBadge from './TitleBadge.jsx'
 import StarBadges from './StarBadges.jsx'
 
@@ -17,8 +18,9 @@ import StarBadges from './StarBadges.jsx'
 // The player's profile (only when logged in): how they look to others, their title and
 // stars, a few numbers, and the settings for their avatar, flag and username.
 // (`api` is friends.js; a test can pass a pretend one.)
-export default function Profile({ progress, account, onBack, onOpenFriends, api = friendsApi }) {
+export default function Profile({ progress, account, onBack, onOpenFriends, onOpenAdmin, api = friendsApi }) {
   const player = usePlayer()
+  const openFeedback = useFeedback()
   const { user, profile, updateProfile } = account
   const title = playerTitle(progress)
   const wonIn = (eventId) => roundsWon(progress, eventId)
@@ -122,6 +124,20 @@ export default function Profile({ progress, account, onBack, onOpenFriends, api 
             Log out
           </button>
           <DeleteAccountButton />
+        </div>
+        <div className="profile-account-buttons">
+          <button className="profile-logout" onClick={() => openFeedback('bug', 'Profile page')}>
+            🐞 Report a bug
+          </button>
+          <button className="profile-logout" onClick={() => openFeedback('idea', 'Profile page')}>
+            💡 Suggest a feature
+          </button>
+          {/* Only for admins: what players have sent in. */}
+          {player.admin && (
+            <button className="profile-logout" onClick={onOpenAdmin}>
+              🛠 Admin page
+            </button>
+          )}
         </div>
         <p className="profile-links">
           <a href="/privacy.html">Privacy policy</a> · <a href="/credits.html">Credits</a>
